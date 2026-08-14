@@ -149,7 +149,7 @@ dart --version
 Clonar el repositorio desde GitHub:
 
 ```
-git clone https://github.com/somoscafeappgarzon-bot/mi_caffe1
+git clone https://github.com/SomosCafeApp/SomosCafe-ProyectoColaborativo
 ```
 
 Ingresar al directorio:
