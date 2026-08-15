@@ -9,7 +9,15 @@ dotenv.config();
 // ===================================
 const transporter = nodemailer.createTransport({
 
-    service: "gmail",
+    host: "smtp.gmail.com",
+
+    port: 587,
+
+    secure: false,
+
+    requireTLS: true,
+
+    family: 4,
 
     auth: {
         user: process.env.EMAIL_USER,
@@ -38,7 +46,10 @@ export const requestRecoveryCode = async (req, res) => {
 
         const { email } = req.body;
 
+        // ===================================
         // VALIDATE EMAIL
+        // ===================================
+
         if (!email) {
 
             return res.status(400).json({
@@ -49,10 +60,13 @@ export const requestRecoveryCode = async (req, res) => {
 
         }
 
+        const normalizedEmail =
+            email.trim().toLowerCase();
+
         const emailRegex =
             /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-        if (!emailRegex.test(email)) {
+        if (!emailRegex.test(normalizedEmail)) {
 
             return res.status(400).json({
 
@@ -62,10 +76,13 @@ export const requestRecoveryCode = async (req, res) => {
 
         }
 
+        // ===================================
         // FIND USER
+        // ===================================
+
         const user = await User.findOne({
 
-            email: email.toLowerCase()
+            email: normalizedEmail
 
         });
 
@@ -79,22 +96,47 @@ export const requestRecoveryCode = async (req, res) => {
 
         }
 
-        // GENERATE CODE
+        // ===================================
+        // VALIDATE ACTIVE ACCOUNT
+        // ===================================
+
+        if (!user.isActive) {
+
+            return res.status(403).json({
+
+                message: "User account is inactive"
+
+            });
+
+        }
+
+        // ===================================
+        // GENERATE RECOVERY CODE
+        // ===================================
+
         const code =
             generateRecoveryCode();
 
-        // SAVE CODE
+        // ===================================
+        // SAVE RECOVERY DATA
+        // ===================================
+
         user.recoveryCode = code;
 
         user.recoveryCodeExpiration =
-            new Date(Date.now() + 900000);
+            new Date(
+                Date.now() + 15 * 60 * 1000
+            );
 
         await user.save();
 
+        // ===================================
         // EMAIL
+        // ===================================
+
         const mailOptions = {
 
-            from: process.env.EMAIL_USER,
+            from: `"SomosCafeApp" <${process.env.EMAIL_USER}>`,
 
             to: user.email,
 
@@ -241,9 +283,16 @@ export const requestRecoveryCode = async (req, res) => {
 
         };
 
+        // ===================================
         // SEND EMAIL
+        // ===================================
+
         await transporter.sendMail(
             mailOptions
+        );
+
+        console.log(
+            `📧 Recovery email sent to ${user.email}`
         );
 
         return res.status(200).json({
@@ -255,7 +304,10 @@ export const requestRecoveryCode = async (req, res) => {
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            "❌ Recovery email error:",
+            error
+        );
 
         return res.status(500).json({
 
@@ -283,7 +335,10 @@ export const changePassword = async (req, res) => {
             newPassword
         } = req.body;
 
+        // ===================================
         // VALIDATE FIELDS
+        // ===================================
+
         if (
             !email ||
             !code ||
@@ -292,13 +347,20 @@ export const changePassword = async (req, res) => {
 
             return res.status(400).json({
 
-                message: "All fields are required"
+                message:
+                    "All fields are required"
 
             });
 
         }
 
+        const normalizedEmail =
+            email.trim().toLowerCase();
+
+        // ===================================
         // PASSWORD LENGTH
+        // ===================================
+
         if (newPassword.length < 6) {
 
             return res.status(400).json({
@@ -310,7 +372,10 @@ export const changePassword = async (req, res) => {
 
         }
 
+        // ===================================
         // NUMBER
+        // ===================================
+
         if (!/[0-9]/.test(newPassword)) {
 
             return res.status(400).json({
@@ -322,7 +387,10 @@ export const changePassword = async (req, res) => {
 
         }
 
+        // ===================================
         // UPPERCASE
+        // ===================================
+
         if (!/[A-Z]/.test(newPassword)) {
 
             return res.status(400).json({
@@ -334,7 +402,10 @@ export const changePassword = async (req, res) => {
 
         }
 
+        // ===================================
         // LOWERCASE
+        // ===================================
+
         if (!/[a-z]/.test(newPassword)) {
 
             return res.status(400).json({
@@ -346,7 +417,10 @@ export const changePassword = async (req, res) => {
 
         }
 
+        // ===================================
         // SPECIAL CHARACTER
+        // ===================================
+
         if (
             !/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(
                 newPassword
@@ -362,10 +436,13 @@ export const changePassword = async (req, res) => {
 
         }
 
+        // ===================================
         // FIND USER
+        // ===================================
+
         const user = await User.findOne({
 
-            email: email.toLowerCase(),
+            email: normalizedEmail,
 
             recoveryCode:
                 code.toString(),
@@ -378,7 +455,10 @@ export const changePassword = async (req, res) => {
 
         });
 
-        // VALIDATE CODE
+        // ===================================
+        // VALIDATE RECOVERY CODE
+        // ===================================
+
         if (!user) {
 
             return res.status(400).json({
@@ -390,22 +470,38 @@ export const changePassword = async (req, res) => {
 
         }
 
+        // ===================================
         // CHANGE PASSWORD
+        // ===================================
+
         user.password =
             newPassword;
 
+        // ===================================
         // CLEAR RECOVERY DATA
+        // ===================================
+
         user.recoveryCode = null;
 
         user.recoveryCodeExpiration = null;
 
-        // SAVE
+        // ===================================
+        // SAVE USER
+        // ===================================
+
         await user.save();
 
+        console.log(
+            `🔐 Password updated for ${user.email}`
+        );
+
+        // ===================================
         // CONFIRMATION EMAIL
+        // ===================================
+
         const mailOptions = {
 
-            from: process.env.EMAIL_USER,
+            from: `"SomosCafeApp" <${process.env.EMAIL_USER}>`,
 
             to: user.email,
 
@@ -532,10 +628,32 @@ export const changePassword = async (req, res) => {
 
         };
 
-        // SEND EMAIL
-        await transporter.sendMail(
-            mailOptions
-        );
+        // ===================================
+        // SEND CONFIRMATION EMAIL
+        // ===================================
+
+        try {
+
+            await transporter.sendMail(
+                mailOptions
+            );
+
+            console.log(
+                `📧 Password confirmation email sent to ${user.email}`
+            );
+
+        } catch (emailError) {
+
+            console.error(
+                "⚠️ Password changed, but confirmation email could not be sent:",
+                emailError.message
+            );
+
+        }
+
+        // ===================================
+        // SUCCESS RESPONSE
+        // ===================================
 
         return res.status(200).json({
 
@@ -546,7 +664,10 @@ export const changePassword = async (req, res) => {
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            "❌ Change password error:",
+            error
+        );
 
         return res.status(500).json({
 

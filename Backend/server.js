@@ -32,8 +32,8 @@ app.get("/", (req, res) => {
 
     res.status(200).json({
 
-        message: "Welcome to SomosCafe API",
-        database: "SomosCafeApp"
+        message:
+            "Welcome to SomosCafe API"
 
     });
 
@@ -44,28 +44,43 @@ app.get("/", (req, res) => {
 // ===============================
 
 // USERS
-app.use("/api/users", userRoutes);
+app.use(
+    "/api/users",
+    userRoutes
+);
 
 // LOGIN
-app.use("/api/login", loginRoutes);
+app.use(
+    "/api/login",
+    loginRoutes
+);
 
 // PASSWORD RECOVERY
-app.use("/api/recovery", recoveryRoutes);
+app.use(
+    "/api/recovery",
+    recoveryRoutes
+);
 
 // PRODUCTS
-app.use("/api/products", productRoutes);
+app.use(
+    "/api/products",
+    productRoutes
+);
 
 // ===============================
 // SERVER
 // ===============================
-app.listen(PORT, () => {
+app.listen(
+    PORT,
+    () => {
 
-    console.log("=================================");
-    console.log("☕ SOMOSCAFE API");
-    console.log("=================================");
-    console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`🌐 http://localhost:${PORT}`);
-    console.log("🗄️ Database: SomosCafeApp");
-    console.log("=================================");
+        console.log(
+            `🚀 Server running on port ${PORT}`
+        );
 
-});
+        console.log(
+            `🌐 http://localhost:${PORT}`
+        );
+
+    }
+);

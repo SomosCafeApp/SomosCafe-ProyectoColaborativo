@@ -1,7 +1,7 @@
 import User from "../models/userModel.js";
 
 // ===================================
-// REGISTRAR USUARIO
+// REGISTER USER
 // ===================================
 export const registerUser = async (req, res) => {
 
@@ -15,7 +15,7 @@ export const registerUser = async (req, res) => {
             phone
         } = req.body;
 
-        // VALIDAR DATOS
+        // VALIDATE REQUIRED DATA
         if (
             !name ||
             !lastName ||
@@ -24,81 +24,115 @@ export const registerUser = async (req, res) => {
         ) {
 
             return res.status(400).json({
-                message: "Name, lastName, email and password are required"
+
+                message:
+                    "Name, lastName, email and password are required"
+
             });
 
         }
 
-        // VALIDAR PASSWORD
+        // VALIDATE PASSWORD LENGTH
         if (password.length < 6) {
 
             return res.status(400).json({
-                message: "Password must contain at least 6 characters"
+
+                message:
+                    "Password must contain at least 6 characters"
+
             });
 
         }
 
-        // VALIDAR CORREO
+        // VALIDATE EMAIL FORMAT
         const emailRegex =
             /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
         if (!emailRegex.test(email)) {
 
             return res.status(400).json({
-                message: "Invalid email format"
+
+                message:
+                    "Invalid email format"
+
             });
 
         }
 
-        // VERIFICAR CORREO
+        // CHECK IF EMAIL ALREADY EXISTS
         const existingUser = await User.findOne({
+
             email: email.toLowerCase()
+
         });
 
         if (existingUser) {
 
             return res.status(409).json({
-                message: "Email is already registered"
+
+                message:
+                    "Email is already registered"
+
             });
 
         }
 
-        // CREAR USUARIO
+        // CREATE USER
         const newUser = new User({
 
-            name,
-            lastName,
-            email: email.toLowerCase(),
+            name: name.trim(),
+
+            lastName: lastName.trim(),
+
+            email: email.toLowerCase().trim(),
+
             password,
-            phone: phone || "",
+
+            phone: phone
+                ? phone.trim()
+                : "",
+
             role: "USER",
+
             points: 0,
+
             profileImage: "",
+
             isActive: true
 
         });
 
-        // GUARDAR
+        // SAVE USER
         const user = await newUser.save();
 
-        // RESPUESTA
+        // USER RESPONSE
         const userResponse = {
 
             id: user._id,
+
             name: user.name,
+
             lastName: user.lastName,
+
             email: user.email,
+
             role: user.role,
+
             phone: user.phone,
+
             points: user.points,
+
             profileImage: user.profileImage,
+
             isActive: user.isActive
 
         };
 
+        // RESPONSE
         return res.status(201).json({
 
-            message: "User registered successfully",
+            message:
+                "User registered successfully",
 
             user: userResponse
 
@@ -106,11 +140,15 @@ export const registerUser = async (req, res) => {
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            "Register error:",
+            error
+        );
 
         return res.status(500).json({
 
-            message: "Error registering user",
+            message:
+                "Error registering user",
 
             error: error.message
 

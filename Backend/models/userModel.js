@@ -75,33 +75,29 @@ const userSchema = new mongoose.Schema(
 );
 
 // ===================================
-// ENCRIPTAR PASSWORD
+// HASH PASSWORD
 // ===================================
-userSchema.pre("save", async function (next) {
+userSchema.pre("save", async function () {
 
+    // DO NOT HASH PASSWORD AGAIN
     if (!this.isModified("password")) {
-        return next();
+        return;
     }
 
-    try {
+    // GENERATE SALT
+    const salt = await bcrypt.genSalt(10);
 
-        const salt = await bcrypt.genSalt(10);
-
-        this.password = await bcrypt.hash(
-            this.password,
-            salt
-        );
-
-        next();
-
-    } catch (error) {
-
-        next(error);
-
-    }
+    // HASH PASSWORD
+    this.password = await bcrypt.hash(
+        this.password,
+        salt
+    );
 
 });
 
+// ===================================
+// USER MODEL
+// ===================================
 const User = mongoose.model(
     "User",
     userSchema
