@@ -7,6 +7,7 @@ import userRoutes from "./routes/userRoutes.js";
 import loginRoutes from "./routes/loginRoutes.js";
 import recoveryRoutes from "./routes/recoveryRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
+import categoryRoutes from "./routes/categoryRoutes.js";
 
 const app = express();
 
@@ -65,6 +66,12 @@ app.use(
 app.use(
     "/api/products",
     productRoutes
+);
+
+// CATEGORIES
+app.use(
+    "/api/categories",
+    categoryRoutes
 );
 
 // ===============================
