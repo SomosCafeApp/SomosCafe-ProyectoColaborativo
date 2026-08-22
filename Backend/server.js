@@ -8,6 +8,10 @@ import loginRoutes from "./routes/loginRoutes.js";
 import recoveryRoutes from "./routes/recoveryRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import categoryRoutes from "./routes/categoryRoutes.js";
+import addressRoutes from "./routes/addressRoutes.js";
+import cartRoutes from "./routes/cartRoutes.js";
+import eventRoutes from "./routes/eventRoutes.js";
+import favoriteRoutes from "./routes/favoriteRoutes.js";
 
 const app = express();
 
@@ -72,6 +76,31 @@ app.use(
 app.use(
     "/api/categories",
     categoryRoutes
+);
+
+// ADDRESSES
+
+app.use(
+    "/api/addresses",
+    addressRoutes
+);
+
+// CART
+app.use(
+    "/api/cart",
+    cartRoutes
+);
+
+// EVENTS
+app.use(
+    "/api/events",
+    eventRoutes
+);
+
+// FAVORITES
+app.use(
+    "/api/favorites",
+    favoriteRoutes
 );
 
 // ===============================
