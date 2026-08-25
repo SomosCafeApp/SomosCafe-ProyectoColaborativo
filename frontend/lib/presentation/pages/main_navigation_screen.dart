@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'cart_page.dart';
+import 'cart_tab.dart';
 import 'home_page.dart';
 import 'profile_page.dart';
 import 'search_page.dart';
@@ -18,14 +19,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   static const activeBrown = Color(0xFFA2784F);
   static const inactiveColor = Color(0xFF757575);
 
-  // Mapeo corregido: WelcomePage para Inicio y HomePage para el catálogo/menú
-  final List<Widget> _pages = [
-    const WelcomePage(), 
-    const HomePage(),    
-    const SearchPage(),  
-    const CartPage(),    
-    const ProfilePage(), 
-  ];
+  void _changeTab(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+  }
 
   final List<Map<String, dynamic>> _navItems = [
     {'icon': Icons.home_outlined, 'activeIcon': Icons.home_outlined, 'label': 'Inicio'},
@@ -36,11 +34,20 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   ];
 
   @override
-  Widget build(BuildContext context) {
+    Widget build(BuildContext context) {
+      // Definimos las páginas dentro del build para pasar _changeTab dinámicamente
+      final List<Widget> pages = [
+        WelcomePage(onOrderNow: () => _changeTab(1)), 
+        const HomePage(),    
+        const SearchPage(),  
+        CartTab(onExploreMenu: () => _changeTab(1)),
+        const ProfilePage(), 
+    ];
+
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
-        children: _pages,
+        children: pages,
       ),
       bottomNavigationBar: Container(
         height: 75,
@@ -57,7 +64,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             final item = _navItems[index];
 
             return GestureDetector(
-              onTap: () => setState(() => _currentIndex = index),
+              onTap: () => _changeTab(index),
               behavior: HitTestBehavior.opaque,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,

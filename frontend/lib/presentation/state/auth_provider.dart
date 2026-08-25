@@ -16,6 +16,15 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  // Simulación de registro
+  void register(String name, String email, String password) {
+    if (name.isNotEmpty && email.isNotEmpty && password.length >= 6) {
+      _isLoggedIn = true;
+      _userName = name;
+      notifyListeners();
+    }
+  }
+
   // Cierre de sesión
   void logout() {
     _isLoggedIn = false;

@@ -18,9 +18,18 @@ class CartProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void removeSingleItem(Product product) {
+  final index = _items.indexWhere((item) => item.id == product.id);
+  if (index >= 0) {
+    _items.removeAt(index);
+    notifyListeners();
+  }
+}
+
   // Agregamos esto para limpiar el carrito tras comprar
   void clearCart() {
     _items.clear();
     notifyListeners();
   }
 }
+
