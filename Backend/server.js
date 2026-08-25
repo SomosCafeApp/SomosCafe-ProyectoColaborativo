@@ -15,6 +15,10 @@ import favoriteRoutes from "./routes/favoriteRoutes.js";
 import inventoryRoutes from "./routes/inventoryRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
+import paymentMethodRoutes from "./routes/paymentMethodRoutes.js";
+import pointRoutes from "./routes/pointsRoutes.js";
+import promotionRoutes from "./routes/promotionRoutes.js";
+import reviewsRoutes from "./routes/reviewsRoutes.js";
 
 const app = express();
 
@@ -122,6 +126,30 @@ app.use(
 app.use(
     "/api/orders",
     orderRoutes
+);
+
+// PAYMENT METHODS
+app.use(
+    "/api/payment-methods",
+    paymentMethodRoutes
+);
+
+// POINTS
+app.use(
+    "/api/points",
+    pointRoutes
+);
+
+// PROMOTIONS
+app.use(
+    "/api/promotions",
+    promotionRoutes
+);
+
+// REVIEWS
+app.use(
+    "/api/reviews",
+    reviewsRoutes
 );
 
 // ===============================
