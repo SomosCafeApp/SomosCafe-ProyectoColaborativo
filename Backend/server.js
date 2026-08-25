@@ -12,6 +12,9 @@ import addressRoutes from "./routes/addressRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
 import eventRoutes from "./routes/eventRoutes.js";
 import favoriteRoutes from "./routes/favoriteRoutes.js";
+import inventoryRoutes from "./routes/inventoryRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
+import orderRoutes from "./routes/orderRoutes.js";
 
 const app = express();
 
@@ -101,6 +104,24 @@ app.use(
 app.use(
     "/api/favorites",
     favoriteRoutes
+);
+
+// INVENTORY
+app.use(
+    "/api/inventory",
+    inventoryRoutes
+);
+
+// NOTIFICATIONS
+app.use(
+    "/api/notifications",
+    notificationRoutes
+);
+
+// ORDERS
+app.use(
+    "/api/orders",
+    orderRoutes
 );
 
 // ===============================
