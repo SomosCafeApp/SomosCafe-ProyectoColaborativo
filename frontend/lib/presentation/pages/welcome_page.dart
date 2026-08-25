@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'package:provider/provider.dart';
 import '../../data/models/product.dart';
 import '../components/product_card.dart';
@@ -89,7 +90,7 @@ class _WelcomePageState extends State<WelcomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- 1. SECCIÓN HERO CON FONDO Y ESTADÍSTICAS ---
+            // --- SECCIÓN HERO CON FONDO Y ESTADÍSTICAS ---
             Container(
               width: double.infinity,
               padding: const EdgeInsets.only(top: 60, bottom: 36, left: 20, right: 20),
@@ -106,6 +107,7 @@ class _WelcomePageState extends State<WelcomePage> {
               ),
               child: Column(
                 children: [
+                  // Badge Superior "Café Artesanal Premium"
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                     decoration: BoxDecoration(
@@ -126,12 +128,16 @@ class _WelcomePageState extends State<WelcomePage> {
                     ),
                   ),
                   const SizedBox(height: 24),
+
+                  // Icono Taza de Café
                   const Icon(
                     Icons.coffee_rounded,
                     size: 54,
                     color: Colors.white,
                   ),
                   const SizedBox(height: 12),
+
+                  // Título Principal
                   const Text(
                     'SOMOS CafeApp',
                     style: TextStyle(
@@ -142,6 +148,8 @@ class _WelcomePageState extends State<WelcomePage> {
                     ),
                   ),
                   const SizedBox(height: 8),
+
+                  // Estrellas de Calificación
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(
@@ -150,6 +158,8 @@ class _WelcomePageState extends State<WelcomePage> {
                     ),
                   ),
                   const SizedBox(height: 12),
+
+                  // Descripción
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Text(
@@ -163,6 +173,8 @@ class _WelcomePageState extends State<WelcomePage> {
                     ),
                   ),
                   const SizedBox(height: 32),
+
+                  // Métricas / Estadísticas
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
@@ -177,7 +189,7 @@ class _WelcomePageState extends State<WelcomePage> {
               ),
             ),
 
-            // --- 2. TARJETA DE OFERTA ESPECIAL ---
+            // --- TARJETA DE OFERTA ESPECIAL ---
             Padding(
               padding: const EdgeInsets.all(20),
               child: Stack(
@@ -227,6 +239,8 @@ class _WelcomePageState extends State<WelcomePage> {
                           ),
                         ),
                         const SizedBox(height: 14),
+
+                        // Título de la oferta
                         const Text(
                           '¡30% de Descuento!',
                           style: TextStyle(
@@ -236,6 +250,8 @@ class _WelcomePageState extends State<WelcomePage> {
                           ),
                         ),
                         const SizedBox(height: 6),
+
+                        // Subtítulo
                         Text(
                           'En tu segunda compra del día.\nSolo por tiempo limitado.',
                           style: TextStyle(
@@ -245,6 +261,8 @@ class _WelcomePageState extends State<WelcomePage> {
                           ),
                         ),
                         const SizedBox(height: 18),
+
+                        // Botón "Ordenar Ahora"
                         ElevatedButton(
                           onPressed: widget.onOrderNow,
                           style: ElevatedButton.styleFrom(
@@ -274,6 +292,8 @@ class _WelcomePageState extends State<WelcomePage> {
                       ],
                     ),
                   ),
+
+                  // Insignia Circular (30% OFF)
                   Positioned(
                     top: 16,
                     right: 16,
@@ -319,7 +339,7 @@ class _WelcomePageState extends State<WelcomePage> {
               ),
             ),
 
-            // --- 3. SECCIÓN CATEGORÍAS ---
+            // --- SECCIÓN CATEGORÍAS ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
@@ -342,6 +362,7 @@ class _WelcomePageState extends State<WelcomePage> {
                     ),
                   ),
                   const SizedBox(height: 16),
+
                   Row(
                     children: List.generate(_categories.length, (index) {
                       final cat = _categories[index];
@@ -402,7 +423,7 @@ class _WelcomePageState extends State<WelcomePage> {
 
             const SizedBox(height: 28),
 
-            // --- 4. SECCIÓN LO MÁS POPULAR ---
+            // --- SECCIÓN LO MÁS POPULAR ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
@@ -467,6 +488,7 @@ class _WelcomePageState extends State<WelcomePage> {
                     ],
                   ),
                   const SizedBox(height: 16),
+
                   GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
@@ -499,7 +521,7 @@ class _WelcomePageState extends State<WelcomePage> {
 
             const SizedBox(height: 32),
 
-            // --- 5. DIVISOR "EXPLORA MÁS" ---
+            // --- DIVISOR "EXPLORA MÁS" ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
@@ -544,7 +566,7 @@ class _WelcomePageState extends State<WelcomePage> {
 
             const SizedBox(height: 28),
 
-            // --- 6. NUESTRO MENÚ COMPLETO ---
+            // --- NUESTRO MENÚ COMPLETO ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
@@ -599,7 +621,7 @@ class _WelcomePageState extends State<WelcomePage> {
 
             const SizedBox(height: 28),
 
-            // --- 7. BOTÓN "VER MENÚ COMPLETO" ---
+            // --- BOTÓN "VER MENÚ COMPLETO" ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: SizedBox(

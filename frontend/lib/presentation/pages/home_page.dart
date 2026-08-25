@@ -14,14 +14,14 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _selectedCategoryIndex = 0;
 
-  final List<Map<String, dynamic>> _categories = [
+  final List<Map<String, dynamic>> _categories = const [
     {'label': 'Todo', 'icon': Icons.auto_awesome},
     {'label': 'Calientes', 'icon': Icons.coffee_rounded},
     {'label': 'Frías', 'icon': Icons.ac_unit_rounded},
     {'label': 'Postres', 'icon': Icons.cake_rounded},
   ];
 
-  final List<Product> _originalProducts = [
+  final List<Product> _products = [
     Product(
       id: '1',
       name: 'Espresso Tradicional',
@@ -47,8 +47,8 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    const primaryBrown = Color(0xFF8C6239);
-    const darkHeaderBg = Color(0xFF9E7247);
+    const primaryBrown = Color(0xFFA2784F);
+    const headerBgColor = Color(0xFF9E754B);
     const scaffoldBgColor = Color(0xFFFAF7F2);
 
     final cartProvider = Provider.of<CartProvider>(context, listen: false);
@@ -63,7 +63,7 @@ class _HomePageState extends State<HomePage> {
             Container(
               padding: const EdgeInsets.only(top: 50, bottom: 20, left: 20, right: 20),
               decoration: const BoxDecoration(
-                color: darkHeaderBg,
+                color: headerBgColor,
                 borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
               ),
               child: Column(
@@ -80,10 +80,10 @@ class _HomePageState extends State<HomePage> {
                         child: const Icon(Icons.coffee_rounded, color: Colors.white, size: 22),
                       ),
                       const SizedBox(width: 12),
-                      const Column(
+                      Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
+                          const Text(
                             'Nuestro Menú',
                             style: TextStyle(
                               fontSize: 22,
@@ -95,7 +95,7 @@ class _HomePageState extends State<HomePage> {
                             'Más de 12 productos artesanales',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.white70,
+                              color: Colors.white.withOpacity(0.85),
                             ),
                           ),
                         ],
@@ -161,7 +161,7 @@ class _HomePageState extends State<HomePage> {
                   const Icon(Icons.auto_awesome, size: 16, color: primaryBrown),
                   const SizedBox(width: 6),
                   Text(
-                    '${_originalProducts.length} productos disponibles',
+                    '${_products.length} productos disponibles',
                     style: TextStyle(
                       fontSize: 13,
                       color: Colors.black.withOpacity(0.6),
@@ -179,7 +179,7 @@ class _HomePageState extends State<HomePage> {
                 child: GridView.builder(
                   padding: const EdgeInsets.only(bottom: 20),
                   physics: const BouncingScrollPhysics(),
-                  itemCount: _originalProducts.length,
+                  itemCount: _products.length,
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
                     mainAxisSpacing: 16,
@@ -187,7 +187,7 @@ class _HomePageState extends State<HomePage> {
                     childAspectRatio: 0.68,
                   ),
                   itemBuilder: (context, index) {
-                    final product = _originalProducts[index];
+                    final product = _products[index];
                     return ProductCard(
                       product: product,
                       onAddToCart: () {
@@ -195,6 +195,7 @@ class _HomePageState extends State<HomePage> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text('${product.name} añadido al carrito'),
+                            backgroundColor: primaryBrown,
                             duration: const Duration(seconds: 2),
                           ),
                         );

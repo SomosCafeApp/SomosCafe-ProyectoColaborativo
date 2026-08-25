@@ -6,12 +6,14 @@ class ProductCard extends StatelessWidget {
   final Product product;
   final VoidCallback onAddToCart;
   final VoidCallback? onFavorite;
+  final bool isFavorite;
 
   const ProductCard({
     super.key,
     required this.product,
     required this.onAddToCart,
     this.onFavorite,
+    this.isFavorite = false,
   });
 
   @override
@@ -46,7 +48,7 @@ class ProductCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // --- IMAGEN / HEADER ---
+              // --- IMAGEN / HEADER CON BADGES ---
               Expanded(
                 child: Stack(
                   children: [
@@ -81,6 +83,8 @@ class ProductCard extends StatelessWidget {
                             )
                           : _buildFallbackIcon(primaryBrown),
                     ),
+
+                    // 1. RATING STAR (Arriba a la izquierda)
                     Positioned(
                       top: 8,
                       left: 8,
@@ -108,6 +112,81 @@ class ProductCard extends StatelessWidget {
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.black87,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    // 2. BOTÓN DE FAVORITO (Arriba a la derecha)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: GestureDetector(
+                        onTap: onFavorite,
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.9),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            isFavorite
+                                ? Icons.favorite_rounded
+                                : Icons.favorite_border_rounded,
+                            color: isFavorite
+                                ? const Color(0xFFE53935)
+                                : const Color(0xFF6C757D),
+                            size: 18,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // 3. BADGE DE VISTAS (Abajo a la derecha)
+                    Positioned(
+                      bottom: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFAF7F2).withOpacity(0.92),
+                          borderRadius: BorderRadius.circular(14),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.08),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.remove_red_eye_outlined,
+                              size: 14,
+                              color: Color(0xFF8C6E54),
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              '205',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF5D4037),
                               ),
                             ),
                           ],

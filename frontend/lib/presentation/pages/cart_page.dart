@@ -1,134 +1,129 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../state/cart_provider.dart';
-import 'checkout_page.dart'; // <-- Conexión agregada
 
 class CartPage extends StatelessWidget {
   const CartPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final cart = context.watch<CartProvider>();
+    const headerBgColor = Color(0xFF9E754B);
+    const primaryBrown = Color(0xFFA2784F);
+    const scaffoldBgColor = Color(0xFFFAF7F2);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Mi Carrito'),
-        backgroundColor: Colors.brown[400],
-        foregroundColor: Colors.white,
-      ),
-      body: cart.items.isEmpty
-          ? const Center(
-              child: Text(
-                'Tu carrito está vacío. ¡Pídete un café!',
-                style: TextStyle(fontSize: 16, color: Colors.grey),
-              ),
-            )
-          : Column(
+      backgroundColor: scaffoldBgColor,
+      body: Column(
+        children: [
+          // Header
+          Container(
+            color: headerBgColor,
+            padding: const EdgeInsets.only(top: 50, bottom: 20, left: 20, right: 20),
+            child: Row(
               children: [
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: cart.items.length,
-                    itemBuilder: (context, index) {
-                      final product = cart.items[index];
-                      return Card(
-                        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        child: ListTile(
-                          leading: ClipRRect(
-                            borderRadius: BorderRadius.circular(4),
-                            child: Image.network(
-                              product.imageUrl,
-                              width: 50,
-                              height: 50,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  const Icon(Icons.coffee),
-                            ),
-                          ),
-                          title: Text(
-                            product.name,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          subtitle: Text(
-                            '\$${product.price.toStringAsFixed(0)} COP',
-                          ),
-                          trailing: IconButton(
-                            icon: const Icon(
-                              Icons.delete_outline,
-                              color: Colors.red,
-                            ),
-                            onPressed: () {
-                              context.read<CartProvider>().removeFromCart(
-                                    product,
-                                  );
-                            },
-                          ),
-                        ),
-                      );
-                    },
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.shopping_bag_outlined,
+                    color: Colors.white,
+                    size: 26,
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.brown[50],
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(20),
-                      topRight: Radius.circular(20),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Mi Carrito',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            'Total:',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            '\$${cart.total.toStringAsFixed(0)} COP',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.brown[800],
-                            ),
-                          ),
-                        ],
+                    Text(
+                      'Tus productos favoritos',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white.withOpacity(0.87),
                       ),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.brown[600],
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          onPressed: () {
-                            // Abrimos la pantalla de Checkout
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const CheckoutPage(),
-                              ),
-                            );
-                          },
-                          child: const Text(
-                            'Confirmar Pedido',
-                            style: TextStyle(fontSize: 16, color: Colors.white),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ],
             ),
+          ),
+
+          // Estado vacío
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: primaryBrown.withOpacity(0.15),
+                    ),
+                    child: const Icon(
+                      Icons.shopping_bag_outlined,
+                      size: 40,
+                      color: primaryBrown,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Tu carrito está vacío',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 32),
+                    child: Text(
+                      'Añade tus bebidas y postres favoritos desde nuestro menú',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: () {
+                      // Acción para ir al menú
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryBrown,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('Explorar Menú'),
+                        SizedBox(width: 8),
+                        Icon(Icons.arrow_forward, size: 16),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
