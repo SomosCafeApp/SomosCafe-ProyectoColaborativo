@@ -323,4 +323,6 @@ Proyecto desarrollado por:
 | **Jesus Manuel Serrano Collazos** | Frontend                          |
 | **Faiber Julian Torres Gaviria**  | Base de datos y Documentación     |
 
----
+-------------------------------------
+
+dev-jesus ======= >>>>>>> main
