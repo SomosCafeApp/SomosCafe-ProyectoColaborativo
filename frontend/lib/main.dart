@@ -28,7 +28,8 @@ class MyApp extends StatelessWidget {
       title: 'SOMOS CafeApp',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: const MainNavigationScreen(), // Carga siempre el marco con la barra
+      // La aplicación siempre inicia en el contenedor de navegación con Navbar
+      home: const MainNavigationScreen(),
     );
   }
 }
