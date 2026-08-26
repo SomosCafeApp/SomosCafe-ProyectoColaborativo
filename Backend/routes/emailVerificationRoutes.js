@@ -1,12 +1,9 @@
 import express from "express";
 
 import {
-    registerUser
-} from "../controllers/userController.js";
-
-import {
     requestEmailVerification,
-    verifyEmail
+    verifyEmail,
+    resendVerificationCode
 } from "../controllers/emailVerificationController.js";
 
 const router = express.Router();
@@ -16,7 +13,7 @@ const router = express.Router();
 // ===================================
 
 router.post(
-    "/request-email-verification",
+    "/request",
     requestEmailVerification
 );
 
@@ -25,17 +22,17 @@ router.post(
 // ===================================
 
 router.post(
-    "/verify-email",
+    "/verify",
     verifyEmail
 );
 
 // ===================================
-// REGISTER USER
+// RESEND VERIFICATION CODE
 // ===================================
 
 router.post(
-    "/register",
-    registerUser
+    "/resend",
+    resendVerificationCode
 );
 
 export default router;

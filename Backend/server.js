@@ -19,6 +19,7 @@ import paymentMethodRoutes from "./routes/paymentMethodRoutes.js";
 import pointRoutes from "./routes/pointsRoutes.js";
 import promotionRoutes from "./routes/promotionRoutes.js";
 import reviewsRoutes from "./routes/reviewsRoutes.js";
+import emailVerificationRoutes from "./routes/emailVerificationRoutes.js";
 
 const app = express();
 
@@ -150,6 +151,12 @@ app.use(
 app.use(
     "/api/reviews",
     reviewsRoutes
+);
+
+// EMAIL VERIFICATION
+app.use(
+    "/api/email-verification",
+    emailVerificationRoutes
 );
 
 // ===============================

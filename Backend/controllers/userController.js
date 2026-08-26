@@ -1,4 +1,5 @@
 import User from "../models/userModel.js";
+import jwt from "jsonwebtoken";
 
 // ===================================
 // REGISTER USER
@@ -12,43 +13,52 @@ export const registerUser = async (req, res) => {
             lastName,
             email,
             password,
-            phone
+            phone,
+            verificationToken
         } = req.body;
 
+        // ===================================
         // VALIDATE REQUIRED DATA
+        // ===================================
+
         if (
             !name ||
             !lastName ||
             !email ||
-            !password
+            !password ||
+            !verificationToken
         ) {
 
             return res.status(400).json({
 
                 message:
-                    "Name, lastName, email and password are required"
+                    "Name, lastName, email, password and verificationToken are required"
 
             });
 
         }
 
-        // VALIDATE PASSWORD LENGTH
-        if (password.length < 6) {
+        // ===================================
+        // NORMALIZE EMAIL
+        // ===================================
 
-            return res.status(400).json({
+        const normalizedEmail =
+            email
+                .trim()
+                .toLowerCase();
 
-                message:
-                    "Password must contain at least 6 characters"
-
-            });
-
-        }
-
+        // ===================================
         // VALIDATE EMAIL FORMAT
+        // ===================================
+
         const emailRegex =
             /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-        if (!emailRegex.test(email)) {
+        if (
+            !emailRegex.test(
+                normalizedEmail
+            )
+        ) {
 
             return res.status(400).json({
 
@@ -59,12 +69,198 @@ export const registerUser = async (req, res) => {
 
         }
 
+        // ===================================
+        // VALIDATE EMAIL TOKEN
+        // ===================================
+
+        let decodedToken;
+
+        try {
+
+            decodedToken =
+                jwt.verify(
+                    verificationToken,
+                    process.env.JWT_SECRET
+                );
+
+        } catch (tokenError) {
+
+            return res.status(400).json({
+
+                message:
+                    "Invalid or expired email verification token"
+
+            });
+
+        }
+
+        // ===================================
+        // VALIDATE TOKEN PURPOSE
+        // ===================================
+
+        if (
+            decodedToken.purpose !==
+            "EMAIL_VERIFICATION"
+        ) {
+
+            return res.status(400).json({
+
+                message:
+                    "Invalid email verification token"
+
+            });
+
+        }
+
+        // ===================================
+        // VALIDATE TOKEN EMAIL
+        // ===================================
+
+        if (
+            decodedToken.email !==
+            normalizedEmail
+        ) {
+
+            return res.status(400).json({
+
+                message:
+                    "Verification token does not match the email"
+
+            });
+
+        }
+
+        // ===================================
+        // VALIDATE NAME
+        // ===================================
+
+        if (
+            name.trim().length < 2
+        ) {
+
+            return res.status(400).json({
+
+                message:
+                    "Name must contain at least 2 characters"
+
+            });
+
+        }
+
+        // ===================================
+        // VALIDATE LAST NAME
+        // ===================================
+
+        if (
+            lastName.trim().length < 2
+        ) {
+
+            return res.status(400).json({
+
+                message:
+                    "Last name must contain at least 2 characters"
+
+            });
+
+        }
+
+        // ===================================
+        // VALIDATE PASSWORD LENGTH
+        // ===================================
+
+        if (
+            password.length < 6
+        ) {
+
+            return res.status(400).json({
+
+                message:
+                    "Password must contain at least 6 characters"
+
+            });
+
+        }
+
+        // ===================================
+        // VALIDATE PASSWORD NUMBER
+        // ===================================
+
+        if (
+            !/[0-9]/.test(password)
+        ) {
+
+            return res.status(400).json({
+
+                message:
+                    "Password must contain at least one number"
+
+            });
+
+        }
+
+        // ===================================
+        // VALIDATE PASSWORD UPPERCASE
+        // ===================================
+
+        if (
+            !/[A-Z]/.test(password)
+        ) {
+
+            return res.status(400).json({
+
+                message:
+                    "Password must contain at least one uppercase letter"
+
+            });
+
+        }
+
+        // ===================================
+        // VALIDATE PASSWORD LOWERCASE
+        // ===================================
+
+        if (
+            !/[a-z]/.test(password)
+        ) {
+
+            return res.status(400).json({
+
+                message:
+                    "Password must contain at least one lowercase letter"
+
+            });
+
+        }
+
+        // ===================================
+        // VALIDATE PASSWORD SPECIAL CHARACTER
+        // ===================================
+
+        if (
+            !/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/
+                .test(password)
+        ) {
+
+            return res.status(400).json({
+
+                message:
+                    "Password must contain at least one special character"
+
+            });
+
+        }
+
+        // ===================================
         // CHECK IF EMAIL ALREADY EXISTS
-        const existingUser = await User.findOne({
+        // ===================================
 
-            email: email.toLowerCase()
+        const existingUser =
+            await User.findOne({
 
-        });
+                email:
+                    normalizedEmail
+
+            });
 
         if (existingUser) {
 
@@ -77,64 +273,96 @@ export const registerUser = async (req, res) => {
 
         }
 
+        // ===================================
         // CREATE USER
-        const newUser = new User({
+        // ===================================
 
-            name: name.trim(),
+        const newUser =
+            new User({
 
-            lastName: lastName.trim(),
+                name:
+                    name.trim(),
 
-            email: email.toLowerCase().trim(),
+                lastName:
+                    lastName.trim(),
 
-            password,
+                email:
+                    normalizedEmail,
 
-            phone: phone
-                ? phone.trim()
-                : "",
+                password,
 
-            role: "USER",
+                phone:
+                    phone
+                        ? phone.trim()
+                        : "",
 
-            points: 0,
+                role:
+                    "USER",
 
-            profileImage: "",
+                points:
+                    0,
 
-            isActive: true
+                profileImage:
+                    "",
 
-        });
+                isActive:
+                    true
 
+            });
+
+        // ===================================
         // SAVE USER
-        const user = await newUser.save();
+        // ===================================
 
+        const user =
+            await newUser.save();
+
+        // ===================================
         // USER RESPONSE
+        // ===================================
+
         const userResponse = {
 
-            id: user._id,
+            id:
+                user._id,
 
-            name: user.name,
+            name:
+                user.name,
 
-            lastName: user.lastName,
+            lastName:
+                user.lastName,
 
-            email: user.email,
+            email:
+                user.email,
 
-            role: user.role,
+            role:
+                user.role,
 
-            phone: user.phone,
+            phone:
+                user.phone,
 
-            points: user.points,
+            points:
+                user.points,
 
-            profileImage: user.profileImage,
+            profileImage:
+                user.profileImage,
 
-            isActive: user.isActive
+            isActive:
+                user.isActive
 
         };
 
+        // ===================================
         // RESPONSE
+        // ===================================
+
         return res.status(201).json({
 
             message:
                 "User registered successfully",
 
-            user: userResponse
+            user:
+                userResponse
 
         });
 
@@ -145,12 +373,30 @@ export const registerUser = async (req, res) => {
             error
         );
 
+        // ===================================
+        // DUPLICATE EMAIL
+        // ===================================
+
+        if (
+            error.code === 11000
+        ) {
+
+            return res.status(409).json({
+
+                message:
+                    "Email is already registered"
+
+            });
+
+        }
+
         return res.status(500).json({
 
             message:
                 "Error registering user",
 
-            error: error.message
+            error:
+                error.message
 
         });
 
