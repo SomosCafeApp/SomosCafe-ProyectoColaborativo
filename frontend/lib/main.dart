@@ -3,8 +3,8 @@ import 'package:provider/provider.dart';
 
 // Módulos y páginas
 import 'core/theme/app_theme.dart';
-import 'presentation/pages/welcome_page.dart';
 import 'presentation/pages/main_navigation_screen.dart';
+import 'presentation/pages/welcome_page.dart';
 
 // Providers
 import 'presentation/state/cart_provider.dart';
@@ -35,6 +35,14 @@ class MyApp extends StatelessWidget {
       title: 'SOMOS CafeApp',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
+      
+      // Si quieres que siempre entre directo a la pantalla con Navbar:
+      home: const MainNavigationScreen(),
+
+      /* 
+      // NOTA: Si prefieres validar la sesión desde el inicio,
+      // borra la línea de arriba y descomenta este bloque:
+      
       home: Consumer<AuthProvider>(
         builder: (context, auth, child) {
           if (auth.isLoggedIn) {
@@ -43,7 +51,7 @@ class MyApp extends StatelessWidget {
 
           return WelcomePage(
             onOrderNow: () {
-              Navigator.push(
+              Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
                   builder: (_) => const MainNavigationScreen(),
@@ -53,6 +61,7 @@ class MyApp extends StatelessWidget {
           );
         },
       ),
+      */
     );
   }
 }

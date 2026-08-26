@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'cart_page.dart';
+import 'package:provider/provider.dart';
+import '../state/auth_provider.dart';
 import 'cart_tab.dart';
 import 'home_page.dart';
+import 'login_page.dart';
 import 'profile_page.dart';
 import 'search_page.dart';
 import 'welcome_page.dart';
@@ -35,67 +37,80 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Definimos las páginas dentro del build para pasar _changeTab dinámicamente
+    final authProvider = context.watch<AuthProvider>();
+
+    // Exactamente 5 elementos en match con _navItems (índices 0 al 4)
     final List<Widget> pages = [
       WelcomePage(onOrderNow: () => _changeTab(1)),
       const HomePage(),
       const SearchPage(),
       CartTab(onExploreMenu: () => _changeTab(1)),
-      const ProfilePage(),
+      // Si hay sesión muestra ProfilePage, de lo contrario muestra LoginPage
+      authProvider.isLoggedIn
+          ? const ProfilePage()
+          : LoginPage(
+              onRegisterTap: () {
+                _changeTab(4); // Redirige a la pestaña de perfil/login
+              },
+            ),
     ];
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       body: IndexedStack(
         index: _currentIndex,
         children: pages,
       ),
-      bottomNavigationBar: Container(
-        height: 75,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(
-            top: BorderSide(color: Color(0xFFEEEEEE), width: 1),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Container(
+          height: 65,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            border: Border(
+              top: BorderSide(color: Color(0xFFEEEEEE), width: 1),
+            ),
           ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: List.generate(_navItems.length, (index) {
-            final isSelected = _currentIndex == index;
-            final item = _navItems[index];
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: List.generate(_navItems.length, (index) {
+              final isSelected = _currentIndex == index;
+              final item = _navItems[index];
 
-            return GestureDetector(
-              onTap: () => _changeTab(index),
-              behavior: HitTestBehavior.opaque,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    width: 56,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: isSelected ? activeBrown : Colors.transparent,
-                      borderRadius: BorderRadius.circular(16),
+              return GestureDetector(
+                onTap: () => _changeTab(index),
+                behavior: HitTestBehavior.opaque,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: 56,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: isSelected ? activeBrown : Colors.transparent,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Icon(
+                        isSelected ? item['activeIcon'] : item['icon'],
+                        color: isSelected ? Colors.white : inactiveColor,
+                        size: 22,
+                      ),
                     ),
-                    child: Icon(
-                      isSelected ? item['activeIcon'] : item['icon'],
-                      color: isSelected ? Colors.white : inactiveColor,
-                      size: 22,
+                    const SizedBox(height: 2),
+                    Text(
+                      item['label'],
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                        color: isSelected ? activeBrown : inactiveColor,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    item['label'],
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                      color: isSelected ? activeBrown : inactiveColor,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }),
+                  ],
+                ),
+              );
+            }),
+          ),
         ),
       ),
     );
