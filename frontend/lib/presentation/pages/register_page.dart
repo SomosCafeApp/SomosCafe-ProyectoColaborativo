@@ -2,23 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../state/auth_provider.dart'; // Ajusta la ruta según tu estructura
 
-class LoginPage extends StatefulWidget {
-  final VoidCallback? onRegisterTap;
+class RegisterPage extends StatefulWidget {
+  final VoidCallback? onLoginTap;
 
-  const LoginPage({
+  const RegisterPage({
     super.key,
-    this.onRegisterTap,
+    this.onLoginTap,
   });
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<RegisterPage> createState() => _RegisterPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _RegisterPageState extends State<RegisterPage> {
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _rememberMe = false;
+  final _confirmPasswordController = TextEditingController();
+  
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
   static const primaryBrown = Color(0xFF9E754B);
   static const backgroundColor = Color(0xFFFAF7F2);
@@ -26,8 +29,10 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -72,7 +77,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'Inicia sesión para disfrutar de tu café favorito',
+                          'Únete a nuestra comunidad de amantes del café',
                           style: TextStyle(
                             fontSize: 13,
                             color: Colors.white.withOpacity(0.9),
@@ -123,6 +128,32 @@ class _LoginPageState extends State<LoginPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
+                            'Nombre completo',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF555555),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _nameController,
+                            keyboardType: TextInputType.name,
+                            decoration: InputDecoration(
+                              hintText: 'Juan Pérez',
+                              hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+                              prefixIcon: const Icon(Icons.person_outline, color: primaryBrown, size: 20),
+                              filled: true,
+                              fillColor: inputBgColor,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: BorderSide.none,
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
                             'Correo electrónico',
                             style: TextStyle(
                               fontSize: 13,
@@ -147,7 +178,7 @@ class _LoginPageState extends State<LoginPage> {
                               contentPadding: const EdgeInsets.symmetric(vertical: 14),
                             ),
                           ),
-                          const SizedBox(height: 18),
+                          const SizedBox(height: 16),
                           const Text(
                             'Contraseña',
                             style: TextStyle(
@@ -185,47 +216,43 @@ class _LoginPageState extends State<LoginPage> {
                               contentPadding: const EdgeInsets.symmetric(vertical: 14),
                             ),
                           ),
-                          const SizedBox(height: 12),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: Checkbox(
-                                      value: _rememberMe,
-                                      activeColor: primaryBrown,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      onChanged: (value) {
-                                        setState(() {
-                                          _rememberMe = value ?? false;
-                                        });
-                                      },
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  const Text(
-                                    'Recordarme',
-                                    style: TextStyle(fontSize: 13, color: Color(0xFF666666)),
-                                  ),
-                                ],
-                              ),
-                              GestureDetector(
-                                onTap: () {},
-                                child: const Text(
-                                  '¿Olvidaste tu contraseña?',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: primaryBrown,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Confirmar contraseña',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF555555),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _confirmPasswordController,
+                            obscureText: _obscureConfirmPassword,
+                            decoration: InputDecoration(
+                              hintText: '••••••••',
+                              hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+                              prefixIcon: const Icon(Icons.lock_outline, color: primaryBrown, size: 20),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _obscureConfirmPassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                                  color: Colors.grey.shade600,
+                                  size: 20,
                                 ),
+                                onPressed: () {
+                                  setState(() {
+                                    _obscureConfirmPassword = !_obscureConfirmPassword;
+                                  });
+                                },
                               ),
-                            ],
+                              filled: true,
+                              fillColor: inputBgColor,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: BorderSide.none,
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                            ),
                           ),
                           const SizedBox(height: 24),
                           SizedBox(
@@ -233,16 +260,23 @@ class _LoginPageState extends State<LoginPage> {
                             height: 50,
                             child: ElevatedButton(
                               onPressed: () {
+                                final name = _nameController.text.trim();
                                 final email = _emailController.text.trim();
                                 final password = _passwordController.text.trim();
+                                final confirmPass = _confirmPasswordController.text.trim();
 
-                                if (email.isNotEmpty && password.length >= 6) {
-                                  context.read<AuthProvider>().login(email, password);
+                                if (password != confirmPass) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Las contraseñas no coinciden')),
+                                  );
+                                  return;
+                                }
+
+                                if (name.isNotEmpty && email.isNotEmpty && password.length >= 6) {
+                                  context.read<AuthProvider>().register(name, email, password);
                                 } else {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Ingresa un correo y contraseña (min 6 caracteres)'),
-                                    ),
+                                    const SnackBar(content: Text('Completa todos los campos correctamente (pass min 6 caracteres)')),
                                   );
                                 }
                               },
@@ -256,10 +290,10 @@ class _LoginPageState extends State<LoginPage> {
                               child: const Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.login, color: Colors.white, size: 18),
+                                  Icon(Icons.person_add_outlined, color: Colors.white, size: 18),
                                   SizedBox(width: 8),
                                   Text(
-                                    'Iniciar Sesión',
+                                    'Crear cuenta',
                                     style: TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.bold,
@@ -324,13 +358,13 @@ class _LoginPageState extends State<LoginPage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          '¿No tienes una cuenta? ',
+                          '¿Ya tienes una cuenta? ',
                           style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
                         ),
                         GestureDetector(
-                          onTap: widget.onRegisterTap,
+                          onTap: widget.onLoginTap,
                           child: const Text(
-                            'Regístrate aquí',
+                            'Inicia sesión aquí',
                             style: TextStyle(
                               color: primaryBrown,
                               fontWeight: FontWeight.bold,

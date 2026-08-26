@@ -119,7 +119,7 @@ class FavoritesPage extends StatelessWidget {
                               elevation: 2,
                             ),
                             onPressed: () {
-                              Navigator.pop(context); // Regresa o redirige al tab del menú
+                              Navigator.pop(context);
                             },
                             icon: const Icon(Icons.shopping_cart_outlined, color: Colors.white, size: 20),
                             label: const Text(
@@ -148,10 +148,6 @@ class FavoritesPage extends StatelessWidget {
                       final product = favorites[index];
                       return ProductCard(
                         product: product,
-                        isFavorite: true,
-                        onFavorite: () {
-                          favoritesProvider.toggleFavorite(product);
-                        },
                         onAddToCart: () {
                           cartProvider.addToCart(product);
                           ScaffoldMessenger.of(context).showSnackBar(

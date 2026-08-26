@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../state/auth_provider.dart';
+import '../state/favorites_provider.dart';
 import 'addresses_page.dart';
 import 'favorites_page.dart';
 import 'payment_methods_page.dart';
@@ -31,6 +32,7 @@ class ProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
+    final favoritesCount = context.watch<FavoritesProvider>().favorites.length;
 
     const primaryBrown = Color(0xFFA2784F);
     const darkBrown = Color(0xFF634832);
@@ -188,7 +190,9 @@ class ProfilePage extends StatelessWidget {
                     iconBgColor: const Color(0xFFFFF8E1),
                     iconColor: const Color(0xFFE53935),
                     title: 'Favoritos',
-                    subtitle: '0 productos guardados',
+                    subtitle: favoritesCount == 0
+                        ? '0 productos guardados'
+                        : '$favoritesCount producto${favoritesCount == 1 ? '' : 's'} guardado${favoritesCount == 1 ? '' : 's'}',
                     onTap: () {
                       Navigator.push(
                         context,

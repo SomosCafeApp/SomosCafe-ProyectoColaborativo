@@ -15,11 +15,11 @@ class ViewsBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFFFAF7F2).withOpacity(0.92),
         borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: Colors.black10,
+            color: Colors.black.withOpacity(0.1),
             blurRadius: 4,
-            offset: Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),

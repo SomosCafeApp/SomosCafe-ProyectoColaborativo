@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../components/product_card.dart';
 import '../../data/models/product.dart';
 import '../state/cart_provider.dart';
+import '../state/favorites_provider.dart';
 
 class ProductDetailPage extends StatefulWidget {
   final Product product;
@@ -18,31 +19,20 @@ class ProductDetailPage extends StatefulWidget {
 
 class _ProductDetailPageState extends State<ProductDetailPage> {
   int _quantity = 1;
-  int _currentImageIndex = 0;
   String _selectedSize = 'Mediano';
   String _selectedType = 'Caliente';
   String _selectedMilk = 'Entera';
   String _selectedSugar = 'Normal';
   int _extraShots = 0;
   final Set<String> _selectedToppings = {};
-  bool _isFavorite = false;
-
-  final List<String> _images = [
-    'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?q=80&w=600&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1541167760496-1628856ab772?q=80&w=600&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?q=80&w=600&auto=format&fit=crop',
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _isFavorite = widget.product.isFavorite;
-  }
 
   @override
   Widget build(BuildContext context) {
     const primaryBrown = Color(0xFF8C6239);
     const backgroundColor = Color(0xFFFAF7F2);
+
+    final favoritesProvider = context.watch<FavoritesProvider>();
+    final isFavorite = favoritesProvider.isFavorite(widget.product);
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -71,9 +61,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   ),
                   GestureDetector(
                     onTap: () {
-                      setState(() {
-                        _isFavorite = !_isFavorite;
-                      });
+                      context.read<FavoritesProvider>().toggleFavorite(widget.product);
                     },
                     child: Container(
                       width: 40,
@@ -90,8 +78,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         ],
                       ),
                       child: Icon(
-                        _isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                        color: _isFavorite ? const Color(0xFFE53935) : Colors.black54,
+                        isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                        color: isFavorite ? const Color(0xFFE53935) : Colors.black54,
                         size: 20,
                       ),
                     ),
@@ -372,7 +360,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                 name: 'Cappuccino',
                                 description: 'Espresso con leche y espuma abundante',
                                 price: 12000,
-                                imageUrl: 'https://images.unsplash.com/photo-1534778101976-62847782c213?q=80&w=400&auto=format&fit=crop',
+                                imageUrl: '',
                               ),
                               onAddToCart: () {},
                             ),
@@ -386,7 +374,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                 name: 'Flat White',
                                 description: 'Café suave con microespuma artesanal',
                                 price: 13000,
-                                imageUrl: 'https://images.unsplash.com/photo-1577968897966-3d4325b36b61?q=80&w=400&auto=format&fit=crop',
+                                imageUrl: '',
                               ),
                               onAddToCart: () {},
                             ),
@@ -451,91 +439,37 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   // --- WIDGETS AUXILIARES ---
 
   Widget _buildImageCarousel() {
-    return Column(
+    return Stack(
       children: [
-        Stack(
-          children: [
-            Container(
-              height: 280,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(24),
-                child: Image.network(
-                  _images[_currentImageIndex],
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    color: const Color(0xFFF3EBE1),
-                    child: const Icon(Icons.coffee, size: 60, color: Color(0xFF8C6239)),
-                  ),
-                ),
-              ),
+        Container(
+          height: 280,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: const Color(0xFFF3EBE1),
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: const Center(
+            child: Icon(
+              Icons.coffee_rounded,
+              size: 64,
+              color: Color(0xFF8C6239),
             ),
-            Positioned(
-              top: 12,
-              left: 12,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFF3B30),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Text(
-                  '20% OFF',
-                  style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: 12,
-              left: 0,
-              right: 0,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(_images.length, (index) {
-                  final isSelected = _currentImageIndex == index;
-                  return AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    margin: const EdgeInsets.symmetric(horizontal: 3),
-                    width: isSelected ? 16 : 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: isSelected ? Colors.white : Colors.white.withOpacity(0.5),
-                      borderRadius: BorderRadius.circular(3),
-                    ),
-                  );
-                }),
-              ),
-            )
-          ],
+          ),
         ),
-        const SizedBox(height: 12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(_images.length, (index) {
-            final isSelected = _currentImageIndex == index;
-            return GestureDetector(
-              onTap: () => setState(() => _currentImageIndex = index),
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                width: 55,
-                height: 55,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isSelected ? const Color(0xFF8C6239) : Colors.transparent,
-                    width: 2,
-                  ),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: Image.network(_images[index], fit: BoxFit.cover),
-                ),
-              ),
-            );
-          }),
+        Positioned(
+          top: 12,
+          left: 12,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFF3B30),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Text(
+              '20% OFF',
+              style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+            ),
+          ),
         ),
       ],
     );

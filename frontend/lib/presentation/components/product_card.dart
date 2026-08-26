@@ -1,25 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../data/models/product.dart';
 import '../pages/product_detail_page.dart';
+import '../state/favorites_provider.dart';
 
 class ProductCard extends StatelessWidget {
   final Product product;
   final VoidCallback onAddToCart;
-  final VoidCallback? onFavorite;
-  final bool isFavorite;
 
   const ProductCard({
     super.key,
     required this.product,
     required this.onAddToCart,
-    this.onFavorite,
-    this.isFavorite = false,
   });
 
   @override
   Widget build(BuildContext context) {
     const primaryBrown = Color(0xFF8C6239);
     final bool hasImage = product.imageUrl.isNotEmpty;
+
+    // Escuchamos a FavoritesProvider para saber si este producto está marcado
+    final favoritesProvider = Provider.of<FavoritesProvider>(context);
+    final isFav = favoritesProvider.isFavorite(product);
 
     return Container(
       decoration: BoxDecoration(
@@ -124,7 +126,10 @@ class ProductCard extends StatelessWidget {
                       top: 8,
                       right: 8,
                       child: GestureDetector(
-                        onTap: onFavorite,
+                        onTap: () {
+                          // Conmuta el estado en el Provider
+                          favoritesProvider.toggleFavorite(product);
+                        },
                         child: Container(
                           width: 32,
                           height: 32,
@@ -140,10 +145,10 @@ class ProductCard extends StatelessWidget {
                             ],
                           ),
                           child: Icon(
-                            isFavorite
+                            isFav
                                 ? Icons.favorite_rounded
                                 : Icons.favorite_border_rounded,
-                            color: isFavorite
+                            color: isFav
                                 ? const Color(0xFFE53935)
                                 : const Color(0xFF6C757D),
                             size: 18,
@@ -240,9 +245,9 @@ class ProductCard extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              '\$${product.price.toStringAsFixed(0)}',
+                              '\$${product.price.toStringAsFixed(0)} COP',
                               style: const TextStyle(
-                                fontSize: 12,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w900,
                                 color: Colors.black87,
                               ),
@@ -252,15 +257,31 @@ class ProductCard extends StatelessWidget {
                         GestureDetector(
                           onTap: onAddToCart,
                           child: Container(
-                            padding: const EdgeInsets.all(6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
                               color: primaryBrown,
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: const Icon(
-                              Icons.add_rounded,
-                              color: Colors.white,
-                              size: 16,
+                            child: const Row(
+                              children: [
+                                Icon(
+                                  Icons.add_rounded,
+                                  color: Colors.white,
+                                  size: 14,
+                                ),
+                                SizedBox(width: 2),
+                                Text(
+                                  'Añadir',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
