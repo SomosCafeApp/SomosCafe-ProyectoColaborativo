@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'package:provider/provider.dart';
 import '../../data/models/product.dart';
 import '../components/product_card.dart';
@@ -90,18 +89,26 @@ class _WelcomePageState extends State<WelcomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- SECCIÓN HERO CON FONDO Y ESTADÍSTICAS ---
+            // --- SECCIÓN HERO CON IMAGEN DE FONDO, GRADIENTE Y ESTADÍSTICAS ---
             Container(
               width: double.infinity,
               padding: const EdgeInsets.only(top: 60, bottom: 36, left: 20, right: 20),
               decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: const AssetImage('assets/images/hero_home_image.jpeg'),
+                  fit: BoxFit.cover,
+                  colorFilter: ColorFilter.mode(
+                    Colors.black.withOpacity(0.45), // Tinte oscuro para legibilidad del texto
+                    BlendMode.darken,
+                  ),
+                ),
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    darkBrown,
-                    primaryBrown,
-                    darkBrown.withOpacity(0.9),
+                    darkBrown.withOpacity(0.7),
+                    primaryBrown.withOpacity(0.6),
+                    darkBrown.withOpacity(0.85),
                   ],
                 ),
               ),
