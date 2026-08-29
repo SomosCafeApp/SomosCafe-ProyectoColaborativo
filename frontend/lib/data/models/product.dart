@@ -4,7 +4,8 @@ class Product {
   final String description;
   final double price;
   final String imageUrl;
-  final bool isFavorite; // <-- 1. Agregamos este campo
+  final bool isFavorite;
+  final String? categoryId; // 👈 Campo necesario para el filtrado por categorías
 
   Product({
     required this.id,
@@ -12,10 +13,11 @@ class Product {
     required this.description,
     required this.price,
     required this.imageUrl,
-    this.isFavorite = false, // <-- 2. Lo añadimos al constructor (false por defecto)
+    this.isFavorite = false,
+    this.categoryId,
   });
 
-  // Método opcional para facilitar la copia y actualización de estado
+  // Método copyWith actualizado con todas las propiedades
   Product copyWith({
     String? id,
     String? name,
@@ -23,6 +25,7 @@ class Product {
     double? price,
     String? imageUrl,
     bool? isFavorite,
+    String? categoryId,
   }) {
     return Product(
       id: id ?? this.id,
@@ -31,6 +34,7 @@ class Product {
       price: price ?? this.price,
       imageUrl: imageUrl ?? this.imageUrl,
       isFavorite: isFavorite ?? this.isFavorite,
+      categoryId: categoryId ?? this.categoryId,
     );
   }
 }

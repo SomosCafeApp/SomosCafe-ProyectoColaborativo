@@ -7,27 +7,11 @@ import 'favorites_page.dart';
 import 'payment_methods_page.dart';
 import 'notifications_page.dart';
 import 'orders_page.dart';
+import 'rewards_page.dart';
+import 'settings_page.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
-
-  // Diálogo genérico para opciones en desarrollo o con información
-  void _showFeatureDialog(BuildContext context, String title, String message) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Entendido', style: TextStyle(color: Color(0xFFA2784F))),
-          ),
-        ],
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,7 +42,7 @@ class ProfilePage extends StatelessWidget {
                   end: Alignment.bottomCenter,
                   colors: [
                     darkBrown,
-                    primaryBrown.withOpacity(0.85),
+                    primaryBrown.withAlpha(217),
                   ],
                 ),
               ),
@@ -68,9 +52,9 @@ class ProfilePage extends StatelessWidget {
                     width: 72,
                     height: 72,
                     decoration: BoxDecoration(
-                      color: darkBrown.withOpacity(0.9),
+                      color: darkBrown.withAlpha(230),
                       borderRadius: BorderRadius.circular(22),
-                      border: Border.all(color: Colors.white.withOpacity(0.3), width: 2),
+                      border: Border.all(color: Colors.white.withAlpha(77), width: 2),
                     ),
                     child: Center(
                       child: Text(
@@ -99,13 +83,13 @@ class ProfilePage extends StatelessWidget {
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            Icon(Icons.email_outlined, color: Colors.white.withOpacity(0.8), size: 14),
+                            Icon(Icons.email_outlined, color: Colors.white.withAlpha(204), size: 14),
                             const SizedBox(width: 4),
                             Text(
                               'jh@gmail.com',
                               style: TextStyle(
                                 fontSize: 13,
-                                color: Colors.white.withOpacity(0.9),
+                                color: Colors.white.withAlpha(230),
                               ),
                             ),
                           ],
@@ -114,9 +98,9 @@ class ProfilePage extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withAlpha(51),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.white.withOpacity(0.4)),
+                            border: Border.all(color: Colors.white.withAlpha(102)),
                           ),
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
@@ -141,7 +125,7 @@ class ProfilePage extends StatelessWidget {
               ),
             ),
 
-            // --- 2. LISTA DE OPCIONES CON ACCIONES FUNCIONALES ---
+            // --- 2. LISTA DE OPCIONES ---
             Padding(
               padding: const EdgeInsets.all(20.0),
               child: Column(
@@ -206,11 +190,12 @@ class ProfilePage extends StatelessWidget {
                     iconColor: const Color(0xFFFFA000),
                     title: 'Recompensas',
                     subtitle: 'Promociones y descuentos',
-                    onTap: () => _showFeatureDialog(
-                      context,
-                      'Puntos de Recompensa',
-                      'Tienes 150 puntos acumulados. ¡Sigue comprando para canjear bebidas gratis!',
-                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const RewardsPage()),
+                      );
+                    },
                   ),
                   _buildProfileOptionCard(
                     icon: Icons.history_rounded,
@@ -231,11 +216,12 @@ class ProfilePage extends StatelessWidget {
                     iconColor: const Color(0xFF546E7A),
                     title: 'Configuración',
                     subtitle: 'Ajustes de la aplicación',
-                    onTap: () => _showFeatureDialog(
-                      context,
-                      'Configuración',
-                      'Versión 1.0.0 — Modos de app y preferencias del sistema.',
-                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const SettingsPage()),
+                      );
+                    },
                   ),
                   const SizedBox(height: 12),
                   _buildProfileOptionCard(
@@ -295,7 +281,7 @@ class ProfilePage extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withAlpha(8),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -328,12 +314,12 @@ class ProfilePage extends StatelessWidget {
             subtitle,
             style: TextStyle(
               fontSize: 12,
-              color: Colors.black.withOpacity(0.45),
+              color: Colors.black.withAlpha(115),
             ),
           ),
           trailing: Icon(
             Icons.chevron_right_rounded,
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withAlpha(77),
             size: 20,
           ),
         ),

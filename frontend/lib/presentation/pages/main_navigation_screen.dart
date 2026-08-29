@@ -18,9 +18,6 @@ class MainNavigationScreen extends StatefulWidget {
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
 
-  static const activeBrown = Color(0xFFA2784F);
-  static const inactiveColor = Color(0xFF757575);
-
   void _changeTab(int index) {
     setState(() {
       _currentIndex = index;
@@ -37,30 +34,30 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
-
-    // Definimos las páginas dentro del build para pasar _changeTab dinámicamente
-
     final authProvider = context.watch<AuthProvider>();
+    
+    // Obtenemos los temas y colores actuales dinámicamente
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
-    // Lista de páginas dentro del build para responder a cambios de estado y cambiar de pestaña
+    final activeColor = theme.colorScheme.primary;
+    final navBackgroundColor = theme.cardColor;
+    final borderColor = isDark ? const Color(0xFF2C1E18) : const Color(0xFFEEEEEE);
+    final inactiveColor = isDark ? Colors.white54 : const Color(0xFF757575);
 
+    // Exactamente 5 elementos correspondientes a los botones de navegación
     final List<Widget> pages = [
       WelcomePage(onOrderNow: () => _changeTab(1)),
       const HomePage(),
       const SearchPage(),
       CartTab(onExploreMenu: () => _changeTab(1)),
-
-      const ProfilePage(),
-
-      // Si hay sesión iniciada muestra ProfilePage, si no, muestra LoginPage
       authProvider.isLoggedIn
           ? const ProfilePage()
           : LoginPage(
               onRegisterTap: () {
-                _changeTab(3); // Redirige a la pestaña de autenticación
+                _changeTab(4); // Redirige a la pestaña de perfil
               },
             ),
-
     ];
 
     return Scaffold(
@@ -73,14 +70,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         top: false,
         child: Container(
           height: 65,
-          decoration: const BoxDecoration(
-            color: Colors.white,
+          decoration: BoxDecoration(
+            color: navBackgroundColor, // 👈 Fondo dinámico
             border: Border(
-              top: BorderSide(color: Color(0xFFEEEEEE), width: 1),
+              top: BorderSide(color: borderColor, width: 1), // 👈 Borde dinámico
             ),
           ),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            mainAxisAlignment: MainAxisAlignment.spaceAround, // 👈 Corregido
             children: List.generate(_navItems.length, (index) {
               final isSelected = _currentIndex == index;
               final item = _navItems[index];
@@ -89,19 +86,19 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 onTap: () => _changeTab(index),
                 behavior: HitTestBehavior.opaque,
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center, // 👈 Corregido
                   children: [
                     AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
                       width: 56,
                       height: 32,
                       decoration: BoxDecoration(
-                        color: isSelected ? activeBrown : Colors.transparent,
+                        color: isSelected ? activeColor : Colors.transparent, // 👈 Píldora activa dinámica
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Icon(
                         isSelected ? item['activeIcon'] : item['icon'],
-                        color: isSelected ? Colors.white : inactiveColor,
+                        color: isSelected ? Colors.white : inactiveColor, // 👈 Icono dinámico
                         size: 22,
                       ),
                     ),
@@ -111,7 +108,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                        color: isSelected ? activeBrown : inactiveColor,
+                        color: isSelected ? activeColor : inactiveColor, // 👈 Texto dinámico
                       ),
                     ),
                   ],

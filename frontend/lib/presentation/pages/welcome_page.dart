@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'package:provider/provider.dart';
 import '../../data/models/product.dart';
 import '../components/product_card.dart';
@@ -19,6 +18,7 @@ class _WelcomePageState extends State<WelcomePage> {
 
   final List<Map<String, dynamic>> _categories = [
     {
+      'id': 'hot_coffee',
       'label': 'Cafés\nCalientes',
       'icon': Icons.coffee_rounded,
       'bgColor': const Color(0xFFFEF3D6),
@@ -26,6 +26,7 @@ class _WelcomePageState extends State<WelcomePage> {
       'iconColor': const Color(0xFF8C5C2B),
     },
     {
+      'id': 'cold_drinks',
       'label': 'Bebidas\nFrías',
       'icon': Icons.ac_unit_rounded,
       'bgColor': const Color(0xFFE1F5FE),
@@ -33,6 +34,7 @@ class _WelcomePageState extends State<WelcomePage> {
       'iconColor': const Color(0xFF0288D1),
     },
     {
+      'id': 'desserts',
       'label': 'Postres',
       'icon': Icons.cake_rounded,
       'bgColor': const Color(0xFFFCE4EC),
@@ -61,10 +63,11 @@ class _WelcomePageState extends State<WelcomePage> {
   final List<Product> _fullMenuProducts = [
     Product(
       id: '3',
-      name: 'Espresso',
-      description: 'Intenso y aromático, la esencia pura del café',
-      price: 8000,
+      name: 'Espresso Doble',
+      description: 'Doble carga de intenso café recién extraído',
+      price: 9500,
       imageUrl: '',
+      categoryId: 'hot_coffee',
     ),
     Product(
       id: '4',
@@ -72,6 +75,39 @@ class _WelcomePageState extends State<WelcomePage> {
       description: 'Espresso coronado con espuma de leche sedosa',
       price: 12000,
       imageUrl: '',
+      categoryId: 'hot_coffee',
+    ),
+    Product(
+      id: '5',
+      name: 'Cold Brew',
+      description: 'Café infusionado en frío durante 12 horas',
+      price: 11000,
+      imageUrl: '',
+      categoryId: 'cold_drinks',
+    ),
+    Product(
+      id: '6',
+      name: 'Frappé de Caramelo',
+      description: 'Bebida helada con crema batida y caramelo',
+      price: 14000,
+      imageUrl: '',
+      categoryId: 'cold_drinks',
+    ),
+    Product(
+      id: '7',
+      name: 'Cheesecake de Frutos Rojos',
+      description: 'Suave tarta de queso con mermelada artesanal',
+      price: 13000,
+      imageUrl: '',
+      categoryId: 'desserts',
+    ),
+    Product(
+      id: '8',
+      name: 'Torta de Chocolate',
+      description: 'Bizcocho húmedo de cacao con cobertura fina',
+      price: 12500,
+      imageUrl: '',
+      categoryId: 'desserts',
     ),
   ];
 
@@ -83,6 +119,12 @@ class _WelcomePageState extends State<WelcomePage> {
 
     final cartProvider = Provider.of<CartProvider>(context, listen: false);
 
+    // Filtrar productos según la categoría seleccionada
+    final selectedCategoryId = _categories[_selectedCategoryIndex]['id'];
+    final filteredProducts = _fullMenuProducts
+        .where((p) => p.categoryId == selectedCategoryId)
+        .toList();
+
     return Scaffold(
       backgroundColor: scaffoldBgColor,
       body: SingleChildScrollView(
@@ -90,24 +132,31 @@ class _WelcomePageState extends State<WelcomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- SECCIÓN HERO CON FONDO Y ESTADÍSTICAS ---
+            // --- SECCIÓN HERO CON IMAGEN DE FONDO, GRADIENTE Y ESTADÍSTICAS ---
             Container(
               width: double.infinity,
               padding: const EdgeInsets.only(top: 60, bottom: 36, left: 20, right: 20),
               decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: const AssetImage('assets/images/hero_home_image.jpeg'),
+                  fit: BoxFit.cover,
+                  colorFilter: ColorFilter.mode(
+                    Colors.black.withOpacity(0.45),
+                    BlendMode.darken,
+                  ),
+                ),
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    darkBrown,
-                    primaryBrown,
-                    darkBrown.withOpacity(0.9),
+                    darkBrown.withOpacity(0.7),
+                    primaryBrown.withOpacity(0.6),
+                    darkBrown.withOpacity(0.85),
                   ],
                 ),
               ),
               child: Column(
                 children: [
-                  // Badge Superior "Café Artesanal Premium"
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                     decoration: BoxDecoration(
@@ -129,7 +178,6 @@ class _WelcomePageState extends State<WelcomePage> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Icono Taza de Café
                   const Icon(
                     Icons.coffee_rounded,
                     size: 54,
@@ -137,7 +185,6 @@ class _WelcomePageState extends State<WelcomePage> {
                   ),
                   const SizedBox(height: 12),
 
-                  // Título Principal
                   const Text(
                     'SOMOS CafeApp',
                     style: TextStyle(
@@ -149,7 +196,6 @@ class _WelcomePageState extends State<WelcomePage> {
                   ),
                   const SizedBox(height: 8),
 
-                  // Estrellas de Calificación
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(
@@ -159,7 +205,6 @@ class _WelcomePageState extends State<WelcomePage> {
                   ),
                   const SizedBox(height: 12),
 
-                  // Descripción
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Text(
@@ -174,7 +219,6 @@ class _WelcomePageState extends State<WelcomePage> {
                   ),
                   const SizedBox(height: 32),
 
-                  // Métricas / Estadísticas
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
@@ -240,7 +284,6 @@ class _WelcomePageState extends State<WelcomePage> {
                         ),
                         const SizedBox(height: 14),
 
-                        // Título de la oferta
                         const Text(
                           '¡30% de Descuento!',
                           style: TextStyle(
@@ -251,7 +294,6 @@ class _WelcomePageState extends State<WelcomePage> {
                         ),
                         const SizedBox(height: 6),
 
-                        // Subtítulo
                         Text(
                           'En tu segunda compra del día.\nSolo por tiempo limitado.',
                           style: TextStyle(
@@ -262,7 +304,6 @@ class _WelcomePageState extends State<WelcomePage> {
                         ),
                         const SizedBox(height: 18),
 
-                        // Botón "Ordenar Ahora"
                         ElevatedButton(
                           onPressed: widget.onOrderNow,
                           style: ElevatedButton.styleFrom(
@@ -293,7 +334,6 @@ class _WelcomePageState extends State<WelcomePage> {
                     ),
                   ),
 
-                  // Insignia Circular (30% OFF)
                   Positioned(
                     top: 16,
                     right: 16,
@@ -566,7 +606,7 @@ class _WelcomePageState extends State<WelcomePage> {
 
             const SizedBox(height: 28),
 
-            // --- NUESTRO MENÚ COMPLETO ---
+            // --- NUESTRO MENÚ COMPLETO (FILTRADO DINÁMICO) ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
@@ -589,32 +629,44 @@ class _WelcomePageState extends State<WelcomePage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: _fullMenuProducts.length,
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 16,
-                      childAspectRatio: 0.68,
-                    ),
-                    itemBuilder: (context, index) {
-                      final product = _fullMenuProducts[index];
-                      return ProductCard(
-                        product: product,
-                        onAddToCart: () {
-                          cartProvider.addToCart(product);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('${product.name} añadido al carrito'),
-                              duration: const Duration(seconds: 2),
+                  
+                  // Renderizado condicional si no existen productos en la categoría
+                  filteredProducts.isEmpty
+                      ? const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 32),
+                          child: Center(
+                            child: Text(
+                              'No hay productos disponibles en esta categoría',
+                              style: TextStyle(color: Colors.grey, fontSize: 14),
                             ),
-                          );
-                        },
-                      );
-                    },
-                  ),
+                          ),
+                        )
+                      : GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: filteredProducts.length,
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 16,
+                            crossAxisSpacing: 16,
+                            childAspectRatio: 0.68,
+                          ),
+                          itemBuilder: (context, index) {
+                            final product = filteredProducts[index];
+                            return ProductCard(
+                              product: product,
+                              onAddToCart: () {
+                                cartProvider.addToCart(product);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('${product.name} añadido al carrito'),
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
                 ],
               ),
             ),
