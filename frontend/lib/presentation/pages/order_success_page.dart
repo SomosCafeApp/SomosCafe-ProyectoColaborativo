@@ -6,46 +6,79 @@ class OrderSuccessPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const primaryBrown = Color(0xFFA2784F);
+    const darkBrown = Color(0xFF634832);
+
     return Scaffold(
+      backgroundColor: const Color(0xFFFAF7F2),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
-                Icons.check_circle_outline,
-                size: 100,
-                color: Colors.green,
+              // Icono con contenedor decorativo
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFE8F5E9),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.check_circle_rounded,
+                  size: 80,
+                  color: Colors.green,
+                ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 28),
               const Text(
                 '¡Pedido Confirmado!',
-                style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
+                  color: darkBrown,
+                ),
               ),
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 'Tu café ya se está preparando con los mejores granos. Te notificaremos cuando vaya en camino.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: Colors.grey),
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Colors.black.withOpacity(0.6),
+                  height: 1.4,
+                ),
               ),
               const SizedBox(height: 40),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF4E342E),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryBrown,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                  onPressed: () {
+                    // Limpia todo el stack de pantallas y reconstruye la navegación desde la raíz
+                    Navigator.of(context).pushAndRemoveUntil(
+                      PageRouteBuilder(
+                        pageBuilder: (context, animation1, animation2) =>
+                            const MainNavigationScreen(),
+                        transitionDuration: Duration.zero,
+                        reverseTransitionDuration: Duration.zero,
+                      ),
+                      (route) => false,
+                    );
+                  },
+                  child: const Text(
+                    'Volver al Menú',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
                 ),
-                onPressed: () {
-                  // Volvemos al inicio reiniciando las pestañas
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
-                    (route) => false,
-                  );
-                },
-                child: const Text('Volver al Menú', style: TextStyle(fontSize: 16)),
               ),
             ],
           ),

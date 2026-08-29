@@ -3,8 +3,8 @@ import 'package:provider/provider.dart';
 
 // Módulos y páginas
 import 'core/theme/app_theme.dart';
-import 'presentation/pages/welcome_page.dart';
 import 'presentation/pages/main_navigation_screen.dart';
+import 'presentation/pages/welcome_page.dart';
 
 // Providers
 import 'presentation/state/cart_provider.dart';
@@ -35,24 +35,36 @@ class MyApp extends StatelessWidget {
       title: 'SOMOS CafeApp',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: Consumer<AuthProvider>(
-        builder: (context, auth, child) {
-          if (auth.isLoggedIn) {
-            return const MainNavigationScreen();
-          }
+      home: const RootDecider(),
+    );
+  }
+}
 
-          return WelcomePage(
-            onOrderNow: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const MainNavigationScreen(),
-                ),
-              );
-            },
-          );
-        },
-      ),
+class RootDecider extends StatefulWidget {
+  const RootDecider({super.key});
+
+  @override
+  State<RootDecider> createState() => _RootDeciderState();
+}
+
+class _RootDeciderState extends State<RootDecider> {
+  bool _guestAcceptedWelcome = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+
+    // Si el usuario inició sesión o ya presionó "Pedir ahora" en el WelcomePage
+    if (auth.isLoggedIn || _guestAcceptedWelcome) {
+      return const MainNavigationScreen();
+    }
+
+    return WelcomePage(
+      onOrderNow: () {
+        setState(() {
+          _guestAcceptedWelcome = true;
+        });
+      },
     );
   }
 }
