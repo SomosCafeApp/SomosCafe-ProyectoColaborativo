@@ -118,9 +118,21 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   @override
   Widget build(BuildContext context) {
-    const headerColor = Color(0xFF8C6239);
-    const backgroundColor = Color(0xFFFAF7F2);
-    const unreadDotColor = Color(0xFF8C6239);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final headerColor = theme.colorScheme.primary;
+    final backgroundColor = theme.scaffoldBackgroundColor;
+    final cardColor = theme.cardColor;
+    final textColor = theme.colorScheme.onSurface;
+    final subtitleColor = textColor.withOpacity(0.6);
+    final mutedColor = textColor.withOpacity(0.4);
+    final unreadDotColor = headerColor;
+    final unreadBadgeBg = isDark ? const Color(0xFF3D2E26) : const Color(0xFFEFEBE4);
+    final unreadBadgeText = isDark ? const Color(0xFFD7B89A) : const Color(0xFF6D4C41);
+    final unreadBorderColor = isDark ? const Color(0xFF6D4C41) : const Color(0xFFD7CCC8);
+    final infoCardBg = isDark ? const Color(0xFF17324A).withOpacity(0.5) : const Color(0xFFE1F5FE).withOpacity(0.6);
+    final infoIconBg = isDark ? const Color(0xFF1E4A6B) : const Color(0xFFBBDEFB);
+    final timeBoxBorder = isDark ? Colors.white24 : Colors.grey.shade300;
 
     int unreadCount = _recentActivity.where((n) => n.isUnread).length;
 
@@ -183,26 +195,26 @@ class _NotificationsPageState extends State<NotificationsPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         'Actividad Reciente',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                          color: textColor,
                         ),
                       ),
                       if (unreadCount > 0)
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFEFEBE4),
+                            color: unreadBadgeBg,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
                             '$unreadCount nuevas',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
-                              color: Color(0xFF6D4C41),
+                              color: unreadBadgeText,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -212,7 +224,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                   const SizedBox(height: 12),
 
                   // Lista de Notificaciones
-                  ..._recentActivity.map((item) => _buildNotificationCard(item, unreadDotColor)),
+                  ..._recentActivity.map((item) => _buildNotificationCard(item, unreadDotColor, cardColor, textColor, subtitleColor, mutedColor, unreadBorderColor)),
 
                   const SizedBox(height: 12),
 
@@ -220,7 +232,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE1F5FE).withOpacity(0.6),
+                      color: infoCardBg,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
@@ -229,13 +241,13 @@ class _NotificationsPageState extends State<NotificationsPage> {
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFBBDEFB),
+                            color: infoIconBg,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(Icons.notifications_none, color: Color(0xFF1976D2)),
                         ),
                         const SizedBox(width: 12),
-                        const Expanded(
+                        Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -244,13 +256,13 @@ class _NotificationsPageState extends State<NotificationsPage> {
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 15,
-                                  color: Colors.black87,
+                                  color: textColor,
                                 ),
                               ),
-                              SizedBox(height: 4),
+                              const SizedBox(height: 4),
                               Text(
                                 'Configura cómo quieres recibir actualizaciones sobre tus pedidos, ofertas especiales y más.',
-                                style: TextStyle(fontSize: 12, color: Colors.black54),
+                                style: TextStyle(fontSize: 12, color: subtitleColor),
                               ),
                             ],
                           ),
@@ -262,12 +274,12 @@ class _NotificationsPageState extends State<NotificationsPage> {
                   const SizedBox(height: 24),
 
                   // --- SECCIÓN CANALES DE NOTIFICACIÓN ---
-                  const Text(
+                  Text(
                     'Canales de Notificación',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: textColor,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -276,48 +288,60 @@ class _NotificationsPageState extends State<NotificationsPage> {
                     title: 'Notificaciones Push',
                     subtitle: 'Recibe alertas en tu dispositivo',
                     icon: Icons.smartphone_outlined,
-                    iconBg: const Color(0xFFF5F2EC),
+                    iconBg: isDark ? const Color(0xFF3D2E26) : const Color(0xFFF5F2EC),
                     iconColor: const Color(0xFF8C6239),
                     value: _pushNotifications,
                     onChanged: (val) => setState(() => _pushNotifications = val),
+                    cardColor: cardColor,
+                    textColor: textColor,
+                    subtitleColor: subtitleColor,
                   ),
                   _buildChannelTile(
                     title: 'Correo Electrónico',
                     subtitle: 'Recibe ofertas y actualizaciones por email',
                     icon: Icons.email_outlined,
-                    iconBg: const Color(0xFFE1F5FE),
+                    iconBg: isDark ? const Color(0xFF17324A) : const Color(0xFFE1F5FE),
                     iconColor: const Color(0xFF0288D1),
                     value: _emailNotifications,
                     onChanged: (val) => setState(() => _emailNotifications = val),
+                    cardColor: cardColor,
+                    textColor: textColor,
+                    subtitleColor: subtitleColor,
                   ),
                   _buildChannelTile(
                     title: 'SMS',
                     subtitle: 'Recibe confirmaciones por mensaje de texto',
                     icon: Icons.chat_bubble_outline_rounded,
-                    iconBg: const Color(0xFFFFEBEE),
+                    iconBg: isDark ? const Color(0xFF3A1F1F) : const Color(0xFFFFEBEE),
                     iconColor: const Color(0xFFE53935),
                     value: _smsNotifications,
                     onChanged: (val) => setState(() => _smsNotifications = val),
+                    cardColor: cardColor,
+                    textColor: textColor,
+                    subtitleColor: subtitleColor,
                   ),
                   _buildChannelTile(
                     title: 'Sonidos',
                     subtitle: 'Reproducir sonidos para notificaciones',
                     icon: Icons.volume_up_outlined,
-                    iconBg: const Color(0xFFFFF8E1),
+                    iconBg: isDark ? const Color(0xFF3D371C) : const Color(0xFFFFF8E1),
                     iconColor: const Color(0xFFFFA000),
                     value: _soundNotifications,
                     onChanged: (val) => setState(() => _soundNotifications = val),
+                    cardColor: cardColor,
+                    textColor: textColor,
+                    subtitleColor: subtitleColor,
                   ),
 
                   const SizedBox(height: 24),
 
                   // --- SECCIÓN PREFERENCIAS ADICIONALES ---
-                  const Text(
+                  Text(
                     'Preferencias Adicionales',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: textColor,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -325,24 +349,24 @@ class _NotificationsPageState extends State<NotificationsPage> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: cardColor,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Horario de Notificaciones',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 15,
-                            color: Colors.black87,
+                            color: textColor,
                           ),
                         ),
                         const SizedBox(height: 4),
-                        const Text(
+                        Text(
                           'Recibe notificaciones solo en este horario',
-                          style: TextStyle(fontSize: 12, color: Colors.black54),
+                          style: TextStyle(fontSize: 12, color: subtitleColor),
                         ),
                         const SizedBox(height: 16),
                         Row(
@@ -352,6 +376,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
                                 label: 'Desde',
                                 timeText: _formatTimeOfDay(_startTime),
                                 onTap: () => _selectTime(context, true),
+                                cardColor: cardColor,
+                                textColor: textColor,
+                                subtitleColor: subtitleColor,
+                                borderColor: timeBoxBorder,
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -360,6 +388,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
                                 label: 'Hasta',
                                 timeText: _formatTimeOfDay(_endTime),
                                 onTap: () => _selectTime(context, false),
+                                cardColor: cardColor,
+                                textColor: textColor,
+                                subtitleColor: subtitleColor,
+                                borderColor: timeBoxBorder,
                               ),
                             ),
                           ],
@@ -379,15 +411,15 @@ class _NotificationsPageState extends State<NotificationsPage> {
   }
 
   // Tarjeta individual de Notificación
-  Widget _buildNotificationCard(NotificationItem item, Color unreadDotColor) {
+  Widget _buildNotificationCard(NotificationItem item, Color unreadDotColor, Color cardColor, Color textColor, Color subtitleColor, Color mutedColor, Color unreadBorderColor) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(20),
         border: item.isUnread
-            ? Border.all(color: const Color(0xFFD7CCC8), width: 1.5)
+            ? Border.all(color: unreadBorderColor, width: 1.5)
             : null,
         boxShadow: [
           BoxShadow(
@@ -418,10 +450,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
                   children: [
                     Text(
                       item.title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
-                        color: Colors.black87,
+                        color: textColor,
                       ),
                     ),
                     if (item.isUnread)
@@ -438,12 +470,12 @@ class _NotificationsPageState extends State<NotificationsPage> {
                 const SizedBox(height: 4),
                 Text(
                   item.subtitle,
-                  style: const TextStyle(fontSize: 13, color: Colors.black54),
+                  style: TextStyle(fontSize: 13, color: subtitleColor),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   item.time,
-                  style: const TextStyle(fontSize: 11, color: Colors.black38),
+                  style: TextStyle(fontSize: 11, color: mutedColor),
                 ),
               ],
             ),
@@ -462,12 +494,15 @@ class _NotificationsPageState extends State<NotificationsPage> {
     required Color iconColor,
     required bool value,
     required ValueChanged<bool> onChanged,
+    required Color cardColor,
+    required Color textColor,
+    required Color subtitleColor,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -487,16 +522,16 @@ class _NotificationsPageState extends State<NotificationsPage> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
-                    color: Colors.black87,
+                    color: textColor,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
-                  style: const TextStyle(fontSize: 12, color: Colors.black54),
+                  style: TextStyle(fontSize: 12, color: subtitleColor),
                 ),
               ],
             ),
@@ -519,13 +554,17 @@ class _NotificationsPageState extends State<NotificationsPage> {
     required String label,
     required String timeText,
     required VoidCallback onTap,
+    required Color cardColor,
+    required Color textColor,
+    required Color subtitleColor,
+    required Color borderColor,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 12, color: Colors.black54),
+          style: TextStyle(fontSize: 12, color: subtitleColor),
         ),
         const SizedBox(height: 6),
         InkWell(
@@ -534,25 +573,25 @@ class _NotificationsPageState extends State<NotificationsPage> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: cardColor,
               borderRadius: BorderRadius.circular(30),
-              border: Border.all(color: Colors.grey.shade300),
+              border: Border.all(color: borderColor),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   timeText,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: Colors.black87,
+                    color: textColor,
                   ),
                 ),
-                const Icon(
+                Icon(
                   Icons.access_time_rounded,
                   size: 18,
-                  color: Colors.black87,
+                  color: textColor,
                 ),
               ],
             ),

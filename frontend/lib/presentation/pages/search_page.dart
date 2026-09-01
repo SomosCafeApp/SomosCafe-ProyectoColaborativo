@@ -44,9 +44,16 @@ class _SearchPageState extends State<SearchPage> {
 
   @override
   Widget build(BuildContext context) {
-    const headerBgColor = Color(0xFF9E754B);
-    const primaryBrown = Color(0xFFA2784F);
-    const scaffoldBgColor = Color(0xFFFAF7F2);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primaryBrown = theme.colorScheme.primary;
+    final headerBgColor = primaryBrown;
+    final scaffoldBgColor = theme.scaffoldBackgroundColor;
+    final cardBgColor = theme.cardColor;
+    final textColor = theme.colorScheme.onSurface;
+    final subtitleColor = textColor.withAlpha(150);
+    final searchFieldBg = isDark ? const Color(0xFF3D2E26) : Colors.white;
+    final searchHintColor = isDark ? Colors.white54 : Colors.grey.shade500;
 
     return Scaffold(
       backgroundColor: scaffoldBgColor,
@@ -71,13 +78,14 @@ class _SearchPageState extends State<SearchPage> {
                 TextField(
                   controller: _searchController,
                   onChanged: _filterProducts,
+                  style: TextStyle(color: textColor),
                   decoration: InputDecoration(
                     hintText: 'Buscar café, postre...',
-                    hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
-                    prefixIcon: Icon(Icons.search, color: Colors.grey.shade500),
+                    hintStyle: TextStyle(color: searchHintColor, fontSize: 14),
+                    prefixIcon: Icon(Icons.search, color: searchHintColor),
                     suffixIcon: _searchController.text.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(Icons.clear, color: Colors.grey),
+                            icon: Icon(Icons.clear, color: searchHintColor),
                             onPressed: () {
                               _searchController.clear();
                               _filterProducts('');
@@ -85,7 +93,7 @@ class _SearchPageState extends State<SearchPage> {
                           )
                         : null,
                     filled: true,
-                    fillColor: Colors.white,
+                    fillColor: searchFieldBg,
                     contentPadding: const EdgeInsets.symmetric(vertical: 0),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(30),
@@ -100,10 +108,10 @@ class _SearchPageState extends State<SearchPage> {
           // Contenido de la búsqueda
           Expanded(
             child: _searchController.text.isEmpty
-                ? _buildEmptyState(primaryBrown)
+                ? _buildEmptyState(primaryBrown, textColor, subtitleColor)
                 : _filteredProducts.isEmpty
-                    ? _buildNoResultsState()
-                    : _buildResultsList(primaryBrown),
+                    ? _buildNoResultsState(textColor, subtitleColor)
+                    : _buildResultsList(primaryBrown, cardBgColor, textColor, subtitleColor),
           ),
         ],
       ),
@@ -111,7 +119,7 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   // Vista cuando el buscador está vacío
-  Widget _buildEmptyState(Color primaryBrown) {
+  Widget _buildEmptyState(Color primaryBrown, Color textColor, Color subtitleColor) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -130,12 +138,12 @@ class _SearchPageState extends State<SearchPage> {
             ),
           ),
           const SizedBox(height: 20),
-          const Text(
+          Text(
             'Busca tu bebida favorita',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
+              color: textColor,
             ),
           ),
           const SizedBox(height: 8),
@@ -143,7 +151,7 @@ class _SearchPageState extends State<SearchPage> {
             'Encuentra cafés, bebidas frías y postres',
             style: TextStyle(
               fontSize: 14,
-              color: Colors.grey.shade600,
+              color: subtitleColor,
             ),
           ),
         ],
@@ -152,21 +160,21 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   // Vista cuando no hay coincidencias
-  Widget _buildNoResultsState() {
+  Widget _buildNoResultsState(Color textColor, Color subtitleColor) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.search_off, size: 60, color: Colors.grey.shade400),
+          Icon(Icons.search_off, size: 60, color: subtitleColor),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'No se encontraron resultados',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textColor),
           ),
           const SizedBox(height: 4),
           Text(
             'Intenta buscando con otra palabra',
-            style: TextStyle(color: Colors.grey.shade600),
+            style: TextStyle(color: subtitleColor),
           ),
         ],
       ),
@@ -174,13 +182,14 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   // Lista de resultados
-  Widget _buildResultsList(Color primaryBrown) {
+  Widget _buildResultsList(Color primaryBrown, Color cardBgColor, Color textColor, Color subtitleColor) {
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       itemCount: _filteredProducts.length,
       itemBuilder: (context, index) {
         final product = _filteredProducts[index];
         return Card(
+          color: cardBgColor,
           margin: const EdgeInsets.only(bottom: 12),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           elevation: 1,
@@ -193,23 +202,23 @@ class _SearchPageState extends State<SearchPage> {
                 color: primaryBrown.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(Icons.coffee, color: Color(0xFFA2784F)),
+              child: Icon(Icons.coffee, color: primaryBrown),
             ),
             title: Text(
               product.name,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: textColor),
             ),
             subtitle: Text(
               product.description,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              style: TextStyle(fontSize: 12, color: subtitleColor),
             ),
             trailing: Text(
               '\$${product.price.toStringAsFixed(0)}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Color(0xFFA2784F),
+                color: primaryBrown,
                 fontSize: 14,
               ),
             ),

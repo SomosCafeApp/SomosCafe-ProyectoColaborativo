@@ -10,9 +10,16 @@ class CartPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const primaryBrown = Color(0xFF9E754B);
-    const scaffoldBgColor = Color(0xFFF7F4EF);
-    const cardBgColor = Colors.white;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primaryBrown = theme.colorScheme.primary;
+    final scaffoldBgColor = theme.scaffoldBackgroundColor;
+    final cardBgColor = theme.cardColor;
+    final textColor = theme.colorScheme.onSurface;
+    final subtitleColor = textColor.withAlpha(150);
+    final panelBgColor = isDark ? const Color(0xFF2A1F19) : const Color(0xFFEFECE6);
+    final totalCardBg = isDark ? Colors.white.withOpacity(0.06) : Colors.white.withOpacity(0.6);
+    final quantityPillBg = isDark ? Colors.white.withOpacity(0.08) : const Color(0xFFF5F5F5);
 
     return Scaffold(
       backgroundColor: scaffoldBgColor,
@@ -95,7 +102,7 @@ class CartPage extends StatelessWidget {
               // Contenido Principal
               Expanded(
                 child: totalItems == 0
-                    ? _buildEmptyCart(primaryBrown)
+                    ? _buildEmptyCart(primaryBrown, textColor, subtitleColor)
                     : Column(
                         children: [
                           // Lista de Productos
@@ -139,7 +146,7 @@ class CartPage extends StatelessWidget {
                                               width: 80,
                                               height: 80,
                                               color: primaryBrown.withOpacity(0.1),
-                                              child: const Icon(Icons.coffee, color: primaryBrown),
+                                              child: Icon(Icons.coffee, color: primaryBrown),
                                             );
                                           },
                                         ),
@@ -157,10 +164,10 @@ class CartPage extends StatelessWidget {
                                                 Expanded(
                                                   child: Text(
                                                     product.name,
-                                                    style: const TextStyle(
+                                                    style: TextStyle(
                                                       fontWeight: FontWeight.bold,
                                                       fontSize: 16,
-                                                      color: Colors.black87,
+                                                      color: textColor,
                                                     ),
                                                     maxLines: 1,
                                                     overflow: TextOverflow.ellipsis,
@@ -183,7 +190,7 @@ class CartPage extends StatelessWidget {
                                               product.description,
                                               style: TextStyle(
                                                 fontSize: 12,
-                                                color: Colors.grey.shade600,
+                                                color: subtitleColor,
                                               ),
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
@@ -194,17 +201,17 @@ class CartPage extends StatelessWidget {
                                               children: [
                                                 Text(
                                                   '\$${(product.price * quantity).toStringAsFixed(0)} COP',
-                                                  style: const TextStyle(
+                                                  style: TextStyle(
                                                     fontWeight: FontWeight.bold,
                                                     fontSize: 14,
-                                                    color: Colors.black87,
+                                                    color: textColor,
                                                   ),
                                                 ),
 
                                                 // Controles de Cantidad
                                                 Container(
                                                   decoration: BoxDecoration(
-                                                    color: const Color(0xFFF5F5F5),
+                                                    color: quantityPillBg,
                                                     borderRadius: BorderRadius.circular(20),
                                                   ),
                                                   child: Row(
@@ -222,8 +229,8 @@ class CartPage extends StatelessWidget {
                                                             style: TextStyle(
                                                               fontWeight: FontWeight.bold,
                                                               color: quantity > 1
-                                                                  ? Colors.black87
-                                                                  : Colors.grey.shade400,
+                                                                  ? textColor
+                                                                  : subtitleColor,
                                                             ),
                                                           ),
                                                         ),
@@ -232,18 +239,18 @@ class CartPage extends StatelessWidget {
                                                         padding: const EdgeInsets.symmetric(horizontal: 6),
                                                         child: Text(
                                                           '$quantity',
-                                                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: textColor),
                                                         ),
                                                       ),
                                                       // Botón de Sumar
                                                       InkWell(
                                                         onTap: () => cart.addToCart(product),
                                                         borderRadius: BorderRadius.circular(20),
-                                                        child: const Padding(
-                                                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                        child: Padding(
+                                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                                           child: Text(
                                                             '+',
-                                                            style: TextStyle(fontWeight: FontWeight.bold),
+                                                            style: TextStyle(fontWeight: FontWeight.bold, color: textColor),
                                                           ),
                                                         ),
                                                       ),
@@ -265,9 +272,9 @@ class CartPage extends StatelessWidget {
                           // Panel Inferior
                           Container(
                             padding: const EdgeInsets.all(20),
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFEFECE6),
-                              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                            decoration: BoxDecoration(
+                              color: panelBgColor,
+                              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
                             ),
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
@@ -275,26 +282,26 @@ class CartPage extends StatelessWidget {
                                 Container(
                                   padding: const EdgeInsets.all(16),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.6),
+                                    color: totalCardBg,
                                     borderRadius: BorderRadius.circular(16),
                                   ),
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      const Text(
+                                      Text(
                                         'Total',
                                         style: TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.bold,
-                                          color: Colors.black87,
+                                          color: textColor,
                                         ),
                                       ),
                                       Text(
                                         '\$${totalPrice.toStringAsFixed(0)} COP',
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.bold,
-                                          color: Colors.black87,
+                                          color: textColor,
                                         ),
                                       ),
                                     ],
@@ -308,8 +315,8 @@ class CartPage extends StatelessWidget {
                                     onPressed: () {
                                       cart.clearCart();
                                       ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(
-                                          content: Text('¡Pedido realizado con éxito!'),
+                                        SnackBar(
+                                          content: const Text('¡Pedido realizado con éxito!'),
                                           backgroundColor: primaryBrown,
                                         ),
                                       );
@@ -351,7 +358,7 @@ class CartPage extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyCart(Color primaryBrown) {
+  Widget _buildEmptyCart(Color primaryBrown, Color textColor, Color subtitleColor) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -370,12 +377,12 @@ class CartPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
-          const Text(
+          Text(
             'Tu carrito está vacío',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
+              color: textColor,
             ),
           ),
           const SizedBox(height: 8),
@@ -383,7 +390,7 @@ class CartPage extends StatelessWidget {
             'Añade productos para continuar',
             style: TextStyle(
               fontSize: 14,
-              color: Colors.grey.shade600,
+              color: subtitleColor,
             ),
           ),
           const SizedBox(height: 24),

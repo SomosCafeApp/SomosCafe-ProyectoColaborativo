@@ -16,7 +16,19 @@ class ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const primaryBrown = Color(0xFF8C6239);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primaryBrown = theme.colorScheme.primary;
+    final cardColor = theme.cardColor;
+    final textColor = theme.colorScheme.onSurface;
+    final subtitleColor = textColor.withOpacity(0.5);
+    final mutedColor = textColor.withOpacity(0.4);
+    final imagePlaceholderBg = isDark ? const Color(0xFF3D2E26) : const Color(0xFFF3EBE1);
+    final pillBg = isDark ? Colors.black.withOpacity(0.55) : Colors.white.withOpacity(0.9);
+    final viewsBadgeBg = isDark ? const Color(0xFF2D211B).withOpacity(0.92) : const Color(0xFFFAF7F2).withOpacity(0.92);
+    final viewsIconColor = isDark ? const Color(0xFFC9A98B) : const Color(0xFF8C6E54);
+    final viewsTextColor = isDark ? const Color(0xFFE4D2C1) : const Color(0xFF5D4037);
+
     final bool hasImage = product.imageUrl.isNotEmpty;
 
     // Escuchamos a FavoritesProvider para saber si este producto está marcado
@@ -25,7 +37,7 @@ class ProductCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -56,9 +68,9 @@ class ProductCard extends StatelessWidget {
                   children: [
                     Container(
                       width: double.infinity,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFF3EBE1),
-                        borderRadius: BorderRadius.vertical(
+                      decoration: BoxDecoration(
+                        color: imagePlaceholderBg,
+                        borderRadius: const BorderRadius.vertical(
                           top: Radius.circular(20),
                         ),
                       ),
@@ -96,24 +108,24 @@ class ProductCard extends StatelessWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.9),
+                          color: pillBg,
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Row(
+                        child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.star_rounded,
                               color: Colors.amber,
                               size: 14,
                             ),
-                            SizedBox(width: 2),
+                            const SizedBox(width: 2),
                             Text(
                               '4.8',
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.black87,
+                                color: isDark ? Colors.white : Colors.black87,
                               ),
                             ),
                           ],
@@ -134,7 +146,7 @@ class ProductCard extends StatelessWidget {
                           width: 32,
                           height: 32,
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.9),
+                            color: pillBg,
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
@@ -150,7 +162,7 @@ class ProductCard extends StatelessWidget {
                                 : Icons.favorite_border_rounded,
                             color: isFav
                                 ? const Color(0xFFE53935)
-                                : const Color(0xFF6C757D),
+                                : (isDark ? Colors.white70 : const Color(0xFF6C757D)),
                             size: 18,
                           ),
                         ),
@@ -167,7 +179,7 @@ class ProductCard extends StatelessWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFAF7F2).withOpacity(0.92),
+                          color: viewsBadgeBg,
                           borderRadius: BorderRadius.circular(14),
                           boxShadow: [
                             BoxShadow(
@@ -177,21 +189,21 @@ class ProductCard extends StatelessWidget {
                             ),
                           ],
                         ),
-                        child: const Row(
+                        child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
                               Icons.remove_red_eye_outlined,
                               size: 14,
-                              color: Color(0xFF8C6E54),
+                              color: viewsIconColor,
                             ),
-                            SizedBox(width: 4),
+                            const SizedBox(width: 4),
                             Text(
                               '205',
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF5D4037),
+                                color: viewsTextColor,
                               ),
                             ),
                           ],
@@ -212,10 +224,10 @@ class ProductCard extends StatelessWidget {
                       product.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                        color: textColor,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -225,7 +237,7 @@ class ProductCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 10,
-                        color: Colors.black.withOpacity(0.5),
+                        color: subtitleColor,
                         height: 1.2,
                       ),
                     ),
@@ -241,15 +253,15 @@ class ProductCard extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 8,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.black.withOpacity(0.4),
+                                color: mutedColor,
                               ),
                             ),
                             Text(
                               '\$${product.price.toStringAsFixed(0)} COP',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w900,
-                                color: Colors.black87,
+                                color: textColor,
                               ),
                             ),
                           ],

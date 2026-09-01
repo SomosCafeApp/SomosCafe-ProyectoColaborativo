@@ -47,9 +47,12 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    const primaryBrown = Color(0xFFA2784F);
-    const headerBgColor = Color(0xFF9E754B);
-    const scaffoldBgColor = Color(0xFFFAF7F2);
+    final theme = Theme.of(context);
+    final primaryBrown = theme.colorScheme.primary;
+    final headerBgColor = primaryBrown;
+    final scaffoldBgColor = theme.scaffoldBackgroundColor;
+    final textColor = theme.colorScheme.onSurface;
+    final subtitleColor = textColor.withOpacity(0.6);
 
     final cartProvider = Provider.of<CartProvider>(context, listen: false);
 
@@ -60,11 +63,12 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           children: [
             // --- HEADER CON CATEGORÍAS ---
+            // Se mantiene con el color café de marca a propósito (encabezado de sección)
             Container(
               padding: const EdgeInsets.only(top: 50, bottom: 20, left: 20, right: 20),
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 color: headerBgColor,
-                borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -158,13 +162,13 @@ class _HomePageState extends State<HomePage> {
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
               child: Row(
                 children: [
-                  const Icon(Icons.auto_awesome, size: 16, color: primaryBrown),
+                  Icon(Icons.auto_awesome, size: 16, color: primaryBrown),
                   const SizedBox(width: 6),
                   Text(
                     '${_products.length} productos disponibles',
                     style: TextStyle(
                       fontSize: 13,
-                      color: Colors.black.withOpacity(0.6),
+                      color: subtitleColor,
                       fontWeight: FontWeight.w500,
                     ),
                   ),

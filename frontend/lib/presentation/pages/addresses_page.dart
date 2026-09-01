@@ -79,8 +79,22 @@ class _AddressesPageState extends State<AddressesPage> {
 
   @override
   Widget build(BuildContext context) {
-    const primaryBrown = Color(0xFF9E7247);
-    const bgCanvas = Color(0xFFFAF7F2);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primaryBrown = theme.colorScheme.primary;
+    final bgCanvas = theme.scaffoldBackgroundColor;
+    final cardColor = theme.cardColor;
+    final textColor = theme.colorScheme.onSurface;
+    final subtitleColor = textColor.withOpacity(0.6);
+    final mutedColor = textColor.withOpacity(0.4);
+    final inputFillColor = isDark ? const Color(0xFF3D2E26) : const Color(0xFFF9F6F0);
+    final hintColor = isDark ? Colors.white38 : Colors.black38;
+    final closeBtnBg = isDark ? Colors.white.withOpacity(0.08) : const Color(0xFFF4F0EA);
+    final actionBtnBg = isDark ? Colors.white.withOpacity(0.06) : const Color(0xFFFAF7F2);
+    final deleteBtnBg = isDark ? const Color(0xFF3A1F1F) : const Color(0xFFFFF5F5);
+    final deleteBorderColor = isDark ? const Color(0xFF5C2E2E) : const Color(0xFFFFCDD2);
+    final cancelBorderColor = isDark ? Colors.white24 : const Color(0xFFE5DDD3);
+    final mapPillBg = isDark ? const Color(0xFF2D211B) : Colors.white;
 
     return Scaffold(
       backgroundColor: bgCanvas,
@@ -158,19 +172,19 @@ class _AddressesPageState extends State<AddressesPage> {
 
                   // Formulario de Agregar (Estilo 1)
                   if (_showForm) ...[
-                    _buildFormCard(primaryBrown),
+                    _buildFormCard(primaryBrown, cardColor, textColor, hintColor, inputFillColor, closeBtnBg, cancelBorderColor),
                     const SizedBox(height: 20),
                   ],
 
                   const SizedBox(height: 16),
 
                   // Título Sección Ubicaciones Guardadas
-                  const Text(
+                  Text(
                     'Ubicaciones Guardadas',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: textColor,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -181,7 +195,17 @@ class _AddressesPageState extends State<AddressesPage> {
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: _addresses.length,
                     itemBuilder: (context, index) {
-                      return _buildAddressCardWithMap(_addresses[index], primaryBrown);
+                      return _buildAddressCardWithMap(
+                        _addresses[index],
+                        cardColor,
+                        textColor,
+                        subtitleColor,
+                        mutedColor,
+                        mapPillBg,
+                        actionBtnBg,
+                        deleteBtnBg,
+                        deleteBorderColor,
+                      );
                     },
                   ),
                 ],
@@ -193,12 +217,12 @@ class _AddressesPageState extends State<AddressesPage> {
     );
   }
 
-  // --- FORMULARIO DISEÑO LIMPIO Y REDONDEADO (IMAGEN 1) ---
-  Widget _buildFormCard(Color primaryBrown) {
+  // --- FORMULARIO ---
+  Widget _buildFormCard(Color primaryBrown, Color cardColor, Color textColor, Color hintColor, Color inputFillColor, Color closeBtnBg, Color cancelBorderColor) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
@@ -214,26 +238,26 @@ class _AddressesPageState extends State<AddressesPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Agregar Nueva Dirección',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                  color: textColor,
                 ),
               ),
               GestureDetector(
                 onTap: () => setState(() => _showForm = false),
                 child: Container(
                   padding: const EdgeInsets.all(6),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFF4F0EA),
+                  decoration: BoxDecoration(
+                    color: closeBtnBg,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.close,
                     size: 16,
-                    color: Colors.black54,
+                    color: textColor.withOpacity(0.6),
                   ),
                 ),
               ),
@@ -242,22 +266,23 @@ class _AddressesPageState extends State<AddressesPage> {
           const SizedBox(height: 16),
 
           // Campo Nombre
-          const Text(
+          Text(
             'Nombre de la ubicación',
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,
-              color: Colors.black87,
+              color: textColor,
             ),
           ),
           const SizedBox(height: 8),
           TextField(
             controller: _nameController,
+            style: TextStyle(color: textColor),
             decoration: InputDecoration(
               hintText: 'Ej: Casa, Trabajo, Cafetería...',
-              hintStyle: const TextStyle(color: Colors.black38, fontSize: 14),
+              hintStyle: TextStyle(color: hintColor, fontSize: 14),
               filled: true,
-              fillColor: const Color(0xFFF9F6F0),
+              fillColor: inputFillColor,
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(30),
@@ -268,23 +293,24 @@ class _AddressesPageState extends State<AddressesPage> {
           const SizedBox(height: 16),
 
           // Campo Buscar Dirección
-          const Text(
+          Text(
             'Buscar dirección',
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,
-              color: Colors.black87,
+              color: textColor,
             ),
           ),
           const SizedBox(height: 8),
           TextField(
             controller: _addressController,
+            style: TextStyle(color: textColor),
             decoration: InputDecoration(
-              prefixIcon: const Icon(Icons.search, color: Colors.black45),
+              prefixIcon: Icon(Icons.search, color: hintColor),
               hintText: 'Ingresa la dirección o ubicación',
-              hintStyle: const TextStyle(color: Colors.black38, fontSize: 14),
+              hintStyle: TextStyle(color: hintColor, fontSize: 14),
               filled: true,
-              fillColor: const Color(0xFFF9F6F0),
+              fillColor: inputFillColor,
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(30),
@@ -302,16 +328,16 @@ class _AddressesPageState extends State<AddressesPage> {
                   height: 46,
                   child: OutlinedButton(
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFFE5DDD3)),
+                      side: BorderSide(color: cancelBorderColor),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
                       ),
                     ),
                     onPressed: () => setState(() => _showForm = false),
-                    child: const Text(
+                    child: Text(
                       'Cancelar',
                       style: TextStyle(
-                        color: Colors.black87,
+                        color: textColor,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -348,12 +374,22 @@ class _AddressesPageState extends State<AddressesPage> {
     );
   }
 
-  // --- TARJETA CON MAPA Y BOTONES (IMAGEN 2) ---
-  Widget _buildAddressCardWithMap(AddressItem item, Color primaryBrown) {
+  // --- TARJETA CON MAPA Y BOTONES ---
+  Widget _buildAddressCardWithMap(
+    AddressItem item,
+    Color cardColor,
+    Color textColor,
+    Color subtitleColor,
+    Color mutedColor,
+    Color mapPillBg,
+    Color actionBtnBg,
+    Color deleteBtnBg,
+    Color deleteBorderColor,
+  ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
@@ -366,7 +402,7 @@ class _AddressesPageState extends State<AddressesPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Previa del Mapa con Tag Superior
+          // Previa del Mapa con Tag Superior (se mantiene con colores fijos: es una vista de mapa)
           Stack(
             children: [
               ClipRRect(
@@ -377,7 +413,6 @@ class _AddressesPageState extends State<AddressesPage> {
                   color: const Color(0xFFE3F2FD),
                   child: Stack(
                     children: [
-                      // Fondo mock de mapa grid
                       Positioned.fill(
                         child: CustomPaint(
                           painter: MapGridPainter(),
@@ -394,14 +429,14 @@ class _AddressesPageState extends State<AddressesPage> {
                   ),
                 ),
               ),
-              // Pill de Categoría (Catación / Coffee Shop)
+              // Pill de Categoría
               Positioned(
                 top: 12,
                 left: 12,
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: mapPillBg,
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
@@ -413,14 +448,14 @@ class _AddressesPageState extends State<AddressesPage> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.local_cafe_outlined, size: 14, color: Colors.black87),
+                      Icon(Icons.local_cafe_outlined, size: 14, color: textColor),
                       const SizedBox(width: 6),
                       Text(
                         item.mapLabel,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                          color: textColor,
                         ),
                       ),
                     ],
@@ -438,22 +473,22 @@ class _AddressesPageState extends State<AddressesPage> {
               children: [
                 Text(
                   item.name,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: textColor,
                   ),
                 ),
                 const SizedBox(height: 6),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.location_on_outlined, size: 16, color: Colors.black45),
+                    Icon(Icons.location_on_outlined, size: 16, color: mutedColor),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
                         item.address,
-                        style: const TextStyle(fontSize: 13, color: Colors.black87),
+                        style: TextStyle(fontSize: 13, color: textColor),
                       ),
                     ),
                   ],
@@ -463,7 +498,7 @@ class _AddressesPageState extends State<AddressesPage> {
                   padding: const EdgeInsets.only(left: 20),
                   child: Text(
                     item.details,
-                    style: const TextStyle(fontSize: 12, color: Colors.black45),
+                    style: TextStyle(fontSize: 12, color: mutedColor),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -475,8 +510,8 @@ class _AddressesPageState extends State<AddressesPage> {
                       child: _buildActionButton(
                         icon: Icons.near_me_outlined,
                         label: 'Ir',
-                        bgColor: const Color(0xFFFAF7F2),
-                        textColor: Colors.black87,
+                        bgColor: actionBtnBg,
+                        textColor: textColor,
                         borderColor: Colors.transparent,
                         onTap: () {},
                       ),
@@ -486,8 +521,8 @@ class _AddressesPageState extends State<AddressesPage> {
                       child: _buildActionButton(
                         icon: Icons.edit_outlined,
                         label: 'Editar',
-                        bgColor: const Color(0xFFFAF7F2),
-                        textColor: Colors.black87,
+                        bgColor: actionBtnBg,
+                        textColor: textColor,
                         borderColor: Colors.transparent,
                         onTap: () {},
                       ),
@@ -497,9 +532,9 @@ class _AddressesPageState extends State<AddressesPage> {
                       child: _buildActionButton(
                         icon: Icons.delete_outline,
                         label: 'Eliminar',
-                        bgColor: const Color(0xFFFFF5F5),
+                        bgColor: deleteBtnBg,
                         textColor: const Color(0xFFE53935),
-                        borderColor: const Color(0xFFFFCDD2),
+                        borderColor: deleteBorderColor,
                         onTap: () {
                           setState(() {
                             _addresses.removeWhere((element) => element.id == item.id);

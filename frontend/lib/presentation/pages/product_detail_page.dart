@@ -28,8 +28,19 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    const primaryBrown = Color(0xFF8C6239);
-    const backgroundColor = Color(0xFFFAF7F2);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primaryBrown = theme.colorScheme.primary;
+    final backgroundColor = theme.scaffoldBackgroundColor;
+    final cardColor = theme.cardColor;
+    final textColor = theme.colorScheme.onSurface;
+    final subtitleColor = textColor.withOpacity(0.55);
+    final mutedColor = textColor.withOpacity(0.35);
+    final borderColor = textColor.withOpacity(0.12);
+    final selectedBg = isDark ? primaryBrown.withOpacity(0.18) : const Color(0xFFF3EBE1);
+    final imagePlaceholderBg = isDark ? const Color(0xFF3D2E26) : const Color(0xFFF3EBE1);
+    final counterBtnBg = isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05);
+    final reviewCardBg = isDark ? Colors.white.withOpacity(0.04) : const Color(0xFFFAF7F2).withOpacity(0.6);
 
     final favoritesProvider = context.watch<FavoritesProvider>();
     final isFavorite = favoritesProvider.isFavorite(widget.product);
@@ -48,13 +59,13 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   InkWell(
                     onTap: () => Navigator.pop(context),
                     borderRadius: BorderRadius.circular(20),
-                    child: const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       child: Row(
                         children: [
-                          Icon(Icons.arrow_back_ios_new, size: 16, color: Colors.black87),
-                          SizedBox(width: 4),
-                          Text('Volver', style: TextStyle(fontWeight: FontWeight.bold)),
+                          Icon(Icons.arrow_back_ios_new, size: 16, color: textColor),
+                          const SizedBox(width: 4),
+                          Text('Volver', style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
                         ],
                       ),
                     ),
@@ -67,7 +78,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: cardColor,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
@@ -79,7 +90,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       ),
                       child: Icon(
                         isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                        color: isFavorite ? const Color(0xFFE53935) : Colors.black54,
+                        color: isFavorite ? const Color(0xFFE53935) : subtitleColor,
                         size: 20,
                       ),
                     ),
@@ -96,32 +107,32 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // CARRUSEL DE IMÁGENES
-                    _buildImageCarousel(),
+                    _buildImageCarousel(imagePlaceholderBg, primaryBrown),
 
                     const SizedBox(height: 16),
 
                     // TÍTULO Y DESCRIPCIÓN
                     Text(
                       widget.product.name,
-                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: textColor),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       widget.product.description,
-                      style: TextStyle(fontSize: 13, color: Colors.black.withOpacity(0.6)),
+                      style: TextStyle(fontSize: 13, color: subtitleColor),
                     ),
                     const SizedBox(height: 8),
-                    const Row(
+                    Row(
                       children: [
-                        Icon(Icons.star_rounded, color: Colors.amber, size: 18),
-                        Icon(Icons.star_rounded, color: Colors.amber, size: 18),
-                        Icon(Icons.star_rounded, color: Colors.amber, size: 18),
-                        Icon(Icons.star_rounded, color: Colors.amber, size: 18),
-                        Icon(Icons.star_half_rounded, color: Colors.amber, size: 18),
-                        SizedBox(width: 6),
+                        const Icon(Icons.star_rounded, color: Colors.amber, size: 18),
+                        const Icon(Icons.star_rounded, color: Colors.amber, size: 18),
+                        const Icon(Icons.star_rounded, color: Colors.amber, size: 18),
+                        const Icon(Icons.star_rounded, color: Colors.amber, size: 18),
+                        const Icon(Icons.star_half_rounded, color: Colors.amber, size: 18),
+                        const SizedBox(width: 6),
                         Text(
                           '4.8 (127 reseñas)',
-                          style: TextStyle(fontSize: 12, color: Colors.black54, fontWeight: FontWeight.bold),
+                          style: TextStyle(fontSize: 12, color: subtitleColor, fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -130,6 +141,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
                     // PRECIO
                     _buildCard(
+                      cardColor: cardColor,
+                      textColor: textColor,
+                      mutedColor: mutedColor,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -138,12 +152,12 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                             children: [
                               Text(
                                 '\$${widget.product.price.toStringAsFixed(0)} COP',
-                                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: primaryBrown),
+                                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: primaryBrown),
                               ),
                               const SizedBox(height: 2),
-                              const Text(
+                              Text(
                                 'Precio unitario base',
-                                style: TextStyle(fontSize: 11, color: Colors.black45),
+                                style: TextStyle(fontSize: 11, color: mutedColor),
                               ),
                             ],
                           ),
@@ -152,6 +166,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                             children: [
                               _buildCounterButton(
                                 Icons.remove,
+                                counterBtnBg,
+                                textColor,
                                 () {
                                   if (_quantity > 1) {
                                     setState(() => _quantity--);
@@ -162,11 +178,13 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                 padding: const EdgeInsets.symmetric(horizontal: 14),
                                 child: Text(
                                   '$_quantity',
-                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textColor),
                                 ),
                               ),
                               _buildCounterButton(
                                 Icons.add,
+                                counterBtnBg,
+                                textColor,
                                 () => setState(() => _quantity++),
                               ),
                             ],
@@ -179,14 +197,17 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
                     // TAMAÑO
                     _buildCard(
+                      cardColor: cardColor,
+                      textColor: textColor,
+                      mutedColor: mutedColor,
                       title: 'Tamaño',
                       child: Row(
                         children: [
-                          _buildSelectableBox('Pequeño', '8oz', '+\$3.000', _selectedSize == 'Pequeño', () => setState(() => _selectedSize = 'Pequeño')),
+                          _buildSelectableBox('Pequeño', '8oz', '+\$3.000', _selectedSize == 'Pequeño', () => setState(() => _selectedSize = 'Pequeño'), selectedBg, primaryBrown, borderColor, textColor, mutedColor),
                           const SizedBox(width: 8),
-                          _buildSelectableBox('Mediano', '12oz', null, _selectedSize == 'Mediano', () => setState(() => _selectedSize = 'Mediano')),
+                          _buildSelectableBox('Mediano', '12oz', null, _selectedSize == 'Mediano', () => setState(() => _selectedSize = 'Mediano'), selectedBg, primaryBrown, borderColor, textColor, mutedColor),
                           const SizedBox(width: 8),
-                          _buildSelectableBox('Grande', '16oz', '+\$5.000', _selectedSize == 'Grande', () => setState(() => _selectedSize = 'Grande')),
+                          _buildSelectableBox('Grande', '16oz', '+\$5.000', _selectedSize == 'Grande', () => setState(() => _selectedSize = 'Grande'), selectedBg, primaryBrown, borderColor, textColor, mutedColor),
                         ],
                       ),
                     ),
@@ -195,15 +216,18 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
                     // TIPO (Caliente / Frío)
                     _buildCard(
+                      cardColor: cardColor,
+                      textColor: textColor,
+                      mutedColor: mutedColor,
                       title: 'Tipo',
                       child: Row(
                         children: [
                           Expanded(
-                            child: _buildTypeButton(Icons.thermostat_outlined, 'Caliente', _selectedType == 'Caliente', () => setState(() => _selectedType = 'Caliente')),
+                            child: _buildTypeButton(Icons.thermostat_outlined, 'Caliente', _selectedType == 'Caliente', () => setState(() => _selectedType = 'Caliente'), selectedBg, primaryBrown, borderColor, textColor),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
-                            child: _buildTypeButton(Icons.ac_unit_outlined, 'Frío', _selectedType == 'Frío', () => setState(() => _selectedType = 'Frío')),
+                            child: _buildTypeButton(Icons.ac_unit_outlined, 'Frío', _selectedType == 'Frío', () => setState(() => _selectedType = 'Frío'), selectedBg, primaryBrown, borderColor, textColor),
                           ),
                         ],
                       ),
@@ -213,6 +237,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
                     // TIPO DE LECHE
                     _buildCard(
+                      cardColor: cardColor,
+                      textColor: textColor,
+                      mutedColor: mutedColor,
                       title: 'Tipo de Leche',
                       subtitle: 'Opcional',
                       child: GridView.count(
@@ -223,10 +250,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         crossAxisSpacing: 8,
                         mainAxisSpacing: 8,
                         children: [
-                          _buildOptionChip('Entera', null, _selectedMilk == 'Entera', () => setState(() => _selectedMilk = 'Entera')),
-                          _buildOptionChip('Almendra', '+\$1.000', _selectedMilk == 'Almendra', () => setState(() => _selectedMilk = 'Almendra')),
-                          _buildOptionChip('Avena', '+\$1.000', _selectedMilk == 'Avena', () => setState(() => _selectedMilk = 'Avena')),
-                          _buildOptionChip('Soya', '+\$2.000', _selectedMilk == 'Soya', () => setState(() => _selectedMilk = 'Soya')),
+                          _buildOptionChip('Entera', null, _selectedMilk == 'Entera', () => setState(() => _selectedMilk = 'Entera'), selectedBg, primaryBrown, borderColor, textColor, mutedColor),
+                          _buildOptionChip('Almendra', '+\$1.000', _selectedMilk == 'Almendra', () => setState(() => _selectedMilk = 'Almendra'), selectedBg, primaryBrown, borderColor, textColor, mutedColor),
+                          _buildOptionChip('Avena', '+\$1.000', _selectedMilk == 'Avena', () => setState(() => _selectedMilk = 'Avena'), selectedBg, primaryBrown, borderColor, textColor, mutedColor),
+                          _buildOptionChip('Soya', '+\$2.000', _selectedMilk == 'Soya', () => setState(() => _selectedMilk = 'Soya'), selectedBg, primaryBrown, borderColor, textColor, mutedColor),
                         ],
                       ),
                     ),
@@ -235,6 +262,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
                     // AZÚCAR
                     _buildCard(
+                      cardColor: cardColor,
+                      textColor: textColor,
+                      mutedColor: mutedColor,
                       title: 'Nivel de Azúcar',
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -245,8 +275,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                               decoration: BoxDecoration(
-                                color: isSel ? const Color(0xFFF3EBE1) : Colors.transparent,
-                                border: Border.all(color: isSel ? primaryBrown : Colors.black12),
+                                color: isSel ? selectedBg : Colors.transparent,
+                                border: Border.all(color: isSel ? primaryBrown : borderColor),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Text(
@@ -254,7 +284,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
-                                  color: isSel ? primaryBrown : Colors.black87,
+                                  color: isSel ? primaryBrown : textColor,
                                 ),
                               ),
                             ),
@@ -267,21 +297,24 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
                     // SHOTS EXTRA
                     _buildCard(
+                      cardColor: cardColor,
+                      textColor: textColor,
+                      mutedColor: mutedColor,
                       title: 'Shots Extra de Espresso',
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Número de shots', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                          Text('Número de shots', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: textColor)),
                           Row(
                             children: [
-                              _buildCounterButton(Icons.remove, () {
+                              _buildCounterButton(Icons.remove, counterBtnBg, textColor, () {
                                 if (_extraShots > 0) setState(() => _extraShots--);
                               }),
                               Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                                child: Text('$_extraShots', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                                child: Text('$_extraShots', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: textColor)),
                               ),
-                              _buildCounterButton(Icons.add, () => setState(() => _extraShots++)),
+                              _buildCounterButton(Icons.add, counterBtnBg, textColor, () => setState(() => _extraShots++)),
                             ],
                           )
                         ],
@@ -292,6 +325,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
                     // TOPPINGS
                     _buildCard(
+                      cardColor: cardColor,
+                      textColor: textColor,
+                      mutedColor: mutedColor,
                       title: 'Toppings',
                       child: GridView.count(
                         shrinkWrap: true,
@@ -301,10 +337,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         crossAxisSpacing: 8,
                         mainAxisSpacing: 8,
                         children: [
-                          _buildToggleChip('Crema batida', '+\$2.000'),
-                          _buildToggleChip('Canela', '+\$1.000'),
-                          _buildToggleChip('Chispas chocolate', '+\$2.500'),
-                          _buildToggleChip('Caramelo', '+\$1.500'),
+                          _buildToggleChip('Crema batida', '+\$2.000', selectedBg, primaryBrown, borderColor, textColor, mutedColor),
+                          _buildToggleChip('Canela', '+\$1.000', selectedBg, primaryBrown, borderColor, textColor, mutedColor),
+                          _buildToggleChip('Chispas chocolate', '+\$2.500', selectedBg, primaryBrown, borderColor, textColor, mutedColor),
+                          _buildToggleChip('Caramelo', '+\$1.500', selectedBg, primaryBrown, borderColor, textColor, mutedColor),
                         ],
                       ),
                     ),
@@ -313,14 +349,17 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
                     // ENTREGA
                     _buildCard(
+                      cardColor: cardColor,
+                      textColor: textColor,
+                      mutedColor: mutedColor,
                       title: 'Información de Entrega',
                       child: Column(
                         children: [
-                          _buildInfoTile(Icons.access_time_rounded, 'Tiempo estimado', '20-30 minutos'),
-                          const Divider(height: 16),
-                          _buildInfoTile(Icons.local_shipping_outlined, 'Envío gratuito', 'En compras superiores a \$20.000'),
-                          const Divider(height: 16),
-                          _buildInfoTile(Icons.location_on_outlined, 'Recogida en tienda', 'Punto principal disponible'),
+                          _buildInfoTile(Icons.access_time_rounded, 'Tiempo estimado', '20-30 minutos', selectedBg, primaryBrown, textColor, mutedColor),
+                          Divider(height: 16, color: borderColor),
+                          _buildInfoTile(Icons.local_shipping_outlined, 'Envío gratuito', 'En compras superiores a \$20.000', selectedBg, primaryBrown, textColor, mutedColor),
+                          Divider(height: 16, color: borderColor),
+                          _buildInfoTile(Icons.location_on_outlined, 'Recogida en tienda', 'Punto principal disponible', selectedBg, primaryBrown, textColor, mutedColor),
                         ],
                       ),
                     ),
@@ -329,12 +368,15 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
                     // RESEÑAS
                     _buildCard(
+                      cardColor: cardColor,
+                      textColor: textColor,
+                      mutedColor: mutedColor,
                       title: 'Reseñas',
                       child: Column(
                         children: [
-                          _buildReviewItem('María García', 'Excelente café, muy aromático y de calidad premium', 'Hace 2 días', 5),
+                          _buildReviewItem('María García', 'Excelente café, muy aromático y de calidad premium', 'Hace 2 días', 5, reviewCardBg, textColor, mutedColor),
                           const SizedBox(height: 10),
-                          _buildReviewItem('Carlos López', 'Muy buen sabor y temperatura perfecta.', 'Hace 1 semana', 4),
+                          _buildReviewItem('Carlos López', 'Muy buen sabor y temperatura perfecta.', 'Hace 1 semana', 4, reviewCardBg, textColor, mutedColor),
                         ],
                       ),
                     ),
@@ -342,9 +384,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     const SizedBox(height: 24),
 
                     // PRODUCTOS RELACIONADOS
-                    const Text(
+                    Text(
                       'Productos Relacionados',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textColor),
                     ),
                     const SizedBox(height: 12),
                     SizedBox(
@@ -394,7 +436,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: cardColor,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.06),
@@ -438,21 +480,21 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
   // --- WIDGETS AUXILIARES ---
 
-  Widget _buildImageCarousel() {
+  Widget _buildImageCarousel(Color placeholderBg, Color primaryBrown) {
     return Stack(
       children: [
         Container(
           height: 280,
           width: double.infinity,
           decoration: BoxDecoration(
-            color: const Color(0xFFF3EBE1),
+            color: placeholderBg,
             borderRadius: BorderRadius.circular(24),
           ),
-          child: const Center(
+          child: Center(
             child: Icon(
               Icons.coffee_rounded,
               size: 64,
-              color: Color(0xFF8C6239),
+              color: primaryBrown,
             ),
           ),
         ),
@@ -475,12 +517,19 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     );
   }
 
-  Widget _buildCard({String? title, String? subtitle, required Widget child}) {
+  Widget _buildCard({
+    required Color cardColor,
+    required Color textColor,
+    required Color mutedColor,
+    String? title,
+    String? subtitle,
+    required Widget child,
+  }) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -497,9 +546,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: textColor)),
                 if (subtitle != null)
-                  Text(subtitle, style: const TextStyle(fontSize: 10, color: Colors.black45)),
+                  Text(subtitle, style: TextStyle(fontSize: 10, color: mutedColor)),
               ],
             ),
             const SizedBox(height: 12),
@@ -510,25 +559,26 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     );
   }
 
-  Widget _buildSelectableBox(String title, String subtitle, String? extraPrice, bool isSelected, VoidCallback onTap) {
+  Widget _buildSelectableBox(String title, String subtitle, String? extraPrice, bool isSelected, VoidCallback onTap,
+      Color selectedBg, Color primaryBrown, Color borderColor, Color textColor, Color mutedColor) {
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFFF3EBE1) : Colors.transparent,
-            border: Border.all(color: isSelected ? const Color(0xFF8C6239) : Colors.black12),
+            color: isSelected ? selectedBg : Colors.transparent,
+            border: Border.all(color: isSelected ? primaryBrown : borderColor),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Column(
             children: [
-              Text(title, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: isSelected ? const Color(0xFF8C6239) : Colors.black87)),
+              Text(title, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: isSelected ? primaryBrown : textColor)),
               const SizedBox(height: 2),
-              Text(subtitle, style: const TextStyle(fontSize: 10, color: Colors.black45)),
+              Text(subtitle, style: TextStyle(fontSize: 10, color: mutedColor)),
               if (extraPrice != null) ...[
                 const SizedBox(height: 2),
-                Text(extraPrice, style: const TextStyle(fontSize: 9, color: Colors.black45)),
+                Text(extraPrice, style: TextStyle(fontSize: 9, color: mutedColor)),
               ],
             ],
           ),
@@ -537,27 +587,28 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     );
   }
 
-  Widget _buildTypeButton(IconData icon, String label, bool isSelected, VoidCallback onTap) {
+  Widget _buildTypeButton(IconData icon, String label, bool isSelected, VoidCallback onTap,
+      Color selectedBg, Color primaryBrown, Color borderColor, Color textColor) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFF3EBE1) : Colors.transparent,
-          border: Border.all(color: isSelected ? const Color(0xFF8C6239) : Colors.black12),
+          color: isSelected ? selectedBg : Colors.transparent,
+          border: Border.all(color: isSelected ? primaryBrown : borderColor),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 16, color: isSelected ? const Color(0xFF8C6239) : Colors.black87),
+            Icon(icon, size: 16, color: isSelected ? primaryBrown : textColor),
             const SizedBox(width: 6),
             Text(
               label,
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                color: isSelected ? const Color(0xFF8C6239) : Colors.black87,
+                color: isSelected ? primaryBrown : textColor,
               ),
             ),
           ],
@@ -566,28 +617,29 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     );
   }
 
-  Widget _buildOptionChip(String title, String? price, bool isSelected, VoidCallback onTap) {
+  Widget _buildOptionChip(String title, String? price, bool isSelected, VoidCallback onTap,
+      Color selectedBg, Color primaryBrown, Color borderColor, Color textColor, Color mutedColor) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFF3EBE1) : Colors.transparent,
-          border: Border.all(color: isSelected ? const Color(0xFF8C6239) : Colors.black12),
+          color: isSelected ? selectedBg : Colors.transparent,
+          border: Border.all(color: isSelected ? primaryBrown : borderColor),
           borderRadius: BorderRadius.circular(14),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(title, style: TextStyle(fontSize: 11, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
-            if (price != null) Text(price, style: const TextStyle(fontSize: 9, color: Colors.black45)),
+            Text(title, style: TextStyle(fontSize: 11, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal, color: textColor)),
+            if (price != null) Text(price, style: TextStyle(fontSize: 9, color: mutedColor)),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildToggleChip(String title, String price) {
+  Widget _buildToggleChip(String title, String price, Color selectedBg, Color primaryBrown, Color borderColor, Color textColor, Color mutedColor) {
     final isSelected = _selectedToppings.contains(title);
     return GestureDetector(
       onTap: () {
@@ -602,64 +654,64 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFF3EBE1) : Colors.transparent,
-          border: Border.all(color: isSelected ? const Color(0xFF8C6239) : Colors.black12),
+          color: isSelected ? selectedBg : Colors.transparent,
+          border: Border.all(color: isSelected ? primaryBrown : borderColor),
           borderRadius: BorderRadius.circular(14),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(title, style: TextStyle(fontSize: 10, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
-            Text(price, style: const TextStyle(fontSize: 8, color: Colors.black45)),
+            Text(title, style: TextStyle(fontSize: 10, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal, color: textColor)),
+            Text(price, style: TextStyle(fontSize: 8, color: mutedColor)),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildCounterButton(IconData icon, VoidCallback onTap) {
+  Widget _buildCounterButton(IconData icon, Color bgColor, Color iconColor, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: 32,
         height: 32,
         decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.05),
+          color: bgColor,
           shape: BoxShape.circle,
         ),
-        child: Icon(icon, size: 18, color: Colors.black87),
+        child: Icon(icon, size: 18, color: iconColor),
       ),
     );
   }
 
-  Widget _buildInfoTile(IconData icon, String title, String subtitle) {
+  Widget _buildInfoTile(IconData icon, String title, String subtitle, Color iconBg, Color iconColor, Color textColor, Color mutedColor) {
     return Row(
       children: [
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: const Color(0xFFF3EBE1),
+            color: iconBg,
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icon, size: 18, color: const Color(0xFF8C6239)),
+          child: Icon(icon, size: 18, color: iconColor),
         ),
         const SizedBox(width: 12),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-            Text(subtitle, style: const TextStyle(fontSize: 10, color: Colors.black45)),
+            Text(title, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: textColor)),
+            Text(subtitle, style: TextStyle(fontSize: 10, color: mutedColor)),
           ],
         )
       ],
     );
   }
 
-  Widget _buildReviewItem(String name, String comment, String date, int stars) {
+  Widget _buildReviewItem(String name, String comment, String date, int stars, Color cardBg, Color textColor, Color mutedColor) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFAF7F2).withOpacity(0.6),
+        color: cardBg,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -668,23 +720,23 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(name, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              Text(name, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: textColor)),
               Row(
                 children: List.generate(
                   5,
                   (index) => Icon(
                     Icons.star_rounded,
                     size: 12,
-                    color: index < stars ? Colors.amber : Colors.black26,
+                    color: index < stars ? Colors.amber : mutedColor,
                   ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 4),
-          Text(comment, style: const TextStyle(fontSize: 11, color: Colors.black87)),
+          Text(comment, style: TextStyle(fontSize: 11, color: textColor.withOpacity(0.85))),
           const SizedBox(height: 4),
-          Text(date, style: const TextStyle(fontSize: 9, color: Colors.black38)),
+          Text(date, style: TextStyle(fontSize: 9, color: mutedColor)),
         ],
       ),
     );

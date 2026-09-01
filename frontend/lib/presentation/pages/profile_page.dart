@@ -18,9 +18,16 @@ class ProfilePage extends StatelessWidget {
     final auth = context.watch<AuthProvider>();
     final favoritesCount = context.watch<FavoritesProvider>().favorites.length;
 
+    // --- Colores dinámicos leídos del ThemeData activo (light/dark) ---
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final scaffoldBgColor = theme.scaffoldBackgroundColor;
+    final cardColor = theme.cardColor;
+    final textColor = theme.colorScheme.onSurface;
+    final subtitleColor = textColor.withAlpha(150);
+
     const primaryBrown = Color(0xFFA2784F);
     const darkBrown = Color(0xFF634832);
-    const scaffoldBgColor = Color(0xFFFAF7F2);
 
     final initial = auth.userName != null && auth.userName!.isNotEmpty
         ? auth.userName![0].toUpperCase()
@@ -33,6 +40,8 @@ class ProfilePage extends StatelessWidget {
         child: Column(
           children: [
             // --- 1. HEADER PROFILE ---
+            // El header mantiene su gradiente café fijo a propósito (marca visual),
+            // solo cambian los textos/íconos si algún día quieres adaptarlos también.
             Container(
               width: double.infinity,
               padding: const EdgeInsets.only(top: 60, bottom: 30, left: 24, right: 24),
@@ -131,8 +140,11 @@ class ProfilePage extends StatelessWidget {
               child: Column(
                 children: [
                   _buildProfileOptionCard(
+                    cardColor: cardColor,
+                    textColor: textColor,
+                    subtitleColor: subtitleColor,
                     icon: Icons.location_on_outlined,
-                    iconBgColor: const Color(0xFFFEF3D6),
+                    iconBgColor: isDark ? const Color(0xFF3D2E26) : const Color(0xFFFEF3D6),
                     iconColor: const Color(0xFF8C5C2B),
                     title: 'Direcciones',
                     subtitle: 'Gestiona tus ubicaciones de entrega',
@@ -144,8 +156,11 @@ class ProfilePage extends StatelessWidget {
                     },
                   ),
                   _buildProfileOptionCard(
+                    cardColor: cardColor,
+                    textColor: textColor,
+                    subtitleColor: subtitleColor,
                     icon: Icons.notifications_none_rounded,
-                    iconBgColor: const Color(0xFFE1F5FE),
+                    iconBgColor: isDark ? const Color(0xFF1B3A4B) : const Color(0xFFE1F5FE),
                     iconColor: const Color(0xFF0288D1),
                     title: 'Notificaciones',
                     subtitle: 'Preferencias de alertas',
@@ -157,8 +172,11 @@ class ProfilePage extends StatelessWidget {
                     },
                   ),
                   _buildProfileOptionCard(
+                    cardColor: cardColor,
+                    textColor: textColor,
+                    subtitleColor: subtitleColor,
                     icon: Icons.credit_card_rounded,
-                    iconBgColor: const Color(0xFFFCE4EC),
+                    iconBgColor: isDark ? const Color(0xFF3A1F2B) : const Color(0xFFFCE4EC),
                     iconColor: const Color(0xFFC2185B),
                     title: 'Métodos de Pago',
                     subtitle: 'Tarjetas y opciones de pago',
@@ -170,8 +188,11 @@ class ProfilePage extends StatelessWidget {
                     },
                   ),
                   _buildProfileOptionCard(
+                    cardColor: cardColor,
+                    textColor: textColor,
+                    subtitleColor: subtitleColor,
                     icon: Icons.favorite_border_rounded,
-                    iconBgColor: const Color(0xFFFFF8E1),
+                    iconBgColor: isDark ? const Color(0xFF3D371C) : const Color(0xFFFFF8E1),
                     iconColor: const Color(0xFFE53935),
                     title: 'Favoritos',
                     subtitle: favoritesCount == 0
@@ -185,8 +206,11 @@ class ProfilePage extends StatelessWidget {
                     },
                   ),
                   _buildProfileOptionCard(
+                    cardColor: cardColor,
+                    textColor: textColor,
+                    subtitleColor: subtitleColor,
                     icon: Icons.card_giftcard_rounded,
-                    iconBgColor: const Color(0xFFFFF8E1),
+                    iconBgColor: isDark ? const Color(0xFF3D371C) : const Color(0xFFFFF8E1),
                     iconColor: const Color(0xFFFFA000),
                     title: 'Recompensas',
                     subtitle: 'Promociones y descuentos',
@@ -198,8 +222,11 @@ class ProfilePage extends StatelessWidget {
                     },
                   ),
                   _buildProfileOptionCard(
+                    cardColor: cardColor,
+                    textColor: textColor,
+                    subtitleColor: subtitleColor,
                     icon: Icons.history_rounded,
-                    iconBgColor: const Color(0xFFE8F5E9),
+                    iconBgColor: isDark ? const Color(0xFF1E3A22) : const Color(0xFFE8F5E9),
                     iconColor: const Color(0xFF388E3C),
                     title: 'Historial de Pedidos',
                     subtitle: 'Consulta tus compras anteriores',
@@ -211,8 +238,11 @@ class ProfilePage extends StatelessWidget {
                     },
                   ),
                   _buildProfileOptionCard(
+                    cardColor: cardColor,
+                    textColor: textColor,
+                    subtitleColor: subtitleColor,
                     icon: Icons.settings_outlined,
-                    iconBgColor: const Color(0xFFECEFF1),
+                    iconBgColor: isDark ? const Color(0xFF2A3236) : const Color(0xFFECEFF1),
                     iconColor: const Color(0xFF546E7A),
                     title: 'Configuración',
                     subtitle: 'Ajustes de la aplicación',
@@ -225,8 +255,11 @@ class ProfilePage extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   _buildProfileOptionCard(
+                    cardColor: cardColor,
+                    textColor: textColor,
+                    subtitleColor: subtitleColor,
                     icon: Icons.logout_rounded,
-                    iconBgColor: const Color(0xFFFFEBEE),
+                    iconBgColor: isDark ? const Color(0xFF3D1F1F) : const Color(0xFFFFEBEE),
                     iconColor: const Color(0xFFD32F2F),
                     title: 'Cerrar Sesión',
                     subtitle: 'Salir de tu cuenta actual',
@@ -236,8 +269,9 @@ class ProfilePage extends StatelessWidget {
                         context: context,
                         builder: (ctx) => AlertDialog(
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                          title: const Text('Cerrar Sesión'),
-                          content: const Text('¿Estás seguro de que deseas salir?'),
+                          backgroundColor: cardColor,
+                          title: Text('Cerrar Sesión', style: TextStyle(color: textColor)),
+                          content: Text('¿Estás seguro de que deseas salir?', style: TextStyle(color: textColor)),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(ctx),
@@ -266,6 +300,9 @@ class ProfilePage extends StatelessWidget {
   }
 
   Widget _buildProfileOptionCard({
+    required Color cardColor,
+    required Color textColor,
+    required Color subtitleColor,
     required IconData icon,
     required Color iconBgColor,
     required Color iconColor,
@@ -277,7 +314,7 @@ class ProfilePage extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -307,19 +344,19 @@ class ProfilePage extends StatelessWidget {
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
-              color: isDestructive ? const Color(0xFFD32F2F) : Colors.black87,
+              color: isDestructive ? const Color(0xFFD32F2F) : textColor,
             ),
           ),
           subtitle: Text(
             subtitle,
             style: TextStyle(
               fontSize: 12,
-              color: Colors.black.withAlpha(115),
+              color: subtitleColor,
             ),
           ),
           trailing: Icon(
             Icons.chevron_right_rounded,
-            color: Colors.black.withAlpha(77),
+            color: subtitleColor,
             size: 20,
           ),
         ),

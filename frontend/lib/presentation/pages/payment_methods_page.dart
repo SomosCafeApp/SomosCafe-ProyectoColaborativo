@@ -13,8 +13,19 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
 
   @override
   Widget build(BuildContext context) {
-    const primaryBrown = Color(0xFF9E7247);
-    const bgCanvas = Color(0xFFFAF7F2);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primaryBrown = theme.colorScheme.primary;
+    final bgCanvas = theme.scaffoldBackgroundColor;
+    final cardColor = theme.cardColor;
+    final textColor = theme.colorScheme.onSurface;
+    final subtitleColor = textColor.withOpacity(0.6);
+    final defaultBadgeBg = isDark ? const Color(0xFF3D2E26) : const Color(0xFFF4EFEA);
+    final dividerColor = isDark ? Colors.white12 : const Color(0xFFF0F0F0);
+    final setDefaultBtnBg = isDark ? Colors.white.withOpacity(0.06) : const Color(0xFFFAF7F2);
+    final outlinedBorderColor = isDark ? Colors.white24 : const Color(0xFFE5DDD3);
+    final infoCardBg = isDark ? const Color(0xFF0E3A3F).withOpacity(0.5) : const Color(0xFFE0F7FA).withOpacity(0.5);
+    final infoIconBg = isDark ? const Color(0xFF13565E) : const Color(0xFFB2EBF2);
 
     return Scaffold(
       backgroundColor: bgCanvas,
@@ -65,23 +76,22 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // --- SECCIÓN: MIS MÉTODOS DE PAGO ---
-                  const Text(
+                  Text(
                     'Mis Métodos de Pago',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: textColor,
                     ),
                   ),
                   const SizedBox(height: 12),
 
                   // 1. Tarjeta de Crédito
                   _buildSavedMethodCard(
-                    id: 'card',
                     title: 'Tarjeta de Crédito',
                     subtitle: '**** **** **** 4532',
                     icon: Icons.credit_card_rounded,
-                    iconBg: const Color(0xFFFFF3E0),
+                    iconBg: isDark ? const Color(0xFF3D2E1A) : const Color(0xFFFFF3E0),
                     iconColor: const Color(0xFFE65100),
                     isDefault: _defaultMethod == 'card',
                     onSetDefault: () {
@@ -89,15 +99,20 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
                         _defaultMethod = 'card';
                       });
                     },
+                    cardColor: cardColor,
+                    textColor: textColor,
+                    subtitleColor: subtitleColor,
+                    defaultBadgeBg: defaultBadgeBg,
+                    dividerColor: dividerColor,
+                    setDefaultBtnBg: setDefaultBtnBg,
                   ),
 
                   // 2. Efectivo
                   _buildSavedMethodCard(
-                    id: 'cash',
                     title: 'Efectivo',
                     subtitle: 'Pago contra entrega',
                     icon: Icons.attach_money_rounded,
-                    iconBg: const Color(0xFFE8F5E9),
+                    iconBg: isDark ? const Color(0xFF1E3A22) : const Color(0xFFE8F5E9),
                     iconColor: const Color(0xFF2E7D32),
                     isDefault: _defaultMethod == 'cash',
                     onSetDefault: () {
@@ -105,6 +120,12 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
                         _defaultMethod = 'cash';
                       });
                     },
+                    cardColor: cardColor,
+                    textColor: textColor,
+                    subtitleColor: subtitleColor,
+                    defaultBadgeBg: defaultBadgeBg,
+                    dividerColor: dividerColor,
+                    setDefaultBtnBg: setDefaultBtnBg,
                   ),
 
                   const SizedBox(height: 12),
@@ -137,12 +158,12 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
                   const SizedBox(height: 24),
 
                   // --- SECCIÓN: OTRAS OPCIONES DE PAGO ---
-                  const Text(
+                  Text(
                     'Otras Opciones de Pago',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: textColor,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -151,43 +172,67 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
                     title: 'Nequi',
                     subtitle: 'Transferencia instantánea',
                     icon: Icons.account_balance_wallet_outlined,
-                    iconBg: const Color(0xFFFCE4EC),
+                    iconBg: isDark ? const Color(0xFF3A1F2B) : const Color(0xFFFCE4EC),
                     iconColor: const Color(0xFFC2185B),
+                    cardColor: cardColor,
+                    textColor: textColor,
+                    subtitleColor: subtitleColor,
+                    outlinedBorderColor: outlinedBorderColor,
                   ),
                   _buildOtherOptionTile(
                     title: 'PSE',
                     subtitle: 'Pago desde tu banco',
                     icon: Icons.account_balance_outlined,
-                    iconBg: const Color(0xFFE1F5FE),
+                    iconBg: isDark ? const Color(0xFF17324A) : const Color(0xFFE1F5FE),
                     iconColor: const Color(0xFF0288D1),
+                    cardColor: cardColor,
+                    textColor: textColor,
+                    subtitleColor: subtitleColor,
+                    outlinedBorderColor: outlinedBorderColor,
                   ),
                   _buildOtherOptionTile(
                     title: 'Efecty',
                     subtitle: 'Pago en puntos Efecty',
                     icon: Icons.location_on_outlined,
-                    iconBg: const Color(0xFFFFF8E1),
+                    iconBg: isDark ? const Color(0xFF3D371C) : const Color(0xFFFFF8E1),
                     iconColor: const Color(0xFFF57F17),
+                    cardColor: cardColor,
+                    textColor: textColor,
+                    subtitleColor: subtitleColor,
+                    outlinedBorderColor: outlinedBorderColor,
                   ),
                   _buildOtherOptionTile(
                     title: 'SuChance',
                     subtitle: 'Pago en puntos SuChance',
                     icon: Icons.location_on_outlined,
-                    iconBg: const Color(0xFFF3E5F5),
+                    iconBg: isDark ? const Color(0xFF35213D) : const Color(0xFFF3E5F5),
                     iconColor: const Color(0xFF7B1FA2),
+                    cardColor: cardColor,
+                    textColor: textColor,
+                    subtitleColor: subtitleColor,
+                    outlinedBorderColor: outlinedBorderColor,
                   ),
                   _buildOtherOptionTile(
                     title: 'Apple Pay',
                     subtitle: 'Pago rápido con Apple',
                     icon: Icons.phone_iphone_rounded,
-                    iconBg: const Color(0xFFECEFF1),
-                    iconColor: const Color(0xFF37474F),
+                    iconBg: isDark ? const Color(0xFF2A3236) : const Color(0xFFECEFF1),
+                    iconColor: isDark ? Colors.white70 : const Color(0xFF37474F),
+                    cardColor: cardColor,
+                    textColor: textColor,
+                    subtitleColor: subtitleColor,
+                    outlinedBorderColor: outlinedBorderColor,
                   ),
                   _buildOtherOptionTile(
                     title: 'Google Pay',
                     subtitle: 'Pago rápido con Google',
                     icon: Icons.phone_android_rounded,
-                    iconBg: const Color(0xFFE8EAF6),
+                    iconBg: isDark ? const Color(0xFF23244A) : const Color(0xFFE8EAF6),
                     iconColor: const Color(0xFF3F51B5),
+                    cardColor: cardColor,
+                    textColor: textColor,
+                    subtitleColor: subtitleColor,
+                    outlinedBorderColor: outlinedBorderColor,
                   ),
 
                   const SizedBox(height: 16),
@@ -196,7 +241,7 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE0F7FA).withOpacity(0.5),
+                      color: infoCardBg,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
@@ -205,7 +250,7 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFB2EBF2),
+                            color: infoIconBg,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(
@@ -215,7 +260,7 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        const Expanded(
+                        Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -224,15 +269,15 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 14,
-                                  color: Colors.black87,
+                                  color: textColor,
                                 ),
                               ),
-                              SizedBox(height: 4),
+                              const SizedBox(height: 4),
                               Text(
                                 'Tus datos de pago están protegidos con encriptación de nivel bancario. Nunca almacenamos información sensible.',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Colors.black54,
+                                  color: subtitleColor,
                                   height: 1.3,
                                 ),
                               ),
@@ -255,7 +300,6 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
 
   // Widget para tarjetas de "Mis Métodos de Pago"
   Widget _buildSavedMethodCard({
-    required String id,
     required String title,
     required String subtitle,
     required IconData icon,
@@ -263,12 +307,18 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
     required Color iconColor,
     required bool isDefault,
     required VoidCallback onSetDefault,
+    required Color cardColor,
+    required Color textColor,
+    required Color subtitleColor,
+    required Color defaultBadgeBg,
+    required Color dividerColor,
+    required Color setDefaultBtnBg,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
@@ -292,10 +342,10 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
                       children: [
                         Text(
                           title,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 15,
-                            color: Colors.black87,
+                            color: textColor,
                           ),
                         ),
                         if (isDefault) ...[
@@ -303,7 +353,7 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF4EFEA),
+                              color: defaultBadgeBg,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: const Row(
@@ -328,7 +378,7 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
                     const SizedBox(height: 4),
                     Text(
                       subtitle,
-                      style: const TextStyle(fontSize: 13, color: Colors.black54),
+                      style: TextStyle(fontSize: 13, color: subtitleColor),
                     ),
                   ],
                 ),
@@ -337,22 +387,22 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
           ),
           if (!isDefault) ...[
             const SizedBox(height: 12),
-            const Divider(height: 1, color: Color(0xFFF0F0F0)),
+            Divider(height: 1, color: dividerColor),
             const SizedBox(height: 8),
             SizedBox(
               width: double.infinity,
               child: TextButton(
                 onPressed: onSetDefault,
                 style: TextButton.styleFrom(
-                  backgroundColor: const Color(0xFFFAF7F2),
+                  backgroundColor: setDefaultBtnBg,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
                 ),
-                child: const Text(
+                child: Text(
                   'Establecer como predeterminado',
                   style: TextStyle(
-                    color: Colors.black87,
+                    color: textColor,
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
                   ),
@@ -372,12 +422,16 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
     required IconData icon,
     required Color iconBg,
     required Color iconColor,
+    required Color cardColor,
+    required Color textColor,
+    required Color subtitleColor,
+    required Color outlinedBorderColor,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -397,34 +451,34 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
-                    color: Colors.black87,
+                    color: textColor,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
-                  style: const TextStyle(fontSize: 12, color: Colors.black54),
+                  style: TextStyle(fontSize: 12, color: subtitleColor),
                 ),
               ],
             ),
           ),
           OutlinedButton.icon(
             style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: Color(0xFFE5DDD3)),
+              side: BorderSide(color: outlinedBorderColor),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             ),
             onPressed: () {},
-            icon: const Icon(Icons.add, size: 14, color: Colors.black87),
-            label: const Text(
+            icon: Icon(Icons.add, size: 14, color: textColor),
+            label: Text(
               'Agregar',
               style: TextStyle(
-                color: Colors.black87,
+                color: textColor,
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
               ),

@@ -113,9 +113,15 @@ class _WelcomePageState extends State<WelcomePage> {
 
   @override
   Widget build(BuildContext context) {
-    const primaryBrown = Color(0xFFA2784F);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primaryBrown = theme.colorScheme.primary;
     const darkBrown = Color(0xFF634832);
-    const scaffoldBgColor = Color(0xFFFAF7F2);
+    final scaffoldBgColor = theme.scaffoldBackgroundColor;
+    final textColor = theme.colorScheme.onSurface;
+    final subtitleColor = textColor.withOpacity(0.55);
+    final dividerColor = textColor.withOpacity(0.08);
+    final outlinedBtnBg = isDark ? theme.cardColor : Colors.white;
 
     final cartProvider = Provider.of<CartProvider>(context, listen: false);
 
@@ -133,6 +139,8 @@ class _WelcomePageState extends State<WelcomePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // --- SECCIÓN HERO CON IMAGEN DE FONDO, GRADIENTE Y ESTADÍSTICAS ---
+            // Se mantiene con colores fijos a propósito: es la identidad visual de marca
+            // y usa una imagen de fondo, por lo que no debe adaptarse al tema claro/oscuro.
             Container(
               width: double.infinity,
               padding: const EdgeInsets.only(top: 60, bottom: 36, left: 20, right: 20),
@@ -234,6 +242,7 @@ class _WelcomePageState extends State<WelcomePage> {
             ),
 
             // --- TARJETA DE OFERTA ESPECIAL ---
+            // También se mantiene con gradiente fijo (elemento promocional de marca)
             Padding(
               padding: const EdgeInsets.all(20),
               child: Stack(
@@ -385,12 +394,12 @@ class _WelcomePageState extends State<WelcomePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Categorías',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: textColor,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -398,7 +407,7 @@ class _WelcomePageState extends State<WelcomePage> {
                     'Explora nuestro menú',
                     style: TextStyle(
                       fontSize: 13,
-                      color: Colors.black.withOpacity(0.5),
+                      color: subtitleColor,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -422,6 +431,8 @@ class _WelcomePageState extends State<WelcomePage> {
                             ),
                             padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
                             decoration: BoxDecoration(
+                              // Las tarjetas de categoría mantienen su color pastel de marca,
+                              // ya que son de tono claro y sirven como acento visual reconocible.
                               color: cat['bgColor'],
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
@@ -486,19 +497,19 @@ class _WelcomePageState extends State<WelcomePage> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'Lo Más Popular',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                              color: textColor,
                             ),
                           ),
                           Text(
                             'Favoritos de nuestros clientes',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.black.withOpacity(0.5),
+                              color: subtitleColor,
                             ),
                           ),
                         ],
@@ -506,7 +517,7 @@ class _WelcomePageState extends State<WelcomePage> {
                       const Spacer(),
                       TextButton(
                         onPressed: widget.onOrderNow,
-                        child: const Row(
+                        child: Row(
                           children: [
                             Text(
                               'Ver todo',
@@ -516,7 +527,7 @@ class _WelcomePageState extends State<WelcomePage> {
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                            SizedBox(width: 4),
+                            const SizedBox(width: 4),
                             Icon(
                               Icons.arrow_forward_rounded,
                               size: 14,
@@ -568,7 +579,7 @@ class _WelcomePageState extends State<WelcomePage> {
                 children: [
                   Expanded(
                     child: Divider(
-                      color: Colors.black.withOpacity(0.06),
+                      color: dividerColor,
                       thickness: 1,
                     ),
                   ),
@@ -588,7 +599,7 @@ class _WelcomePageState extends State<WelcomePage> {
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 1.2,
-                            color: Colors.black.withOpacity(0.4),
+                            color: subtitleColor,
                           ),
                         ),
                       ],
@@ -596,7 +607,7 @@ class _WelcomePageState extends State<WelcomePage> {
                   ),
                   Expanded(
                     child: Divider(
-                      color: Colors.black.withOpacity(0.06),
+                      color: dividerColor,
                       thickness: 1,
                     ),
                   ),
@@ -612,12 +623,12 @@ class _WelcomePageState extends State<WelcomePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Nuestro Menú Completo',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: textColor,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -625,19 +636,19 @@ class _WelcomePageState extends State<WelcomePage> {
                     'Descubre todas nuestras especialidades artesanales',
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.black.withOpacity(0.5),
+                      color: subtitleColor,
                     ),
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Renderizado condicional si no existen productos en la categoría
                   filteredProducts.isEmpty
-                      ? const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 32),
+                      ? Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 32),
                           child: Center(
                             child: Text(
                               'No hay productos disponibles en esta categoría',
-                              style: TextStyle(color: Colors.grey, fontSize: 14),
+                              style: TextStyle(color: subtitleColor, fontSize: 14),
                             ),
                           ),
                         )
@@ -689,9 +700,9 @@ class _WelcomePageState extends State<WelcomePage> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),
-                    backgroundColor: Colors.white,
+                    backgroundColor: outlinedBtnBg,
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
@@ -702,7 +713,7 @@ class _WelcomePageState extends State<WelcomePage> {
                           fontSize: 13,
                         ),
                       ),
-                      SizedBox(width: 8),
+                      const SizedBox(width: 8),
                       Icon(
                         Icons.arrow_forward_rounded,
                         color: primaryBrown,
