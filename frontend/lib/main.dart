@@ -7,6 +7,7 @@ import 'package:mi_proyecto_cafe/presentation/pages/welcome_page.dart';
 
 // Providers
 import 'package:mi_proyecto_cafe/presentation/state/theme_provider.dart';
+import 'package:mi_proyecto_cafe/presentation/state/font_size_provider.dart';
 import 'package:mi_proyecto_cafe/presentation/state/cart_provider.dart';
 import 'package:mi_proyecto_cafe/presentation/state/auth_provider.dart';
 import 'package:mi_proyecto_cafe/presentation/state/order_provider.dart';
@@ -17,6 +18,7 @@ void main() {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => FontSizeProvider()),
         ChangeNotifierProvider(create: (_) => CartProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => OrderProvider()),
@@ -34,6 +36,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     // Escucha activamente el ThemeProvider para redibujar la app al cambiar de modo
     final themeProvider = context.watch<ThemeProvider>();
+    // Escucha activamente el FontSizeProvider para redibujar la app al cambiar el tamaño de letra
+    final fontSizeProvider = context.watch<FontSizeProvider>();
 
     return MaterialApp(
       title: 'SOMOS CafeApp',
@@ -41,6 +45,16 @@ class MyApp extends StatelessWidget {
       theme: themeProvider.lightTheme,
       darkTheme: themeProvider.darkTheme,
       themeMode: themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+      // El builder envuelve TODA la app (cualquier pantalla) en un MediaQuery
+      // con el factor de escala de texto elegido en Configuración.
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            textScaler: TextScaler.linear(fontSizeProvider.scaleFactor),
+          ),
+          child: child!,
+        );
+      },
       home: const RootDecider(),
     );
   }

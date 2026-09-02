@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../state/theme_provider.dart';
+import '../state/font_size_provider.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -10,13 +11,14 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  String _selectedFontSize = 'Mediano';
   String _selectedLanguage = 'Español';
 
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDark = themeProvider.isDarkMode;
+    // Escucha el provider global de tamaño de letra
+    final fontSizeProvider = context.watch<FontSizeProvider>();
 
     // Paleta dinámica basada en la imagen
     final primaryBrown = const Color(0xFFA2784F);
@@ -87,6 +89,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             const SizedBox(height: 12),
             
+            // --- TAMAÑO DE TEXTO (CAMBIA TODAS LAS PÁGINAS) ---
             _buildCardTile(
               cardColor: cardBgColor,
               iconBgColor: iconBgColor,
@@ -104,7 +107,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
-                    value: _selectedFontSize,
+                    value: fontSizeProvider.fontSize,
                     dropdownColor: cardBgColor,
                     isDense: true,
                     style: TextStyle(color: textColor, fontSize: 13, fontWeight: FontWeight.w500),
@@ -112,7 +115,10 @@ class _SettingsPageState extends State<SettingsPage> {
                         .map((val) => DropdownMenuItem(value: val, child: Text(val)))
                         .toList(),
                     onChanged: (val) {
-                      if (val != null) setState(() => _selectedFontSize = val);
+                      if (val != null) {
+                        // Cambia el estado global: afecta el texto de toda la app
+                        context.read<FontSizeProvider>().setFontSize(val);
+                      }
                     },
                   ),
                 ),

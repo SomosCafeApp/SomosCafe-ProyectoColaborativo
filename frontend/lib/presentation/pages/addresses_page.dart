@@ -26,6 +26,10 @@ class AddressesPage extends StatefulWidget {
 class _AddressesPageState extends State<AddressesPage> {
   bool _showForm = false;
 
+  // Guarda el id de la dirección que se está editando.
+  // Si es null, el formulario está en modo "agregar nueva".
+  String? _editingId;
+
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
 
@@ -46,7 +50,9 @@ class _AddressesPageState extends State<AddressesPage> {
     ),
   ];
 
-  void _addAddress() {
+  // Guarda la dirección: si _editingId tiene valor, actualiza esa
+  // dirección existente; si es null, agrega una nueva.
+  void _saveAddress() {
     if (_nameController.text.trim().isEmpty || _addressController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Por favor completa los campos')),
@@ -55,18 +61,54 @@ class _AddressesPageState extends State<AddressesPage> {
     }
 
     setState(() {
-      _addresses.add(
-        AddressItem(
-          id: DateTime.now().toString(),
-          name: _nameController.text.trim(),
-          address: _addressController.text.trim(),
-          details: 'Ubicación personalizada',
-          mapLabel: _nameController.text.trim(),
-        ),
-      );
+      if (_editingId != null) {
+        final index = _addresses.indexWhere((element) => element.id == _editingId);
+        if (index != -1) {
+          final anterior = _addresses[index];
+          _addresses[index] = AddressItem(
+            id: anterior.id,
+            name: _nameController.text.trim(),
+            address: _addressController.text.trim(),
+            details: anterior.details,
+            mapLabel: _nameController.text.trim(),
+          );
+        }
+      } else {
+        _addresses.add(
+          AddressItem(
+            id: DateTime.now().toString(),
+            name: _nameController.text.trim(),
+            address: _addressController.text.trim(),
+            details: 'Ubicación personalizada',
+            mapLabel: _nameController.text.trim(),
+          ),
+        );
+      }
       _nameController.clear();
       _addressController.clear();
       _showForm = false;
+      _editingId = null;
+    });
+  }
+
+  // Abre el formulario precargado con los datos de la dirección
+  // que se quiere editar.
+  void _startEdit(AddressItem item) {
+    setState(() {
+      _editingId = item.id;
+      _nameController.text = item.name;
+      _addressController.text = item.address;
+      _showForm = true;
+    });
+  }
+
+  // Cierra el formulario y limpia el estado de edición.
+  void _closeForm() {
+    setState(() {
+      _showForm = false;
+      _editingId = null;
+      _nameController.clear();
+      _addressController.clear();
     });
   }
 
@@ -170,7 +212,7 @@ class _AddressesPageState extends State<AddressesPage> {
                       ),
                     ),
 
-                  // Formulario de Agregar (Estilo 1)
+                  // Formulario de Agregar / Editar
                   if (_showForm) ...[
                     _buildFormCard(primaryBrown, cardColor, textColor, hintColor, inputFillColor, closeBtnBg, cancelBorderColor),
                     const SizedBox(height: 20),
@@ -217,8 +259,10 @@ class _AddressesPageState extends State<AddressesPage> {
     );
   }
 
-  // --- FORMULARIO ---
+  // --- FORMULARIO (agregar o editar) ---
   Widget _buildFormCard(Color primaryBrown, Color cardColor, Color textColor, Color hintColor, Color inputFillColor, Color closeBtnBg, Color cancelBorderColor) {
+    final esEdicion = _editingId != null;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -239,7 +283,7 @@ class _AddressesPageState extends State<AddressesPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Agregar Nueva Dirección',
+                esEdicion ? 'Editar Dirección' : 'Agregar Nueva Dirección',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -247,7 +291,7 @@ class _AddressesPageState extends State<AddressesPage> {
                 ),
               ),
               GestureDetector(
-                onTap: () => setState(() => _showForm = false),
+                onTap: _closeForm,
                 child: Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
@@ -333,7 +377,7 @@ class _AddressesPageState extends State<AddressesPage> {
                         borderRadius: BorderRadius.circular(30),
                       ),
                     ),
-                    onPressed: () => setState(() => _showForm = false),
+                    onPressed: _closeForm,
                     child: Text(
                       'Cancelar',
                       style: TextStyle(
@@ -356,10 +400,10 @@ class _AddressesPageState extends State<AddressesPage> {
                         borderRadius: BorderRadius.circular(30),
                       ),
                     ),
-                    onPressed: _addAddress,
-                    child: const Text(
-                      'Guardar',
-                      style: TextStyle(
+                    onPressed: _saveAddress,
+                    child: Text(
+                      esEdicion ? 'Guardar Cambios' : 'Guardar',
+                      style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
@@ -524,7 +568,7 @@ class _AddressesPageState extends State<AddressesPage> {
                         bgColor: actionBtnBg,
                         textColor: textColor,
                         borderColor: Colors.transparent,
-                        onTap: () {},
+                        onTap: () => _startEdit(item),
                       ),
                     ),
                     const SizedBox(width: 8),
