@@ -3,28 +3,37 @@ import 'package:provider/provider.dart';
 import '../components/product_card.dart';
 import '../state/cart_provider.dart';
 import '../state/favorites_provider.dart';
+import '../state/theme_provider.dart';
 
 class FavoritesPage extends StatelessWidget {
   const FavoritesPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    const primaryBrown = Color(0xFF9E7247);
-    const bgCanvas = Color(0xFFFAF7F2);
+    final themeProvider = context.watch<ThemeProvider>();
+    final isDark = themeProvider.isDarkMode;
+
+    // Paleta exacta de la imagen
+    final headerBgColor = isDark ? const Color(0xFFA2784F) : const Color(0xFF9E7247);
+    final scaffoldBgColor = isDark ? const Color(0xFF1E1410) : const Color(0xFFFAF7F2);
+    final emptyCircleBg = isDark ? const Color(0xFF2D211B) : const Color(0xFFEBE0D3);
+    
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final subtitleColor = isDark ? Colors.white70 : Colors.black54;
 
     final favoritesProvider = context.watch<FavoritesProvider>();
     final favorites = favoritesProvider.favorites;
     final cartProvider = context.read<CartProvider>();
 
     return Scaffold(
-      backgroundColor: bgCanvas,
+      backgroundColor: scaffoldBgColor,
       body: Column(
         children: [
           // --- HEADER SUPERIOR ---
           Container(
             padding: const EdgeInsets.only(top: 50, bottom: 20, left: 16, right: 16),
             width: double.infinity,
-            color: primaryBrown,
+            color: headerBgColor,
             child: Row(
               children: [
                 IconButton(
@@ -67,51 +76,47 @@ class FavoritesPage extends StatelessWidget {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          // Círculo con Icono de Corazón
                           Container(
                             width: 130,
                             height: 130,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFEBE0D3),
+                            decoration: BoxDecoration(
+                              color: emptyCircleBg,
                               shape: BoxShape.circle,
                             ),
                             child: const Center(
                               child: Icon(
                                 Icons.favorite_border_rounded,
                                 size: 58,
-                                color: Color(0xFF7A5835),
+                                color: Color(0xFFA2784F),
                               ),
                             ),
                           ),
                           const SizedBox(height: 28),
 
-                          // Título
-                          const Text(
+                          Text(
                             'No tienes favoritos',
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                              color: textColor,
                             ),
                           ),
                           const SizedBox(height: 12),
 
-                          // Descripción
-                          const Text(
+                          Text(
                             'Explora nuestro menú y marca tus productos favoritos para encontrarlos fácilmente aquí',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 14,
-                              color: Colors.black54,
+                              color: subtitleColor,
                               height: 1.4,
                             ),
                           ),
                           const SizedBox(height: 28),
 
-                          // Botón Explorar Menú
                           ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: primaryBrown,
+                              backgroundColor: const Color(0xFFA2784F),
                               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(20),
@@ -165,4 +170,4 @@ class FavoritesPage extends StatelessWidget {
       ),
     );
   }
-}
+} 

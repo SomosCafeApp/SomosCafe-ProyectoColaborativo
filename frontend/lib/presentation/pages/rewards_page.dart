@@ -1,16 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../state/theme_provider.dart';
 
 class RewardsPage extends StatelessWidget {
   const RewardsPage({super.key});
 
-  static const activeBrown = Color(0xFFA2784F);
-  static const darkBrown = Color(0xFF5D4037);
-  static const lightBg = Color(0xFFFAF7F2);
-
   @override
   Widget build(BuildContext context) {
+    final themeProvider = context.watch<ThemeProvider>();
+    final isDark = themeProvider.isDarkMode;
+
+    final headerBgColor = isDark ? const Color(0xFFA2784F) : const Color(0xFF8C6E54);
+    final scaffoldBgColor = isDark ? const Color(0xFF1E1410) : const Color(0xFFFAF7F2);
+    final cardBgColor = isDark ? const Color(0xFF2D211B) : Colors.white;
+    final iconBgColor = isDark ? const Color(0xFF3D2E26) : const Color(0xFFF7F2EB);
+    
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final subtitleColor = isDark ? Colors.white70 : Colors.black54;
+
     return Scaffold(
-      backgroundColor: lightBg,
+      backgroundColor: scaffoldBgColor,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
@@ -19,9 +28,9 @@ class RewardsPage extends StatelessWidget {
               // HEADER CON PUNTOS
               Container(
                 padding: const EdgeInsets.all(20),
-                decoration: const BoxDecoration(
-                  color: Color(0xFF8C6E54),
-                  borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+                decoration: BoxDecoration(
+                  color: headerBgColor,
+                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -46,7 +55,10 @@ class RewardsPage extends StatelessWidget {
                             ),
                             Text(
                               'Gana puntos y obtén premios',
-                              style: TextStyle(color: Colors.white70, fontSize: 13),
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 13,
+                              ),
                             ),
                           ],
                         ),
@@ -56,7 +68,7 @@ class RewardsPage extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.white.withAlpha(38),
+                        color: Colors.white.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Column(
@@ -118,16 +130,16 @@ class RewardsPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Row(
+                    Row(
                       children: [
-                        Icon(Icons.auto_awesome, color: activeBrown, size: 18),
-                        SizedBox(width: 6),
+                        const Icon(Icons.auto_awesome, color: Color(0xFFA2784F), size: 18),
+                        const SizedBox(width: 6),
                         Text(
                           'Disponibles para Ti',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: darkBrown,
+                            color: textColor,
                           ),
                         ),
                       ],
@@ -135,9 +147,12 @@ class RewardsPage extends StatelessWidget {
                     const SizedBox(height: 12),
 
                     _buildRewardCard(
+                      cardBgColor: cardBgColor,
+                      textColor: textColor,
+                      subtitleColor: subtitleColor,
                       icon: Icons.percent,
-                      iconBg: Colors.green.shade50,
-                      iconColor: Colors.green,
+                      iconBg: isDark ? const Color(0xFF1E3A29) : Colors.green.shade50,
+                      iconColor: isDark ? Colors.green.shade300 : Colors.green,
                       title: '30% de Descuento',
                       subtitle: 'En tu próxima compra',
                       points: 200,
@@ -146,9 +161,12 @@ class RewardsPage extends StatelessWidget {
                     const SizedBox(height: 12),
 
                     _buildRewardCard(
+                      cardBgColor: cardBgColor,
+                      textColor: textColor,
+                      subtitleColor: subtitleColor,
                       icon: Icons.card_giftcard,
-                      iconBg: Colors.pink.shade50,
-                      iconColor: Colors.pink,
+                      iconBg: isDark ? const Color(0xFF3D212A) : Colors.pink.shade50,
+                      iconColor: isDark ? Colors.pinkAccent.shade100 : Colors.pink,
                       title: '2x1 en Postres',
                       subtitle: 'Compra uno y lleva otro gratis',
                       points: 350,
@@ -157,16 +175,16 @@ class RewardsPage extends StatelessWidget {
 
                     const SizedBox(height: 20),
 
-                    const Row(
+                    Row(
                       children: [
-                        Icon(Icons.bookmark_outline, color: activeBrown, size: 18),
-                        SizedBox(width: 6),
+                        const Icon(Icons.bookmark_outline, color: Color(0xFFA2784F), size: 18),
+                        const SizedBox(width: 6),
                         Text(
                           'Sigue Acumulando',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: darkBrown,
+                            color: textColor,
                           ),
                         ),
                       ],
@@ -175,47 +193,79 @@ class RewardsPage extends StatelessWidget {
 
                     Card(
                       elevation: 0,
-                      color: Colors.white,
+                      color: cardBgColor,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      child: const ListTile(
+                      child: ListTile(
                         leading: CircleAvatar(
-                          backgroundColor: Color(0xFFFFF8E1),
-                          child: Icon(Icons.local_cafe_outlined, color: activeBrown),
+                          backgroundColor: iconBgColor,
+                          child: const Icon(Icons.local_cafe_outlined, color: Color(0xFFA2784F)),
                         ),
-                        title: Text('Café Gratis', style: TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: Text('Cualquier café de tamaño medio\n⭐ 50 puntos más'),
+                        title: Text(
+                          'Café Gratis',
+                          style: TextStyle(fontWeight: FontWeight.bold, color: textColor),
+                        ),
+                        subtitle: Text(
+                          'Cualquier café de tamaño medio\n⭐ 50 puntos más',
+                          style: TextStyle(color: subtitleColor),
+                        ),
                       ),
                     ),
 
                     const SizedBox(height: 20),
 
+                    // CAJA "CÓMO GANAR PUNTOS"
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFFDE7),
+                        color: cardBgColor,
                         borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: isDark ? const Color(0xFF3D2E26) : const Color(0xFFEBE0D3),
+                          width: 1,
+                        ),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Row(
-                            children: [
-                              Icon(Icons.auto_awesome, color: Colors.orange, size: 18),
+                          Row(
+                            children: const [
+                              Icon(Icons.auto_awesome, color: Colors.amber, size: 18),
                               SizedBox(width: 6),
                               Text(
                                 'Cómo Ganar Puntos',
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
-                                  color: darkBrown,
+                                  color: Color(0xFFF3E5D8),
                                 ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 12),
-                          _buildPointInstruction(Icons.local_cafe, '10 puntos', 'por cada compra'),
-                          _buildPointInstruction(Icons.star_outline, '50 puntos', 'por cada reseña'),
-                          _buildPointInstruction(Icons.card_giftcard, '100 puntos', 'por referir amigos'),
+                          _buildPointInstruction(
+                            Icons.local_cafe_outlined,
+                            '10 puntos',
+                            'por cada compra',
+                            iconBgColor,
+                            textColor,
+                            subtitleColor,
+                          ),
+                          _buildPointInstruction(
+                            Icons.star_outline,
+                            '50 puntos',
+                            'por cada reseña',
+                            iconBgColor,
+                            textColor,
+                            subtitleColor,
+                          ),
+                          _buildPointInstruction(
+                            Icons.card_giftcard,
+                            '100 puntos',
+                            'por referir amigos',
+                            iconBgColor,
+                            textColor,
+                            subtitleColor,
+                          ),
                         ],
                       ),
                     ),
@@ -230,6 +280,9 @@ class RewardsPage extends StatelessWidget {
   }
 
   static Widget _buildRewardCard({
+    required Color cardBgColor,
+    required Color textColor,
+    required Color subtitleColor,
     required IconData icon,
     required Color iconBg,
     required Color iconColor,
@@ -241,11 +294,11 @@ class RewardsPage extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBgColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(10),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -268,20 +321,40 @@ class RewardsPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                    Text(subtitle, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        color: textColor,
+                      ),
+                    ),
+                    Text(
+                      subtitle,
+                      style: TextStyle(color: subtitleColor, fontSize: 12),
+                    ),
                     const SizedBox(height: 4),
-                    Text('⭐ $points puntos', style: const TextStyle(color: darkBrown, fontWeight: FontWeight.w600, fontSize: 12)),
+                    Text(
+                      '⭐ $points puntos',
+                      style: const TextStyle(
+                        color: Color(0xFFA2784F),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                      ),
+                    ),
                   ],
                 ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.orange.shade50,
+                  color: Colors.orange.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text('⏰ $expiry', style: const TextStyle(color: Colors.orange, fontSize: 11)),
+                child: Text(
+                  '⏰ $expiry',
+                  style: const TextStyle(color: Colors.orange, fontSize: 11),
+                ),
               ),
             ],
           ),
@@ -291,11 +364,16 @@ class RewardsPage extends StatelessWidget {
             child: ElevatedButton(
               onPressed: () {},
               style: ElevatedButton.styleFrom(
-                backgroundColor: activeBrown,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                backgroundColor: const Color(0xFFA2784F),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 elevation: 0,
               ),
-              child: const Text('Canjear Ahora', style: TextStyle(color: Colors.white)),
+              child: const Text(
+                'Canjear Ahora',
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ),
         ],
@@ -303,19 +381,29 @@ class RewardsPage extends StatelessWidget {
     );
   }
 
-  static Widget _buildPointInstruction(IconData icon, String boldText, String normalText) {
+  static Widget _buildPointInstruction(
+    IconData icon,
+    String boldText,
+    String normalText,
+    Color circleBg,
+    Color textColor,
+    Color subtitleColor,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: Row(
         children: [
           CircleAvatar(
             radius: 16,
-            backgroundColor: Colors.orange.shade100,
-            child: Icon(icon, size: 16, color: activeBrown),
+            backgroundColor: circleBg,
+            child: Icon(icon, size: 16, color: Colors.amber), // Ícono amarillo como la captura
           ),
           const SizedBox(width: 12),
-          Text(boldText, style: const TextStyle(fontWeight: FontWeight.bold, color: darkBrown)),
-          Text(' $normalText', style: const TextStyle(color: Colors.black87)),
+          Text(
+            boldText,
+            style: TextStyle(fontWeight: FontWeight.bold, color: textColor),
+          ),
+          Text(' $normalText', style: TextStyle(color: subtitleColor)),
         ],
       ),
     );
