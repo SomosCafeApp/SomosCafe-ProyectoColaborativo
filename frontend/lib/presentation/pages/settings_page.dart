@@ -18,9 +18,8 @@ class _SettingsPageState extends State<SettingsPage> {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDark = themeProvider.isDarkMode;
 
-    // Paleta dinámica basada en la imagen
-    final primaryBrown = const Color(0xFFA2784F);
-    final darkBrown = isDark ? const Color(0xFFC3A382) : const Color(0xFF634832);
+    // Paleta unificada según la app
+    const primaryBrown = Color(0xFFA2784F);
     final scaffoldBgColor = isDark ? const Color(0xFF1E1410) : const Color(0xFFFAF7F2);
     final cardBgColor = isDark ? const Color(0xFF2D211B) : Colors.white;
     final iconBgColor = isDark ? const Color(0xFF3D2E26) : const Color(0xFFF7F2EB);
@@ -30,19 +29,19 @@ class _SettingsPageState extends State<SettingsPage> {
     return Scaffold(
       backgroundColor: scaffoldBgColor,
       appBar: AppBar(
-        backgroundColor: darkBrown,
+        backgroundColor: primaryBrown,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: isDark ? Colors.black : Colors.white),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+          children: const [
             Text(
               'Configuración',
               style: TextStyle(
-                color: isDark ? Colors.black : Colors.white,
+                color: Colors.white,
                 fontWeight: FontWeight.bold,
                 fontSize: 20,
               ),
@@ -50,7 +49,7 @@ class _SettingsPageState extends State<SettingsPage> {
             Text(
               'Personaliza tu experiencia',
               style: TextStyle(
-                color: isDark ? Colors.black87 : Colors.white70,
+                color: Colors.white70,
                 fontSize: 12,
               ),
             ),
@@ -66,7 +65,6 @@ class _SettingsPageState extends State<SettingsPage> {
           children: [
             _buildSectionHeader('Apariencia', textColor),
             
-            // --- BOTÓN MODO OSCURO (CAMBIA TODAS LAS PÁGINAS) ---
             _buildCardTile(
               cardColor: cardBgColor,
               iconBgColor: iconBgColor,
@@ -80,7 +78,6 @@ class _SettingsPageState extends State<SettingsPage> {
                 activeColor: Colors.white,
                 activeTrackColor: primaryBrown,
                 onChanged: (val) {
-                  // Cambia el estado global y reconstruye la app completa
                   themeProvider.toggleTheme(val);
                 },
               ),
@@ -98,7 +95,7 @@ class _SettingsPageState extends State<SettingsPage> {
               trailing: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E1410) : scaffoldBgColor,
+                  color: isDark ? const Color(0xFF1E1410) : const Color(0xFFFAF7F2),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: isDark ? Colors.white24 : Colors.black12),
                 ),
@@ -133,7 +130,7 @@ class _SettingsPageState extends State<SettingsPage> {
               trailing: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E1410) : scaffoldBgColor,
+                  color: isDark ? const Color(0xFF1E1410) : const Color(0xFFFAF7F2),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: isDark ? Colors.white24 : Colors.black12),
                 ),

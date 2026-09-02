@@ -10,7 +10,7 @@ class RewardsPage extends StatelessWidget {
     final themeProvider = context.watch<ThemeProvider>();
     final isDark = themeProvider.isDarkMode;
 
-    final headerBgColor = isDark ? const Color(0xFFA2784F) : const Color(0xFF8C6E54);
+    const headerBgColor = Color(0xFFA2784F);
     final scaffoldBgColor = isDark ? const Color(0xFF1E1410) : const Color(0xFFFAF7F2);
     final cardBgColor = isDark ? const Color(0xFF2D211B) : Colors.white;
     final iconBgColor = isDark ? const Color(0xFF3D2E26) : const Color(0xFFF7F2EB);
@@ -28,9 +28,9 @@ class RewardsPage extends StatelessWidget {
               // HEADER CON PUNTOS
               Container(
                 padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: headerBgColor,
-                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
+                  borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -228,15 +228,15 @@ class RewardsPage extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
-                            children: const [
-                              Icon(Icons.auto_awesome, color: Colors.amber, size: 18),
-                              SizedBox(width: 6),
+                            children: [
+                              const Icon(Icons.auto_awesome, color: Colors.amber, size: 18),
+                              const SizedBox(width: 6),
                               Text(
                                 'Cómo Ganar Puntos',
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFFF3E5D8),
+                                  color: textColor,
                                 ),
                               ),
                             ],
@@ -396,7 +396,7 @@ class RewardsPage extends StatelessWidget {
           CircleAvatar(
             radius: 16,
             backgroundColor: circleBg,
-            child: Icon(icon, size: 16, color: Colors.amber), // Ícono amarillo como la captura
+            child: Icon(icon, size: 16, color: Colors.amber),
           ),
           const SizedBox(width: 12),
           Text(

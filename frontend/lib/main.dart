@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 
 // Módulos y páginas
 import 'package:mi_proyecto_cafe/presentation/pages/main_navigation_screen.dart';
-import 'package:mi_proyecto_cafe/presentation/pages/welcome_page.dart';
 
 // Providers
 import 'package:mi_proyecto_cafe/presentation/state/theme_provider.dart';
@@ -32,7 +31,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Escucha activamente el ThemeProvider para redibujar la app al cambiar de modo
     final themeProvider = context.watch<ThemeProvider>();
 
     return MaterialApp(
@@ -54,24 +52,25 @@ class RootDecider extends StatefulWidget {
 }
 
 class _RootDeciderState extends State<RootDecider> {
-  bool _guestAcceptedWelcome = false;
-
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
 
-    // Si el usuario está autenticado o presionó 'Pedir ahora' en el WelcomePage,
-    // se le redirige al contenedor principal con la barra de navegación inferior adaptativa
-    if (auth.isLoggedIn || _guestAcceptedWelcome) {
-      return const MainNavigationScreen();
+    // 1. Previene el parpadeo mientras AuthProvider revisa la sesión
+    if (auth.isLoading) {
+      return Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        body: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
     }
 
-    return WelcomePage(
-      onOrderNow: () {
-        setState(() {
-          _guestAcceptedWelcome = true;
-        });
-      },
+    // 2. Carga MainNavigationScreen desde el inicio enviando la clave única.
+    // Al renderizar MainNavigationScreen con el Scaffold completo, el BottomBar 
+    // estará disponible inmediatamente sin importar el estado de autenticación.
+    return const MainNavigationScreen(
+      key: ValueKey('MainNavigationScreen'),
     );
   }
 }

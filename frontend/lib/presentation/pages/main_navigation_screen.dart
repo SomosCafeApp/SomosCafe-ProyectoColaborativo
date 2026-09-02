@@ -19,12 +19,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
 
   void _changeTab(int index) {
-    setState(() {
-      _currentIndex = index;
-    });
+    if (_currentIndex != index) {
+      setState(() {
+        _currentIndex = index;
+      });
+    }
   }
 
-  final List<Map<String, dynamic>> _navItems = [
+  final List<Map<String, dynamic>> _navItems = const [
     {'icon': Icons.home_outlined, 'activeIcon': Icons.home_outlined, 'label': 'Inicio'},
     {'icon': Icons.menu_outlined, 'activeIcon': Icons.menu_outlined, 'label': 'Menú'},
     {'icon': Icons.search_outlined, 'activeIcon': Icons.search_outlined, 'label': 'Buscar'},
@@ -36,7 +38,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
     
-    // Obtenemos los temas y colores actuales dinámicamente
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -45,7 +46,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     final borderColor = isDark ? const Color(0xFF2C1E18) : const Color(0xFFEEEEEE);
     final inactiveColor = isDark ? Colors.white54 : const Color(0xFF757575);
 
-    // Exactamente 5 elementos correspondientes a los botones de navegación
+    // Mantenemos la lista declarada reactivamente
     final List<Widget> pages = [
       WelcomePage(onOrderNow: () => _changeTab(1)),
       const HomePage(),
@@ -55,7 +56,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           ? const ProfilePage()
           : LoginPage(
               onRegisterTap: () {
-                _changeTab(4); // Redirige a la pestaña de perfil
+                _changeTab(4);
               },
             ),
     ];
@@ -71,47 +72,49 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         child: Container(
           height: 65,
           decoration: BoxDecoration(
-            color: navBackgroundColor, // 👈 Fondo dinámico
+            color: navBackgroundColor,
             border: Border(
-              top: BorderSide(color: borderColor, width: 1), // 👈 Borde dinámico
+              top: BorderSide(color: borderColor, width: 1),
             ),
           ),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround, // 👈 Corregido
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: List.generate(_navItems.length, (index) {
               final isSelected = _currentIndex == index;
               final item = _navItems[index];
 
-              return GestureDetector(
-                onTap: () => _changeTab(index),
-                behavior: HitTestBehavior.opaque,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center, // 👈 Corregido
-                  children: [
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      width: 56,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: isSelected ? activeColor : Colors.transparent, // 👈 Píldora activa dinámica
-                        borderRadius: BorderRadius.circular(16),
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () => _changeTab(index),
+                  behavior: HitTestBehavior.opaque,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        width: 56,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: isSelected ? activeColor : Colors.transparent,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Icon(
+                          isSelected ? item['activeIcon'] : item['icon'],
+                          color: isSelected ? Colors.white : inactiveColor,
+                          size: 22,
+                        ),
                       ),
-                      child: Icon(
-                        isSelected ? item['activeIcon'] : item['icon'],
-                        color: isSelected ? Colors.white : inactiveColor, // 👈 Icono dinámico
-                        size: 22,
+                      const SizedBox(height: 2),
+                      Text(
+                        item['label'],
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                          color: isSelected ? activeColor : inactiveColor,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      item['label'],
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                        color: isSelected ? activeColor : inactiveColor, // 👈 Texto dinámico
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               );
             }),
