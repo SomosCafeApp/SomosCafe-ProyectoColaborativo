@@ -1,6 +1,7 @@
 import User from "../models/userModel.js";
 import EmailVerification from "../models/emailVerificationModel.js";
 
+<<<<<<< HEAD
 import nodemailer from "nodemailer";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
@@ -31,6 +32,18 @@ const transporter = nodemailer.createTransport({
 });
 
 // ===================================
+=======
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+
+import {
+    sendVerificationEmail
+} from "../utils/mailer.js";
+
+dotenv.config();
+
+// ===================================
+>>>>>>> main
 // GENERATE VERIFICATION CODE
 // ===================================
 
@@ -43,6 +56,7 @@ const generateVerificationCode = () => {
 };
 
 // ===================================
+<<<<<<< HEAD
 // SEND VERIFICATION EMAIL
 // ===================================
 
@@ -212,6 +226,8 @@ const sendVerificationEmail = async (
 };
 
 // ===================================
+=======
+>>>>>>> main
 // REQUEST EMAIL VERIFICATION
 // ===================================
 
@@ -237,6 +253,13 @@ export const requestEmailVerification =
 
             }
 
+<<<<<<< HEAD
+=======
+            // ===================================
+            // NORMALIZE EMAIL
+            // ===================================
+
+>>>>>>> main
             const normalizedEmail =
                 email
                     .trim()
@@ -308,6 +331,7 @@ export const requestEmailVerification =
             // SAVE VERIFICATION
             // ===================================
 
+<<<<<<< HEAD
             await EmailVerification.findOneAndUpdate(
 
                 {
@@ -342,6 +366,68 @@ export const requestEmailVerification =
                 normalizedEmail,
                 code
             );
+=======
+            const verification =
+                await EmailVerification.findOneAndUpdate(
+
+                    {
+                        email:
+                            normalizedEmail
+                    },
+
+                    {
+                        email:
+                            normalizedEmail,
+
+                        code,
+
+                        expiresAt
+                    },
+
+                    {
+                        upsert: true,
+
+                        new: true,
+
+                        setDefaultsOnInsert: true
+                    }
+
+                );
+
+            // ===================================
+            // SEND EMAIL WITH BREVO
+            // ===================================
+
+            try {
+
+                await sendVerificationEmail(
+                    normalizedEmail,
+                    code
+                );
+
+            } catch (emailError) {
+
+                // Remove pending verification
+                // if Brevo fails.
+
+                await EmailVerification.deleteOne({
+                    _id: verification._id
+                });
+
+                console.error(
+                    "❌ Brevo could not send verification email:",
+                    emailError
+                );
+
+                return res.status(502).json({
+
+                    message:
+                        "Could not send verification email"
+
+                });
+
+            }
+>>>>>>> main
 
             console.log(
                 `📧 Verification email sent to ${normalizedEmail}`
@@ -354,7 +440,14 @@ export const requestEmailVerification =
             return res.status(200).json({
 
                 message:
+<<<<<<< HEAD
                     "Verification code sent successfully"
+=======
+                    "Verification code sent successfully",
+
+                email:
+                    normalizedEmail
+>>>>>>> main
 
             });
 
@@ -411,12 +504,44 @@ export const verifyEmail =
 
             }
 
+<<<<<<< HEAD
+=======
+            // ===================================
+            // NORMALIZE EMAIL
+            // ===================================
+
+>>>>>>> main
             const normalizedEmail =
                 email
                     .trim()
                     .toLowerCase();
 
             // ===================================
+<<<<<<< HEAD
+=======
+            // VALIDATE EMAIL FORMAT
+            // ===================================
+
+            const emailRegex =
+                /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            if (
+                !emailRegex.test(
+                    normalizedEmail
+                )
+            ) {
+
+                return res.status(400).json({
+
+                    message:
+                        "Invalid email format"
+
+                });
+
+            }
+
+            // ===================================
+>>>>>>> main
             // FIND VERIFICATION
             // ===================================
 
@@ -427,10 +552,20 @@ export const verifyEmail =
                         normalizedEmail,
 
                     code:
+<<<<<<< HEAD
                         code.toString(),
 
                     expiresAt: {
                         $gt: new Date()
+=======
+                        code.toString().trim(),
+
+                    expiresAt: {
+
+                        $gt:
+                            new Date()
+
+>>>>>>> main
                     }
 
                 });
@@ -468,7 +603,12 @@ export const verifyEmail =
                     process.env.JWT_SECRET,
 
                     {
+<<<<<<< HEAD
                         expiresIn: "15m"
+=======
+                        expiresIn:
+                            "15m"
+>>>>>>> main
                     }
 
                 );
@@ -548,12 +688,44 @@ export const resendVerificationCode =
 
             }
 
+<<<<<<< HEAD
+=======
+            // ===================================
+            // NORMALIZE EMAIL
+            // ===================================
+
+>>>>>>> main
             const normalizedEmail =
                 email
                     .trim()
                     .toLowerCase();
 
             // ===================================
+<<<<<<< HEAD
+=======
+            // VALIDATE EMAIL FORMAT
+            // ===================================
+
+            const emailRegex =
+                /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            if (
+                !emailRegex.test(
+                    normalizedEmail
+                )
+            ) {
+
+                return res.status(400).json({
+
+                    message:
+                        "Invalid email format"
+
+                });
+
+            }
+
+            // ===================================
+>>>>>>> main
             // CHECK IF USER ALREADY EXISTS
             // ===================================
 
@@ -577,12 +749,45 @@ export const resendVerificationCode =
             }
 
             // ===================================
+<<<<<<< HEAD
+=======
+            // CHECK PENDING VERIFICATION
+            // ===================================
+
+            const existingVerification =
+                await EmailVerification.findOne({
+
+                    email:
+                        normalizedEmail
+
+                });
+
+            if (!existingVerification) {
+
+                return res.status(404).json({
+
+                    message:
+                        "No pending email verification was found for this email"
+
+                });
+
+            }
+
+            // ===================================
+>>>>>>> main
             // GENERATE NEW CODE
             // ===================================
 
             const code =
                 generateVerificationCode();
 
+<<<<<<< HEAD
+=======
+            // ===================================
+            // NEW EXPIRATION
+            // ===================================
+
+>>>>>>> main
             const expiresAt =
                 new Date(
                     Date.now() +
@@ -593,6 +798,7 @@ export const resendVerificationCode =
             // UPDATE VERIFICATION
             // ===================================
 
+<<<<<<< HEAD
             await EmailVerification.findOneAndUpdate(
 
                 {
@@ -627,6 +833,42 @@ export const resendVerificationCode =
                 normalizedEmail,
                 code
             );
+=======
+            existingVerification.code =
+                code;
+
+            existingVerification.expiresAt =
+                expiresAt;
+
+            await existingVerification.save();
+
+            // ===================================
+            // SEND EMAIL WITH BREVO
+            // ===================================
+
+            try {
+
+                await sendVerificationEmail(
+                    normalizedEmail,
+                    code
+                );
+
+            } catch (emailError) {
+
+                console.error(
+                    "❌ Brevo could not resend verification email:",
+                    emailError
+                );
+
+                return res.status(502).json({
+
+                    message:
+                        "Could not send verification email"
+
+                });
+
+            }
+>>>>>>> main
 
             console.log(
                 `📧 New verification code sent to ${normalizedEmail}`
@@ -662,4 +904,8 @@ export const resendVerificationCode =
 
         }
 
+<<<<<<< HEAD
     };
+=======
+    };
+>>>>>>> main

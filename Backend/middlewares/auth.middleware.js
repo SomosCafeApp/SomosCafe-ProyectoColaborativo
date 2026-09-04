@@ -3,6 +3,10 @@ import jwt from "jsonwebtoken";
 // ===================================
 // VERIFY JWT TOKEN
 // ===================================
+<<<<<<< HEAD
+=======
+
+>>>>>>> main
 export const verifyToken = (req, res, next) => {
 
     try {
@@ -77,6 +81,10 @@ export const verifyToken = (req, res, next) => {
 // ===================================
 // ADMIN ONLY
 // ===================================
+<<<<<<< HEAD
+=======
+
+>>>>>>> main
 export const adminOnly = (req, res, next) => {
 
     if (!req.user) {

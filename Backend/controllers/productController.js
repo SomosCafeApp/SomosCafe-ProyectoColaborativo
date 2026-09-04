@@ -1,9 +1,20 @@
 import Product from "../models/productModel.js";
 import Category from "../models/categoryModel.js";
 
+<<<<<<< HEAD
 // ===================================
 // GET ALL PRODUCTS
 // ===================================
+=======
+import {
+    deleteCloudinaryImage
+} from "../utils/cloudinary.js";
+
+// ===================================
+// GET ALL PRODUCTS
+// ===================================
+
+>>>>>>> main
 export const getProducts = async (req, res) => {
 
     try {
@@ -50,6 +61,10 @@ export const getProducts = async (req, res) => {
 // ===================================
 // GET PRODUCT BY ID
 // ===================================
+<<<<<<< HEAD
+=======
+
+>>>>>>> main
 export const getProductById = async (req, res) => {
 
     try {
@@ -106,6 +121,10 @@ export const getProductById = async (req, res) => {
 // ===================================
 // CREATE PRODUCT
 // ===================================
+<<<<<<< HEAD
+=======
+
+>>>>>>> main
 export const createProduct = async (req, res) => {
 
     try {
@@ -114,7 +133,10 @@ export const createProduct = async (req, res) => {
             name,
             description,
             price,
+<<<<<<< HEAD
             images,
+=======
+>>>>>>> main
             ingredients,
             rating,
             categoryId,
@@ -127,7 +149,12 @@ export const createProduct = async (req, res) => {
 
         if (
             !name ||
+<<<<<<< HEAD
             price === undefined
+=======
+            price === undefined ||
+            price === ""
+>>>>>>> main
         ) {
 
             return res.status(400).json({
@@ -140,6 +167,24 @@ export const createProduct = async (req, res) => {
         }
 
         // ===================================
+<<<<<<< HEAD
+=======
+        // VALIDATE IMAGE
+        // ===================================
+
+        if (!req.file) {
+
+            return res.status(400).json({
+
+                message:
+                    "Product image is required"
+
+            });
+
+        }
+
+        // ===================================
+>>>>>>> main
         // VALIDATE CATEGORY
         // ===================================
 
@@ -175,19 +220,90 @@ export const createProduct = async (req, res) => {
         }
 
         // ===================================
+<<<<<<< HEAD
+=======
+        // PROCESS INGREDIENTS
+        // ===================================
+
+        let processedIngredients = [];
+
+        if (ingredients) {
+
+            if (Array.isArray(ingredients)) {
+
+                processedIngredients =
+                    ingredients;
+
+            } else {
+
+                try {
+
+                    processedIngredients =
+                        JSON.parse(ingredients);
+
+                } catch {
+
+                    processedIngredients =
+                        [ingredients];
+
+                }
+
+            }
+
+        }
+
+        // ===================================
+        // PROCESS RATING
+        // ===================================
+
+        const processedRating =
+            rating !== undefined &&
+            rating !== ""
+                ? Number(rating)
+                : 0;
+
+        // ===================================
+        // PROCESS AVAILABILITY
+        // ===================================
+
+        let processedAvailability = true;
+
+        if (isAvailable !== undefined) {
+
+            processedAvailability =
+                isAvailable === true ||
+                isAvailable === "true";
+
+        }
+
+        // ===================================
+        // CLOUDINARY IMAGE URL
+        // ===================================
+
+        const imageUrl =
+            req.file.path;
+
+        // ===================================
+>>>>>>> main
         // CREATE PRODUCT
         // ===================================
 
         const newProduct =
             new Product({
 
+<<<<<<< HEAD
                 name: name.trim(),
+=======
+                name:
+                    name.trim(),
+>>>>>>> main
 
                 description:
                     description
                         ? description.trim()
                         : "",
 
+<<<<<<< HEAD
                 price,
 
                 images:
@@ -204,14 +320,32 @@ export const createProduct = async (req, res) => {
                     rating !== undefined
                         ? rating
                         : 0,
+=======
+                price:
+                    Number(price),
+
+                images: [
+                    imageUrl
+                ],
+
+                ingredients:
+                    processedIngredients,
+
+                rating:
+                    processedRating,
+>>>>>>> main
 
                 categoryId:
                     categoryId || null,
 
                 isAvailable:
+<<<<<<< HEAD
                     isAvailable !== undefined
                         ? isAvailable
                         : true
+=======
+                    processedAvailability
+>>>>>>> main
 
             });
 
@@ -230,6 +364,13 @@ export const createProduct = async (req, res) => {
             "name description image isActive"
         );
 
+<<<<<<< HEAD
+=======
+        // ===================================
+        // RESPONSE
+        // ===================================
+
+>>>>>>> main
         return res.status(201).json({
 
             message:
@@ -247,12 +388,32 @@ export const createProduct = async (req, res) => {
             error
         );
 
+<<<<<<< HEAD
+=======
+        // ===================================
+        // CLEAN CLOUDINARY IMAGE IF DB FAILS
+        // ===================================
+
+        if (req.file?.path) {
+
+            await deleteCloudinaryImage(
+                req.file.path
+            );
+
+        }
+
+>>>>>>> main
         return res.status(500).json({
 
             message:
                 "Error creating product",
 
+<<<<<<< HEAD
             error: error.message
+=======
+            error:
+                error.message
+>>>>>>> main
 
         });
 
@@ -263,12 +424,59 @@ export const createProduct = async (req, res) => {
 // ===================================
 // UPDATE PRODUCT
 // ===================================
+<<<<<<< HEAD
+=======
+
+>>>>>>> main
 export const updateProduct = async (req, res) => {
 
     try {
 
+<<<<<<< HEAD
         const {
             categoryId
+=======
+        // ===================================
+        // FIND PRODUCT
+        // ===================================
+
+        const product =
+            await Product.findById(
+                req.params.id
+            );
+
+        if (!product) {
+
+            // If Multer uploaded an image
+            // but product doesn't exist,
+            // remove the orphan image.
+
+            if (req.file?.path) {
+
+                await deleteCloudinaryImage(
+                    req.file.path
+                );
+
+            }
+
+            return res.status(404).json({
+
+                message:
+                    "Product not found"
+
+            });
+
+        }
+
+        const {
+            name,
+            description,
+            price,
+            ingredients,
+            rating,
+            categoryId,
+            isAvailable
+>>>>>>> main
         } = req.body;
 
         // ===================================
@@ -284,6 +492,17 @@ export const updateProduct = async (req, res) => {
 
             if (!category) {
 
+<<<<<<< HEAD
+=======
+                if (req.file?.path) {
+
+                    await deleteCloudinaryImage(
+                        req.file.path
+                    );
+
+                }
+
+>>>>>>> main
                 return res.status(404).json({
 
                     message:
@@ -295,6 +514,17 @@ export const updateProduct = async (req, res) => {
 
             if (!category.isActive) {
 
+<<<<<<< HEAD
+=======
+                if (req.file?.path) {
+
+                    await deleteCloudinaryImage(
+                        req.file.path
+                    );
+
+                }
+
+>>>>>>> main
                 return res.status(400).json({
 
                     message:
@@ -307,6 +537,7 @@ export const updateProduct = async (req, res) => {
         }
 
         // ===================================
+<<<<<<< HEAD
         // UPDATE PRODUCT
         // ===================================
 
@@ -339,13 +570,145 @@ export const updateProduct = async (req, res) => {
 
         }
 
+=======
+        // UPDATE BASIC DATA
+        // ===================================
+
+        if (name !== undefined) {
+
+            product.name =
+                name.trim();
+
+        }
+
+        if (description !== undefined) {
+
+            product.description =
+                description.trim();
+
+        }
+
+        if (
+            price !== undefined &&
+            price !== ""
+        ) {
+
+            product.price =
+                Number(price);
+
+        }
+
+        if (rating !== undefined) {
+
+            product.rating =
+                Number(rating);
+
+        }
+
+        if (categoryId !== undefined) {
+
+            product.categoryId =
+                categoryId || null;
+
+        }
+
+        if (isAvailable !== undefined) {
+
+            product.isAvailable =
+                isAvailable === true ||
+                isAvailable === "true";
+
+        }
+
+        // ===================================
+        // UPDATE INGREDIENTS
+        // ===================================
+
+        if (ingredients !== undefined) {
+
+            if (Array.isArray(ingredients)) {
+
+                product.ingredients =
+                    ingredients;
+
+            } else {
+
+                try {
+
+                    product.ingredients =
+                        JSON.parse(ingredients);
+
+                } catch {
+
+                    product.ingredients =
+                        [ingredients];
+
+                }
+
+            }
+
+        }
+
+        // ===================================
+        // UPDATE IMAGE
+        // ===================================
+
+        let oldImage = null;
+
+        if (req.file) {
+
+            oldImage =
+                product.images?.[0] || null;
+
+            product.images = [
+                req.file.path
+            ];
+
+        }
+
+        // ===================================
+        // SAVE PRODUCT
+        // ===================================
+
+        await product.save();
+
+        // ===================================
+        // DELETE OLD CLOUDINARY IMAGE
+        // ===================================
+
+        if (oldImage) {
+
+            await deleteCloudinaryImage(
+                oldImage
+            );
+
+        }
+
+        // ===================================
+        // POPULATE CATEGORY
+        // ===================================
+
+        await product.populate(
+            "categoryId",
+            "name description image isActive"
+        );
+
+        // ===================================
+        // RESPONSE
+        // ===================================
+
+>>>>>>> main
         return res.status(200).json({
 
             message:
                 "Product updated successfully",
 
+<<<<<<< HEAD
             product:
                 updatedProduct
+=======
+            product
+>>>>>>> main
 
         });
 
@@ -356,12 +719,31 @@ export const updateProduct = async (req, res) => {
             error
         );
 
+<<<<<<< HEAD
+=======
+        // If new image was uploaded
+        // but update failed, remove it.
+
+        if (req.file?.path) {
+
+            await deleteCloudinaryImage(
+                req.file.path
+            );
+
+        }
+
+>>>>>>> main
         return res.status(500).json({
 
             message:
                 "Error updating product",
 
+<<<<<<< HEAD
             error: error.message
+=======
+            error:
+                error.message
+>>>>>>> main
 
         });
 
@@ -372,16 +754,33 @@ export const updateProduct = async (req, res) => {
 // ===================================
 // DELETE PRODUCT
 // ===================================
+<<<<<<< HEAD
+=======
+
+>>>>>>> main
 export const deleteProduct = async (req, res) => {
 
     try {
 
+<<<<<<< HEAD
         const deletedProduct =
             await Product.findByIdAndDelete(
                 req.params.id
             );
 
         if (!deletedProduct) {
+=======
+        // ===================================
+        // FIND PRODUCT
+        // ===================================
+
+        const product =
+            await Product.findById(
+                req.params.id
+            );
+
+        if (!product) {
+>>>>>>> main
 
             return res.status(404).json({
 
@@ -392,6 +791,40 @@ export const deleteProduct = async (req, res) => {
 
         }
 
+<<<<<<< HEAD
+=======
+        // ===================================
+        // SAVE IMAGE URL
+        // ===================================
+
+        const imageUrl =
+            product.images?.[0] || null;
+
+        // ===================================
+        // DELETE PRODUCT FROM DATABASE
+        // ===================================
+
+        await Product.findByIdAndDelete(
+            req.params.id
+        );
+
+        // ===================================
+        // DELETE IMAGE FROM CLOUDINARY
+        // ===================================
+
+        if (imageUrl) {
+
+            await deleteCloudinaryImage(
+                imageUrl
+            );
+
+        }
+
+        // ===================================
+        // RESPONSE
+        // ===================================
+
+>>>>>>> main
         return res.status(200).json({
 
             message:
@@ -411,7 +844,12 @@ export const deleteProduct = async (req, res) => {
             message:
                 "Error deleting product",
 
+<<<<<<< HEAD
             error: error.message
+=======
+            error:
+                error.message
+>>>>>>> main
 
         });
 

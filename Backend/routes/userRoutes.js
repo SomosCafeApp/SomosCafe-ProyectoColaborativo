@@ -4,6 +4,7 @@ import {
     registerUser
 } from "../controllers/userController.js";
 
+<<<<<<< HEAD
 import {
     requestEmailVerification,
     verifyEmail
@@ -33,6 +34,10 @@ router.post(
 // REGISTER USER
 // ===================================
 
+=======
+const router = express.Router();
+
+>>>>>>> main
 router.post(
     "/register",
     registerUser

@@ -1,10 +1,20 @@
 import User from "../models/userModel.js";
+<<<<<<< HEAD
 import nodemailer from "nodemailer";
+=======
+
+import {
+    sendRecoveryEmail,
+    sendPasswordUpdatedEmail
+} from "../utils/mailer.js";
+
+>>>>>>> main
 import dotenv from "dotenv";
 
 dotenv.config();
 
 // ===================================
+<<<<<<< HEAD
 // CONFIGURE EMAIL TRANSPORTER
 // ===================================
 const transporter = nodemailer.createTransport({
@@ -29,6 +39,11 @@ const transporter = nodemailer.createTransport({
 // ===================================
 // GENERATE RECOVERY CODE
 // ===================================
+=======
+// GENERATE RECOVERY CODE
+// ===================================
+
+>>>>>>> main
 const generateRecoveryCode = () => {
 
     return Math.floor(
@@ -40,6 +55,10 @@ const generateRecoveryCode = () => {
 // ===================================
 // REQUEST RECOVERY CODE
 // ===================================
+<<<<<<< HEAD
+=======
+
+>>>>>>> main
 export const requestRecoveryCode = async (req, res) => {
 
     try {
@@ -54,14 +73,34 @@ export const requestRecoveryCode = async (req, res) => {
 
             return res.status(400).json({
 
+<<<<<<< HEAD
                 message: "Email is required"
+=======
+                message:
+                    "Email is required"
+>>>>>>> main
 
             });
 
         }
 
+<<<<<<< HEAD
         const normalizedEmail =
             email.trim().toLowerCase();
+=======
+        // ===================================
+        // NORMALIZE EMAIL
+        // ===================================
+
+        const normalizedEmail =
+            email
+                .trim()
+                .toLowerCase();
+
+        // ===================================
+        // VALIDATE EMAIL FORMAT
+        // ===================================
+>>>>>>> main
 
         const emailRegex =
             /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -70,7 +109,12 @@ export const requestRecoveryCode = async (req, res) => {
 
             return res.status(400).json({
 
+<<<<<<< HEAD
                 message: "Invalid email format"
+=======
+                message:
+                    "Invalid email format"
+>>>>>>> main
 
             });
 
@@ -80,17 +124,32 @@ export const requestRecoveryCode = async (req, res) => {
         // FIND USER
         // ===================================
 
+<<<<<<< HEAD
         const user = await User.findOne({
 
             email: normalizedEmail
 
         });
+=======
+        const user =
+            await User.findOne({
+
+                email:
+                    normalizedEmail
+
+            });
+>>>>>>> main
 
         if (!user) {
 
             return res.status(404).json({
 
+<<<<<<< HEAD
                 message: "User not found"
+=======
+                message:
+                    "User not found"
+>>>>>>> main
 
             });
 
@@ -104,7 +163,12 @@ export const requestRecoveryCode = async (req, res) => {
 
             return res.status(403).json({
 
+<<<<<<< HEAD
                 message: "User account is inactive"
+=======
+                message:
+                    "User account is inactive"
+>>>>>>> main
 
             });
 
@@ -121,16 +185,27 @@ export const requestRecoveryCode = async (req, res) => {
         // SAVE RECOVERY DATA
         // ===================================
 
+<<<<<<< HEAD
         user.recoveryCode = code;
 
         user.recoveryCodeExpiration =
             new Date(
                 Date.now() + 15 * 60 * 1000
+=======
+        user.recoveryCode =
+            code;
+
+        user.recoveryCodeExpiration =
+            new Date(
+                Date.now() +
+                15 * 60 * 1000
+>>>>>>> main
             );
 
         await user.save();
 
         // ===================================
+<<<<<<< HEAD
         // EMAIL
         // ===================================
 
@@ -290,11 +365,55 @@ export const requestRecoveryCode = async (req, res) => {
         await transporter.sendMail(
             mailOptions
         );
+=======
+        // SEND RECOVERY EMAIL WITH BREVO
+        // ===================================
+
+        try {
+
+            await sendRecoveryEmail(
+                user.email,
+                user.name,
+                code
+            );
+
+        } catch (emailError) {
+
+            // Clear recovery data because
+            // the email was not sent.
+
+            user.recoveryCode = null;
+
+            user.recoveryCodeExpiration = null;
+
+            await user.save();
+
+            console.error(
+                "❌ Brevo recovery email error:",
+                emailError
+            );
+
+            return res.status(502).json({
+
+                message:
+                    "Could not send recovery email"
+
+            });
+
+        }
+>>>>>>> main
 
         console.log(
             `📧 Recovery email sent to ${user.email}`
         );
 
+<<<<<<< HEAD
+=======
+        // ===================================
+        // RESPONSE
+        // ===================================
+
+>>>>>>> main
         return res.status(200).json({
 
             message:
@@ -314,7 +433,12 @@ export const requestRecoveryCode = async (req, res) => {
             message:
                 "Error requesting password recovery",
 
+<<<<<<< HEAD
             error: error.message
+=======
+            error:
+                error.message
+>>>>>>> main
 
         });
 
@@ -325,6 +449,10 @@ export const requestRecoveryCode = async (req, res) => {
 // ===================================
 // CHANGE PASSWORD
 // ===================================
+<<<<<<< HEAD
+=======
+
+>>>>>>> main
 export const changePassword = async (req, res) => {
 
     try {
@@ -354,8 +482,37 @@ export const changePassword = async (req, res) => {
 
         }
 
+<<<<<<< HEAD
         const normalizedEmail =
             email.trim().toLowerCase();
+=======
+        // ===================================
+        // NORMALIZE EMAIL
+        // ===================================
+
+        const normalizedEmail =
+            email
+                .trim()
+                .toLowerCase();
+
+        // ===================================
+        // VALIDATE EMAIL FORMAT
+        // ===================================
+
+        const emailRegex =
+            /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (!emailRegex.test(normalizedEmail)) {
+
+            return res.status(400).json({
+
+                message:
+                    "Invalid email format"
+
+            });
+
+        }
+>>>>>>> main
 
         // ===================================
         // PASSWORD LENGTH
@@ -422,9 +579,14 @@ export const changePassword = async (req, res) => {
         // ===================================
 
         if (
+<<<<<<< HEAD
             !/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(
                 newPassword
             )
+=======
+            !/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/
+                .test(newPassword)
+>>>>>>> main
         ) {
 
             return res.status(400).json({
@@ -440,6 +602,7 @@ export const changePassword = async (req, res) => {
         // FIND USER
         // ===================================
 
+<<<<<<< HEAD
         const user = await User.findOne({
 
             email: normalizedEmail,
@@ -454,6 +617,25 @@ export const changePassword = async (req, res) => {
             }
 
         });
+=======
+        const user =
+            await User.findOne({
+
+                email:
+                    normalizedEmail,
+
+                recoveryCode:
+                    code.toString().trim(),
+
+                recoveryCodeExpiration: {
+
+                    $gt:
+                        new Date()
+
+                }
+
+            });
+>>>>>>> main
 
         // ===================================
         // VALIDATE RECOVERY CODE
@@ -496,6 +678,7 @@ export const changePassword = async (req, res) => {
         );
 
         // ===================================
+<<<<<<< HEAD
         // CONFIRMATION EMAIL
         // ===================================
 
@@ -629,24 +812,42 @@ export const changePassword = async (req, res) => {
         };
 
         // ===================================
+=======
+>>>>>>> main
         // SEND CONFIRMATION EMAIL
         // ===================================
 
         try {
 
+<<<<<<< HEAD
             await transporter.sendMail(
                 mailOptions
             );
 
             console.log(
                 `📧 Password confirmation email sent to ${user.email}`
+=======
+            await sendPasswordUpdatedEmail(
+                user.email,
+                user.name
+>>>>>>> main
             );
 
         } catch (emailError) {
 
+<<<<<<< HEAD
             console.error(
                 "⚠️ Password changed, but confirmation email could not be sent:",
                 emailError.message
+=======
+            // The password has already been changed.
+            // We don't rollback the password just because
+            // the confirmation email failed.
+
+            console.error(
+                "⚠️ Password changed, but confirmation email could not be sent:",
+                emailError
+>>>>>>> main
             );
 
         }
@@ -674,7 +875,12 @@ export const changePassword = async (req, res) => {
             message:
                 "Error changing password",
 
+<<<<<<< HEAD
             error: error.message
+=======
+            error:
+                error.message
+>>>>>>> main
 
         });
 
