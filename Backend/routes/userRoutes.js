@@ -6,10 +6,6 @@ import {
 
 const router = express.Router();
 
-// ===================================
-// REGISTER USER
-// ===================================
-
 router.post(
     "/register",
     registerUser

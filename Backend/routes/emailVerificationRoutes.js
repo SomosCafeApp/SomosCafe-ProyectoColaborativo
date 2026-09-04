@@ -8,27 +8,15 @@ import {
 
 const router = express.Router();
 
-// ===================================
-// REQUEST EMAIL VERIFICATION
-// ===================================
-
 router.post(
     "/request",
     requestEmailVerification
 );
 
-// ===================================
-// VERIFY EMAIL
-// ===================================
-
 router.post(
     "/verify",
     verifyEmail
 );
-
-// ===================================
-// RESEND VERIFICATION CODE
-// ===================================
 
 router.post(
     "/resend",

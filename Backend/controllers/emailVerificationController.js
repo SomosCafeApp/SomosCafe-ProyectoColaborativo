@@ -123,40 +123,66 @@ export const requestEmailVerification =
             // SAVE VERIFICATION
             // ===================================
 
-            await EmailVerification.findOneAndUpdate(
+            const verification =
+                await EmailVerification.findOneAndUpdate(
 
-                {
-                    email:
-                        normalizedEmail
-                },
+                    {
+                        email:
+                            normalizedEmail
+                    },
 
-                {
-                    email:
-                        normalizedEmail,
+                    {
+                        email:
+                            normalizedEmail,
 
-                    code,
+                        code,
 
-                    expiresAt
-                },
+                        expiresAt
+                    },
 
-                {
-                    upsert: true,
+                    {
+                        upsert: true,
 
-                    new: true,
+                        new: true,
 
-                    setDefaultsOnInsert: true
-                }
+                        setDefaultsOnInsert: true
+                    }
 
-            );
+                );
 
             // ===================================
-            // SEND EMAIL
+            // SEND EMAIL WITH BREVO
             // ===================================
 
-            await sendVerificationEmail(
-                normalizedEmail,
-                code
-            );
+            try {
+
+                await sendVerificationEmail(
+                    normalizedEmail,
+                    code
+                );
+
+            } catch (emailError) {
+
+                // Remove pending verification
+                // if Brevo fails.
+
+                await EmailVerification.deleteOne({
+                    _id: verification._id
+                });
+
+                console.error(
+                    "❌ Brevo could not send verification email:",
+                    emailError
+                );
+
+                return res.status(502).json({
+
+                    message:
+                        "Could not send verification email"
+
+                });
+
+            }
 
             console.log(
                 `📧 Verification email sent to ${normalizedEmail}`
@@ -503,13 +529,31 @@ export const resendVerificationCode =
             await existingVerification.save();
 
             // ===================================
-            // SEND EMAIL
+            // SEND EMAIL WITH BREVO
             // ===================================
 
-            await sendVerificationEmail(
-                normalizedEmail,
-                code
-            );
+            try {
+
+                await sendVerificationEmail(
+                    normalizedEmail,
+                    code
+                );
+
+            } catch (emailError) {
+
+                console.error(
+                    "❌ Brevo could not resend verification email:",
+                    emailError
+                );
+
+                return res.status(502).json({
+
+                    message:
+                        "Could not send verification email"
+
+                });
+
+            }
 
             console.log(
                 `📧 New verification code sent to ${normalizedEmail}`

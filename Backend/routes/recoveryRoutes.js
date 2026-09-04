@@ -7,17 +7,11 @@ import {
 
 const router = express.Router();
 
-// ===================================
-// REQUEST RECOVERY CODE
-// ===================================
 router.post(
     "/request",
     requestRecoveryCode
 );
 
-// ===================================
-// CHANGE PASSWORD
-// ===================================
 router.post(
     "/change-password",
     changePassword
