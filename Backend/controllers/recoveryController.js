@@ -1,34 +1,18 @@
 import User from "../models/userModel.js";
-import nodemailer from "nodemailer";
+
+import {
+    sendRecoveryEmail,
+    sendPasswordUpdatedEmail
+} from "../utils/mailer.js";
+
 import dotenv from "dotenv";
 
 dotenv.config();
 
 // ===================================
-// CONFIGURE EMAIL TRANSPORTER
-// ===================================
-const transporter = nodemailer.createTransport({
-
-    host: "smtp.gmail.com",
-
-    port: 587,
-
-    secure: false,
-
-    requireTLS: true,
-
-    family: 4,
-
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    }
-
-});
-
-// ===================================
 // GENERATE RECOVERY CODE
 // ===================================
+
 const generateRecoveryCode = () => {
 
     return Math.floor(
@@ -40,6 +24,7 @@ const generateRecoveryCode = () => {
 // ===================================
 // REQUEST RECOVERY CODE
 // ===================================
+
 export const requestRecoveryCode = async (req, res) => {
 
     try {
@@ -54,14 +39,25 @@ export const requestRecoveryCode = async (req, res) => {
 
             return res.status(400).json({
 
-                message: "Email is required"
+                message:
+                    "Email is required"
 
             });
 
         }
 
+        // ===================================
+        // NORMALIZE EMAIL
+        // ===================================
+
         const normalizedEmail =
-            email.trim().toLowerCase();
+            email
+                .trim()
+                .toLowerCase();
+
+        // ===================================
+        // VALIDATE EMAIL FORMAT
+        // ===================================
 
         const emailRegex =
             /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -70,7 +66,8 @@ export const requestRecoveryCode = async (req, res) => {
 
             return res.status(400).json({
 
-                message: "Invalid email format"
+                message:
+                    "Invalid email format"
 
             });
 
@@ -80,17 +77,20 @@ export const requestRecoveryCode = async (req, res) => {
         // FIND USER
         // ===================================
 
-        const user = await User.findOne({
+        const user =
+            await User.findOne({
 
-            email: normalizedEmail
+                email:
+                    normalizedEmail
 
-        });
+            });
 
         if (!user) {
 
             return res.status(404).json({
 
-                message: "User not found"
+                message:
+                    "User not found"
 
             });
 
@@ -104,7 +104,8 @@ export const requestRecoveryCode = async (req, res) => {
 
             return res.status(403).json({
 
-                message: "User account is inactive"
+                message:
+                    "User account is inactive"
 
             });
 
@@ -121,179 +122,61 @@ export const requestRecoveryCode = async (req, res) => {
         // SAVE RECOVERY DATA
         // ===================================
 
-        user.recoveryCode = code;
+        user.recoveryCode =
+            code;
 
         user.recoveryCodeExpiration =
             new Date(
-                Date.now() + 15 * 60 * 1000
+                Date.now() +
+                15 * 60 * 1000
             );
 
         await user.save();
 
         // ===================================
-        // EMAIL
+        // SEND RECOVERY EMAIL WITH BREVO
         // ===================================
 
-        const mailOptions = {
+        try {
 
-            from: `"SomosCafeApp" <${process.env.EMAIL_USER}>`,
-
-            to: user.email,
-
-            subject:
-                "Password Recovery Code - SomosCafeApp",
-
-            html: `
-
-<div style="
-    font-family: Arial, sans-serif;
-    max-width: 600px;
-    margin: 0 auto;
-    padding: 30px;
-    background: #f8f3ee;
-    color: #4b2e2b;
-    border-radius: 18px;
-    border: 1px solid #d8c3b5;
-">
-
-    <div style="
-        text-align: center;
-        margin-bottom: 35px;
-    ">
-
-        <h1 style="
-            color: #6f4e37;
-            margin: 0;
-            font-size: 34px;
-            letter-spacing: 1px;
-        ">
-            ☕ SomosCafeApp ☕
-        </h1>
-
-        <p style="
-            color: #8b5e3c;
-            margin-top: 10px;
-            font-size: 15px;
-        ">
-            Your coffee, your account, your security.
-        </p>
-
-    </div>
-
-    <h2 style="
-        color: #5c4033;
-        margin-bottom: 20px;
-    ">
-        Password Recovery
-    </h2>
-
-    <p style="font-size: 16px;">
-        Hello <strong>${user.name || "User"}</strong>,
-    </p>
-
-    <p style="
-        line-height: 1.7;
-        color: #5f4637;
-    ">
-        We received a request to reset your password.
-        Use the following code to continue:
-    </p>
-
-    <div style="
-        background: linear-gradient(
-            135deg,
-            #6f4e37 0%,
-            #8b5e3c 50%,
-            #c4a484 100%
-        );
-        padding: 35px 20px;
-        border-radius: 16px;
-        text-align: center;
-        margin: 35px 0;
-        box-shadow:
-            0 10px 25px rgba(
-                111,
-                78,
-                55,
-                0.25
+            await sendRecoveryEmail(
+                user.email,
+                user.name,
+                code
             );
-    ">
 
-        <h1 style="
-            color: #fff8f0;
-            font-size: 42px;
-            letter-spacing: 10px;
-            margin: 0;
-            font-family:
-                'Courier New',
-                Courier,
-                monospace;
-        ">
-            ${code}
-        </h1>
+        } catch (emailError) {
 
-    </div>
+            // Clear recovery data because
+            // the email was not sent.
 
-    <div style="
-        background: #efe2d6;
-        padding: 18px;
-        border-radius: 12px;
-        margin-bottom: 20px;
-    ">
+            user.recoveryCode = null;
 
-        <p style="
-            margin: 0;
-            color: #6b4f3b;
-            font-size: 14px;
-        ">
-            ⏱️ This code expires in
-            <strong>15 minutes</strong>.
-        </p>
+            user.recoveryCodeExpiration = null;
 
-    </div>
+            await user.save();
 
-    <p style="
-        color: #7b5e57;
-        font-size: 14px;
-        line-height: 1.6;
-    ">
-        🔒 If you did not request this change,
-        you can safely ignore this email.
-    </p>
+            console.error(
+                "❌ Brevo recovery email error:",
+                emailError
+            );
 
-    <hr style="
-        margin: 35px 0;
-        border: none;
-        border-top:
-            1px solid #d6bfae;
-    ">
+            return res.status(502).json({
 
-    <p style="
-        color: #9b7b67;
-        font-size: 12px;
-        text-align: center;
-    ">
-        © 2026 SomosCafeApp · Coffee,
-        technology and security ☕
-    </p>
+                message:
+                    "Could not send recovery email"
 
-</div>
+            });
 
-`
-
-        };
-
-        // ===================================
-        // SEND EMAIL
-        // ===================================
-
-        await transporter.sendMail(
-            mailOptions
-        );
+        }
 
         console.log(
             `📧 Recovery email sent to ${user.email}`
         );
+
+        // ===================================
+        // RESPONSE
+        // ===================================
 
         return res.status(200).json({
 
@@ -314,7 +197,8 @@ export const requestRecoveryCode = async (req, res) => {
             message:
                 "Error requesting password recovery",
 
-            error: error.message
+            error:
+                error.message
 
         });
 
@@ -325,6 +209,7 @@ export const requestRecoveryCode = async (req, res) => {
 // ===================================
 // CHANGE PASSWORD
 // ===================================
+
 export const changePassword = async (req, res) => {
 
     try {
@@ -354,8 +239,32 @@ export const changePassword = async (req, res) => {
 
         }
 
+        // ===================================
+        // NORMALIZE EMAIL
+        // ===================================
+
         const normalizedEmail =
-            email.trim().toLowerCase();
+            email
+                .trim()
+                .toLowerCase();
+
+        // ===================================
+        // VALIDATE EMAIL FORMAT
+        // ===================================
+
+        const emailRegex =
+            /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (!emailRegex.test(normalizedEmail)) {
+
+            return res.status(400).json({
+
+                message:
+                    "Invalid email format"
+
+            });
+
+        }
 
         // ===================================
         // PASSWORD LENGTH
@@ -422,9 +331,8 @@ export const changePassword = async (req, res) => {
         // ===================================
 
         if (
-            !/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(
-                newPassword
-            )
+            !/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/
+                .test(newPassword)
         ) {
 
             return res.status(400).json({
@@ -440,20 +348,23 @@ export const changePassword = async (req, res) => {
         // FIND USER
         // ===================================
 
-        const user = await User.findOne({
+        const user =
+            await User.findOne({
 
-            email: normalizedEmail,
+                email:
+                    normalizedEmail,
 
-            recoveryCode:
-                code.toString(),
+                recoveryCode:
+                    code.toString().trim(),
 
-            recoveryCodeExpiration: {
+                recoveryCodeExpiration: {
 
-                $gt: new Date()
+                    $gt:
+                        new Date()
 
-            }
+                }
 
-        });
+            });
 
         // ===================================
         // VALIDATE RECOVERY CODE
@@ -496,157 +407,25 @@ export const changePassword = async (req, res) => {
         );
 
         // ===================================
-        // CONFIRMATION EMAIL
-        // ===================================
-
-        const mailOptions = {
-
-            from: `"SomosCafeApp" <${process.env.EMAIL_USER}>`,
-
-            to: user.email,
-
-            subject:
-                "Password Updated - SomosCafeApp",
-
-            html: `
-
-<div style="
-    font-family: Arial, sans-serif;
-    max-width: 600px;
-    margin: 0 auto;
-    padding: 30px;
-    background: #f8f3ee;
-    color: #4b2e2b;
-    border-radius: 18px;
-    border: 1px solid #d8c3b5;
-">
-
-    <div style="
-        text-align: center;
-        margin-bottom: 35px;
-    ">
-
-        <div style="
-            background:
-                linear-gradient(
-                    135deg,
-                    #6f4e37 0%,
-                    #8b5e3c 100%
-                );
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 20px;
-            box-shadow:
-                0 10px 20px
-                rgba(
-                    111,
-                    78,
-                    55,
-                    0.3
-                );
-        ">
-
-            <span style="
-                color: white;
-                font-size: 38px;
-            ">
-                ✓
-            </span>
-
-        </div>
-
-        <h1 style="
-            color: #6f4e37;
-            margin: 0;
-        ">
-            Password Updated
-        </h1>
-
-    </div>
-
-    <p style="font-size: 16px;">
-        Hello <strong>${user.name}</strong>,
-    </p>
-
-    <p style="
-        line-height: 1.7;
-        color: #5f4637;
-    ">
-        Your password has been successfully
-        updated in <strong>SomosCafeApp</strong>.
-    </p>
-
-    <div style="
-        background: #efe2d6;
-        padding: 18px;
-        border-radius: 12px;
-        margin: 25px 0;
-    ">
-
-        <p style="
-            margin: 0;
-            color: #6b4f3b;
-            font-size: 15px;
-        ">
-            ✅ You can now log in
-            with your new password.
-        </p>
-
-    </div>
-
-    <p style="
-        color: #7b5e57;
-        font-size: 14px;
-    ">
-        🔒 If you did not make this change,
-        contact support immediately.
-    </p>
-
-    <hr style="
-        margin: 35px 0;
-        border: none;
-        border-top:
-            1px solid #d6bfae;
-    ">
-
-    <p style="
-        color: #9b7b67;
-        font-size: 12px;
-        text-align: center;
-    ">
-        © 2026 SomosCafeApp · Coffee,
-        technology and security ☕
-    </p>
-
-</div>
-
-`
-
-        };
-
-        // ===================================
         // SEND CONFIRMATION EMAIL
         // ===================================
 
         try {
 
-            await transporter.sendMail(
-                mailOptions
-            );
-
-            console.log(
-                `📧 Password confirmation email sent to ${user.email}`
+            await sendPasswordUpdatedEmail(
+                user.email,
+                user.name
             );
 
         } catch (emailError) {
 
+            // The password has already been changed.
+            // We don't rollback the password just because
+            // the confirmation email failed.
+
             console.error(
                 "⚠️ Password changed, but confirmation email could not be sent:",
-                emailError.message
+                emailError
             );
 
         }
@@ -674,7 +453,8 @@ export const changePassword = async (req, res) => {
             message:
                 "Error changing password",
 
-            error: error.message
+            error:
+                error.message
 
         });
 

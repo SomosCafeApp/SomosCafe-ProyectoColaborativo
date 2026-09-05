@@ -1,5 +1,6 @@
 import "dotenv/config";
 import express from "express";
+import cors from "cors";
 
 import { conectarDB } from "./db/db.js";
 
@@ -20,148 +21,153 @@ import pointRoutes from "./routes/pointsRoutes.js";
 import promotionRoutes from "./routes/promotionRoutes.js";
 import reviewsRoutes from "./routes/reviewsRoutes.js";
 import emailVerificationRoutes from "./routes/emailVerificationRoutes.js";
-
-const app = express();
+import chatRoutes from "./routes/chatRoutes.js";
 
 // ===============================
 // DATABASE CONNECTION
 // ===============================
+
 conectarDB();
 
 // ===============================
 // PORT
 // ===============================
-const PORT = process.env.PORT || 3000;
+
+const PORT =
+    process.env.PORT || 3000;
 
 // ===============================
 // MIDDLEWARES
 // ===============================
-app.use(express.json());
+
+const app = express();
+
+app.use(
+    express.json()
+);
+
+app.use(
+    cors({
+        origin: "*"
+    })
+);
 
 // ===============================
 // MAIN ROUTE
 // ===============================
-app.get("/", (req, res) => {
 
-    res.status(200).json({
+app.get(
+    "/",
+    (req, res) => {
 
-        message:
-            "Welcome to SomosCafe API"
+        res.status(200).json({
 
-    });
+            message:
+                "Welcome to SomosCafe API"
 
-});
+        });
+
+    }
+);
 
 // ===============================
 // ROUTES
 // ===============================
 
-// USERS
 app.use(
     "/api/users",
     userRoutes
 );
 
-// LOGIN
 app.use(
     "/api/login",
     loginRoutes
 );
 
-// PASSWORD RECOVERY
 app.use(
     "/api/recovery",
     recoveryRoutes
 );
 
-// PRODUCTS
 app.use(
     "/api/products",
     productRoutes
 );
 
-// CATEGORIES
 app.use(
     "/api/categories",
     categoryRoutes
 );
-
-// ADDRESSES
 
 app.use(
     "/api/addresses",
     addressRoutes
 );
 
-// CART
 app.use(
     "/api/cart",
     cartRoutes
 );
 
-// EVENTS
 app.use(
     "/api/events",
     eventRoutes
 );
 
-// FAVORITES
 app.use(
     "/api/favorites",
     favoriteRoutes
 );
 
-// INVENTORY
 app.use(
     "/api/inventory",
     inventoryRoutes
 );
 
-// NOTIFICATIONS
 app.use(
     "/api/notifications",
     notificationRoutes
 );
 
-// ORDERS
 app.use(
     "/api/orders",
     orderRoutes
 );
 
-// PAYMENT METHODS
 app.use(
     "/api/payment-methods",
     paymentMethodRoutes
 );
 
-// POINTS
 app.use(
     "/api/points",
     pointRoutes
 );
 
-// PROMOTIONS
 app.use(
     "/api/promotions",
     promotionRoutes
 );
 
-// REVIEWS
 app.use(
     "/api/reviews",
     reviewsRoutes
 );
 
-// EMAIL VERIFICATION
 app.use(
     "/api/email-verification",
     emailVerificationRoutes
 );
 
+app.use(
+    "/api/chat", 
+    chatRoutes
+);
+
 // ===============================
 // SERVER
 // ===============================
+
 app.listen(
     PORT,
     () => {
