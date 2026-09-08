@@ -1,4 +1,4 @@
-package com.example.jimmy_app
+package com.example.Somos_cafe
 
 import io.flutter.embedding.android.FlutterActivity
 
