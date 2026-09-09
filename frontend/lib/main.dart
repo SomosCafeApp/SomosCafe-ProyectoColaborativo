@@ -2,27 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 // Módulos y páginas
-import 'package:mi_proyecto_cafe/presentation/pages/main_navigation_screen.dart';
-import 'package:mi_proyecto_cafe/presentation/pages/welcome_page.dart';
+import 'core/theme/app_theme.dart';
+import 'presentation/pages/main_navigation_screen.dart';
+import 'presentation/pages/welcome_page.dart';
 
 // Providers
-import 'package:mi_proyecto_cafe/presentation/state/theme_provider.dart';
-import 'package:mi_proyecto_cafe/presentation/state/font_size_provider.dart';
-import 'package:mi_proyecto_cafe/presentation/state/cart_provider.dart';
-import 'package:mi_proyecto_cafe/presentation/state/auth_provider.dart';
-import 'package:mi_proyecto_cafe/presentation/state/order_provider.dart';
-import 'package:mi_proyecto_cafe/presentation/state/favorites_provider.dart';
+import 'presentation/state/cart_provider.dart';
+import 'presentation/state/auth_provider.dart';
+import 'presentation/state/order_provider.dart';
+import 'presentation/state/favorites_provider.dart';
+import 'presentation/state/theme_provider.dart';
 
 void main() {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProvider(create: (_) => FontSizeProvider()),
         ChangeNotifierProvider(create: (_) => CartProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => OrderProvider()),
         ChangeNotifierProvider(create: (_) => FavoritesProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
       child: const MyApp(),
     ),
@@ -34,58 +33,32 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Escucha activamente el ThemeProvider para redibujar la app al cambiar de modo
-    final themeProvider = context.watch<ThemeProvider>();
-    // Escucha activamente el FontSizeProvider para redibujar la app al cambiar el tamaño de letra
-    final fontSizeProvider = context.watch<FontSizeProvider>();
+    final isDark = context.watch<ThemeProvider>().isDarkMode;
 
     return MaterialApp(
       title: 'SOMOS CafeApp',
       debugShowCheckedModeBanner: false,
-      theme: themeProvider.lightTheme,
-      darkTheme: themeProvider.darkTheme,
-      themeMode: themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-      // El builder envuelve TODA la app (cualquier pantalla) en un MediaQuery
-      // con el factor de escala de texto elegido en Configuración.
-      builder: (context, child) {
-        return MediaQuery(
-          data: MediaQuery.of(context).copyWith(
-            textScaler: TextScaler.linear(fontSizeProvider.scaleFactor),
-          ),
-          child: child!,
-        );
-      },
-      home: const RootDecider(),
-    );
-  }
-}
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
+      home: Consumer<AuthProvider>(
+        builder: (context, auth, child) {
+          if (auth.isLoggedIn) {
+            return const MainNavigationScreen();
+          }
 
-class RootDecider extends StatefulWidget {
-  const RootDecider({super.key});
-
-  @override
-  State<RootDecider> createState() => _RootDeciderState();
-}
-
-class _RootDeciderState extends State<RootDecider> {
-  bool _guestAcceptedWelcome = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final auth = context.watch<AuthProvider>();
-
-    // Si el usuario está autenticado o presionó 'Pedir ahora' en el WelcomePage,
-    // se le redirige al contenedor principal con la barra de navegación inferior adaptativa
-    if (auth.isLoggedIn || _guestAcceptedWelcome) {
-      return const MainNavigationScreen();
-    }
-
-    return WelcomePage(
-      onOrderNow: () {
-        setState(() {
-          _guestAcceptedWelcome = true;
-        });
-      },
+          return WelcomePage(
+            onOrderNow: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const MainNavigationScreen(),
+                ),
+              );
+            },
+          );
+        },
+      ),
     );
   }
 }
