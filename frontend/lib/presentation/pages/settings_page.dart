@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../state/theme_provider.dart';
 import '../state/font_size_provider.dart';
+import '../components/settings_section_header.dart';
+import '../components/settings_card_tile.dart';
+import '../components/settings_dropdown_selector.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -17,17 +20,11 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDark = themeProvider.isDarkMode;
-    // Escucha el provider global de tamaño de letra
     final fontSizeProvider = context.watch<FontSizeProvider>();
 
-    // Paleta dinámica basada en la imagen
     final primaryBrown = const Color(0xFFA2784F);
     final darkBrown = isDark ? const Color(0xFFC3A382) : const Color(0xFF634832);
     final scaffoldBgColor = isDark ? const Color(0xFF1E1410) : const Color(0xFFFAF7F2);
-    final cardBgColor = isDark ? const Color(0xFF2D211B) : Colors.white;
-    final iconBgColor = isDark ? const Color(0xFF3D2E26) : const Color(0xFFF7F2EB);
-    final textColor = isDark ? Colors.white : Colors.black87;
-    final subtitleColor = isDark ? Colors.white70 : Colors.black54;
 
     return Scaffold(
       backgroundColor: scaffoldBgColor,
@@ -66,14 +63,8 @@ class _SettingsPageState extends State<SettingsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildSectionHeader('Apariencia', textColor),
-            
-            // --- BOTÓN MODO OSCURO (CAMBIA TODAS LAS PÁGINAS) ---
-            _buildCardTile(
-              cardColor: cardBgColor,
-              iconBgColor: iconBgColor,
-              textColor: textColor,
-              subtitleColor: subtitleColor,
+            const SettingsSectionHeader(title: 'Apariencia'),
+            SettingsCardTile(
               icon: isDark ? Icons.nightlight_round : Icons.wb_sunny_outlined,
               title: 'Modo Oscuro',
               subtitle: 'Cambia a tema oscuro',
@@ -81,93 +72,41 @@ class _SettingsPageState extends State<SettingsPage> {
                 value: isDark,
                 activeColor: Colors.white,
                 activeTrackColor: primaryBrown,
-                onChanged: (val) {
-                  // Cambia el estado global y reconstruye la app completa
-                  themeProvider.toggleTheme(val);
-                },
+                onChanged: (val) => themeProvider.toggleTheme(val),
               ),
             ),
             const SizedBox(height: 12),
-            
-            // --- TAMAÑO DE TEXTO (CAMBIA TODAS LAS PÁGINAS) ---
-            _buildCardTile(
-              cardColor: cardBgColor,
-              iconBgColor: iconBgColor,
-              textColor: textColor,
-              subtitleColor: subtitleColor,
+            SettingsCardTile(
               icon: Icons.remove_red_eye_outlined,
               title: 'Tamaño de Texto',
               subtitle: 'Ajusta el tamaño de la fuente',
-              trailing: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E1410) : scaffoldBgColor,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: isDark ? Colors.white24 : Colors.black12),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: fontSizeProvider.fontSize,
-                    dropdownColor: cardBgColor,
-                    isDense: true,
-                    style: TextStyle(color: textColor, fontSize: 13, fontWeight: FontWeight.w500),
-                    items: ['Pequeño', 'Mediano', 'Grande']
-                        .map((val) => DropdownMenuItem(value: val, child: Text(val)))
-                        .toList(),
-                    onChanged: (val) {
-                      if (val != null) {
-                        // Cambia el estado global: afecta el texto de toda la app
-                        context.read<FontSizeProvider>().setFontSize(val);
-                      }
-                    },
-                  ),
-                ),
+              trailing: SettingsDropdownSelector<String>(
+                value: fontSizeProvider.fontSize,
+                items: const ['Pequeño', 'Mediano', 'Grande'],
+                onChanged: (val) {
+                  if (val != null) {
+                    context.read<FontSizeProvider>().setFontSize(val);
+                  }
+                },
               ),
             ),
-
             const SizedBox(height: 24),
-
-            _buildSectionHeader('Idioma', textColor),
-            _buildCardTile(
-              cardColor: cardBgColor,
-              iconBgColor: iconBgColor,
-              textColor: textColor,
-              subtitleColor: subtitleColor,
+            const SettingsSectionHeader(title: 'Idioma'),
+            SettingsCardTile(
               icon: Icons.language_rounded,
               title: 'Idioma',
               subtitle: 'Cambiar idioma de la app',
-              trailing: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E1410) : scaffoldBgColor,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: isDark ? Colors.white24 : Colors.black12),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: _selectedLanguage,
-                    dropdownColor: cardBgColor,
-                    isDense: true,
-                    style: TextStyle(color: textColor, fontSize: 13, fontWeight: FontWeight.w500),
-                    items: ['Español', 'English']
-                        .map((val) => DropdownMenuItem(value: val, child: Text(val)))
-                        .toList(),
-                    onChanged: (val) {
-                      if (val != null) setState(() => _selectedLanguage = val);
-                    },
-                  ),
-                ),
+              trailing: SettingsDropdownSelector<String>(
+                value: _selectedLanguage,
+                items: const ['Español', 'English'],
+                onChanged: (val) {
+                  if (val != null) setState(() => _selectedLanguage = val);
+                },
               ),
             ),
-
             const SizedBox(height: 24),
-
-            _buildSectionHeader('Privacidad y Seguridad', textColor),
-            _buildCardTile(
-              cardColor: cardBgColor,
-              iconBgColor: iconBgColor,
-              textColor: textColor,
-              subtitleColor: subtitleColor,
+            const SettingsSectionHeader(title: 'Privacidad y Seguridad'),
+            SettingsCardTile(
               icon: Icons.shield_outlined,
               title: 'Privacidad',
               subtitle: 'Gestiona tus datos',
@@ -175,26 +114,16 @@ class _SettingsPageState extends State<SettingsPage> {
               onTap: () {},
             ),
             const SizedBox(height: 12),
-            _buildCardTile(
-              cardColor: cardBgColor,
-              iconBgColor: iconBgColor,
-              textColor: textColor,
-              subtitleColor: subtitleColor,
+            SettingsCardTile(
               icon: Icons.lock_outline_rounded,
               title: 'Seguridad',
               subtitle: 'Cambiar contraseña',
               trailing: Icon(Icons.arrow_forward_rounded, color: primaryBrown, size: 20),
               onTap: () {},
             ),
-
             const SizedBox(height: 24),
-
-            _buildSectionHeader('Soporte', textColor),
-            _buildCardTile(
-              cardColor: cardBgColor,
-              iconBgColor: iconBgColor,
-              textColor: textColor,
-              subtitleColor: subtitleColor,
+            const SettingsSectionHeader(title: 'Soporte'),
+            SettingsCardTile(
               icon: Icons.help_outline_rounded,
               title: 'Centro de Ayuda',
               subtitle: 'Preguntas frecuentes',
@@ -202,90 +131,16 @@ class _SettingsPageState extends State<SettingsPage> {
               onTap: () {},
             ),
             const SizedBox(height: 12),
-            _buildCardTile(
-              cardColor: cardBgColor,
-              iconBgColor: iconBgColor,
-              textColor: textColor,
-              subtitleColor: subtitleColor,
+            SettingsCardTile(
               icon: Icons.description_outlined,
               title: 'Términos y Condiciones',
               subtitle: 'Lee nuestros términos',
               trailing: Icon(Icons.arrow_forward_rounded, color: primaryBrown, size: 20),
               onTap: () {},
             ),
-
             const SizedBox(height: 30),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildSectionHeader(String title, Color color) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0, left: 4.0),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-          color: color,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCardTile({
-    required Color cardColor,
-    required Color iconBgColor,
-    required Color textColor,
-    required Color subtitleColor,
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required Widget trailing,
-    VoidCallback? onTap,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ListTile(
-        onTap: onTap,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        leading: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: iconBgColor,
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Icon(icon, color: const Color(0xFFA2784F), size: 22),
-        ),
-        title: Text(
-          title,
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.bold,
-            color: textColor,
-          ),
-        ),
-        subtitle: Text(
-          subtitle,
-          style: TextStyle(
-            fontSize: 12,
-            color: subtitleColor,
-          ),
-        ),
-        trailing: trailing,
       ),
     );
   }
