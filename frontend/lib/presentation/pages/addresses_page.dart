@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../components/address_card_item.dart';
-import '../components/address_form_card.dart';
+import '../components/address/address_card_item.dart';
+import '../components/address/address_form_card.dart';
 
 class AddressItem {
   final String id;

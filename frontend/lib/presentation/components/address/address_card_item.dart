@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../pages/addresses_page.dart';
+import '../../pages/addresses_page.dart';
 
 class AddressCardItem extends StatelessWidget {
   final AddressItem item;

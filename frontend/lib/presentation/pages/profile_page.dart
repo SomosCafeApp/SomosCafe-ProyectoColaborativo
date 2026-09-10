@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../components/profile_header.dart';
-import '../components/profile_option_card.dart';
+import '../components/profile_page/profile_header.dart';
+import '../components/profile_page/profile_option_card.dart';
 import '../state/auth_provider.dart';
 import '../state/favorites_provider.dart';
 

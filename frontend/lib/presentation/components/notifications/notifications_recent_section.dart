@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../data/models/notification_item.dart';
-import 'notification_card.dart';
-import 'notification_schedule_card.dart';
+import '../../../data/models/notification_item.dart';
+import '../notification_card.dart';
+import '../notification_schedule_card.dart';
 
 class NotificationsRecentSection extends StatelessWidget {
   final List<NotificationItem> recentActivity;

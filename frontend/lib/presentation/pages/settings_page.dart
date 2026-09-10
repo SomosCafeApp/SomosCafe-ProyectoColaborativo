@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../state/theme_provider.dart';
 import '../state/font_size_provider.dart';
-import '../components/settings_section_header.dart';
-import '../components/settings_card_tile.dart';
-import '../components/settings_dropdown_selector.dart';
+import '../components/settings_/settings_section_header.dart';
+import '../components/settings_/settings_card_tile.dart';
+import '../components/settings_/settings_dropdown_selector.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});

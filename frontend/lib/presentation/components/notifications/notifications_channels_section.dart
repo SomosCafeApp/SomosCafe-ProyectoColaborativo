@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'notification_channel_tile.dart';
+import '../notification_channel_tile.dart';
 
 class NotificationsChannelsSection extends StatelessWidget {
   final bool pushNotifications;

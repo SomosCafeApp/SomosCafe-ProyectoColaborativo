@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../components/custom_chip_grid.dart';
-import '../components/custom_section_card.dart';
-import '../components/delivery_info_section.dart';
-import '../components/option_selectable_box.dart';
-import '../components/product_image_carousel.dart';
-import '../components/quantity_counter.dart';
-import '../components/type_selector.dart';
+import '../components/product_detail/custom_chip_grid.dart';
+import '../components/product_detail/custom_section_card.dart';
+import '../components/product_detail/delivery_info_section.dart';
+import '../components/product_detail/option_selectable_box.dart';
+import '../components/product_detail/product_image_carousel.dart';
+import '../components/product_detail/quantity_counter.dart';
+import '../components/product_detail/type_selector.dart';
 
 import '../../data/models/product.dart';
 import '../state/cart_provider.dart';

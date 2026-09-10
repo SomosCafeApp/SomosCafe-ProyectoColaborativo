@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../components/payment_methods_header.dart';
-import '../components/saved_payment_methods_section.dart';
-import '../components/other_payment_options_section.dart';
-import '../components/secure_payment_info_card.dart';
+import '../components/payment/payment_methods_header.dart';
+import '../components/payment/saved_payment_methods_section.dart';
+import '../components/payment/other_payment_options_section.dart';
+import '../components/payment/secure_payment_info_card.dart';
 
 class PaymentMethodsPage extends StatefulWidget {
   const PaymentMethodsPage({super.key});

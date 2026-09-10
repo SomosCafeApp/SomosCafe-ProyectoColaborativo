@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../components/reward_card.dart';
-import '../components/reward_header.dart';
+import '../components/rewards_/reward_card.dart';
+import '../components/rewards_/reward_header.dart';
 
 class RewardsPage extends StatelessWidget {
   const RewardsPage({super.key});

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../data/models/notification_item.dart';
-import '../components/notifications_header.dart';
-import '../components/notifications_recent_section.dart';
-import '../components/notifications_channels_section.dart';
-import '../components/notifications_preferences_section.dart';
+import '../components/notifications/notifications_header.dart';
+import '../components/notifications/notifications_recent_section.dart';
+import '../components/notifications/notifications_channels_section.dart';
+import '../components/notifications/notifications_preferences_section.dart';
 
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});

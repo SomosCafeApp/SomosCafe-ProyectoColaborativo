@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../components/login_header.dart';
-import '../components/login_form_card.dart';
-import '../components/login_footer.dart';
+import '../components/login/login_header.dart';
+import '../components/login/login_form_card.dart';
+import '../components/login/login_footer.dart';
 
 class LoginPage extends StatefulWidget {
   final VoidCallback? onRegisterTap;

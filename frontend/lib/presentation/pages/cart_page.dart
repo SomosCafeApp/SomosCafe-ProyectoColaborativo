@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../state/cart_provider.dart';
 import '../../data/models/product.dart';
-import '../components/cart_item_card.dart';
-import '../components/cart_summary_panel.dart';
-import '../components/cart_empty_state.dart';
+import '../components/cart_/cart_item_card.dart';
+import '../components/cart_/cart_summary_panel.dart';
+import '../components/cart_/cart_empty_state.dart';
 
 class _CartGroup {
   final Product product;

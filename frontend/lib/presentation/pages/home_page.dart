@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../data/models/product.dart';
-import '../components/product_card.dart';
+import '../components/product_card/product_card.dart';
 import '../state/cart_provider.dart';
 
 class HomePage extends StatefulWidget {

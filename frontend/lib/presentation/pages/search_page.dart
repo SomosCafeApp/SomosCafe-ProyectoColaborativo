@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../data/models/product.dart';
 import '../../data/providers/product_provider.dart';
-import '../components/search_header.dart';
-import '../components/search_result_item.dart';
-import '../components/search_state_message.dart';
+import '../components/search/search_header.dart';
+import '../components/search/search_result_item.dart';
+import '../components/search/search_state_message.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});

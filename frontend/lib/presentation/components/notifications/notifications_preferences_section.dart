@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'notification_schedule_card.dart';
+import '../notification_schedule_card.dart';
 
 class NotificationsPreferencesSection extends StatelessWidget {
   final TimeOfDay startTime;

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../data/models/product.dart';
+import '../../../data/models/product.dart';
 
 class SearchResultItem extends StatelessWidget {
   final Product product;
