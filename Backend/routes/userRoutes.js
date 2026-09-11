@@ -6,10 +6,25 @@ import {
 
 import {
     requestEmailVerification,
-    verifyEmail
+    verifyEmail,
+    resendVerificationCode
 } from "../controllers/emailVerificationController.js";
 
-const router = express.Router();
+import {
+    loginWithGoogle
+} from "../controllers/googleController.js";
+
+const router =
+    express.Router();
+
+// ===================================
+// REGISTER USER
+// ===================================
+
+router.post(
+    "/register",
+    registerUser
+);
 
 // ===================================
 // REQUEST EMAIL VERIFICATION
@@ -30,12 +45,21 @@ router.post(
 );
 
 // ===================================
-// REGISTER USER
+// RESEND EMAIL VERIFICATION
 // ===================================
 
 router.post(
-    "/register",
-    registerUser
+    "/resend-email-verification",
+    resendVerificationCode
+);
+
+// ===================================
+// LOGIN WITH GOOGLE
+// ===================================
+
+router.post(
+    "/login-google",
+    loginWithGoogle
 );
 
 export default router;

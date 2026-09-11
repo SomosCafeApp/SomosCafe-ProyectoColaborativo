@@ -6,6 +6,7 @@ import User from "../models/userModel.js";
 // ===================================
 // LOGIN USER
 // ===================================
+
 export const loginUser = async (req, res) => {
 
     try {
@@ -15,8 +16,14 @@ export const loginUser = async (req, res) => {
             password
         } = req.body;
 
+        // ===================================
         // VALIDATE REQUIRED DATA
-        if (!email || !password) {
+        // ===================================
+
+        if (
+            !email ||
+            !password
+        ) {
 
             return res.status(400).json({
 
@@ -27,12 +34,26 @@ export const loginUser = async (req, res) => {
 
         }
 
+        // ===================================
+        // NORMALIZE EMAIL
+        // ===================================
+
+        const normalizedEmail =
+            email
+                .toLowerCase()
+                .trim();
+
+        // ===================================
         // FIND USER
-        const user = await User.findOne({
+        // ===================================
 
-            email: email.toLowerCase().trim()
+        const user =
+            await User.findOne({
 
-        });
+                email:
+                    normalizedEmail
+
+            });
 
         if (!user) {
 
@@ -45,8 +66,13 @@ export const loginUser = async (req, res) => {
 
         }
 
+        // ===================================
         // CHECK ACCOUNT STATUS
-        if (!user.isActive) {
+        // ===================================
+
+        if (
+            !user.isActive
+        ) {
 
             return res.status(403).json({
 
@@ -57,11 +83,55 @@ export const loginUser = async (req, res) => {
 
         }
 
+        // ===================================
+        // CHECK EMAIL VERIFICATION
+        // ===================================
+
+        // Google accounts are already authenticated
+        // through Google and do not need the
+        // traditional email verification flow.
+        if (
+            !user.isEmailVerified &&
+            !user.googleId
+        ) {
+
+            return res.status(403).json({
+
+                message:
+                    "Please verify your email before logging in"
+
+            });
+
+        }
+
+        // ===================================
+        // CHECK PASSWORD
+        // ===================================
+
+        if (
+            !user.password
+        ) {
+
+            return res.status(401).json({
+
+                message:
+                    "This account does not have a password. Please use Google login."
+
+            });
+
+        }
+
+        // ===================================
         // COMPARE PASSWORD
+        // ===================================
+
         const passwordValid =
             await bcrypt.compare(
+
                 password,
+
                 user.password
+
             );
 
         if (!passwordValid) {
@@ -75,24 +145,40 @@ export const loginUser = async (req, res) => {
 
         }
 
+        // ===================================
         // GENERATE JWT
-        const token = jwt.sign(
+        // ===================================
 
-            {
-                id: user._id,
-                email: user.email,
-                role: user.role
-            },
+        const token =
+            jwt.sign(
 
-            process.env.JWT_SECRET,
+                {
+                    id:
+                        user._id,
 
-            {
-                expiresIn: "1h"
-            }
+                    userId:
+                        user._id,
 
-        );
+                    email:
+                        user.email,
 
+                    role:
+                        user.role
+                },
+
+                process.env.JWT_SECRET,
+
+                {
+                    expiresIn:
+                        "1h"
+                }
+
+            );
+
+        // ===================================
         // RESPONSE
+        // ===================================
+
         return res.status(200).json({
 
             message:
@@ -102,23 +188,35 @@ export const loginUser = async (req, res) => {
 
             user: {
 
-                id: user._id,
+                id:
+                    user._id,
 
-                name: user.name,
+                name:
+                    user.name,
 
-                lastName: user.lastName,
+                lastName:
+                    user.lastName,
 
-                email: user.email,
+                email:
+                    user.email,
 
-                role: user.role,
+                role:
+                    user.role,
 
-                phone: user.phone,
+                phone:
+                    user.phone,
 
-                points: user.points,
+                points:
+                    user.points,
 
-                profileImage: user.profileImage,
+                profileImage:
+                    user.profileImage,
 
-                isActive: user.isActive
+                isActive:
+                    user.isActive,
+
+                isEmailVerified:
+                    user.isEmailVerified
 
             }
 
@@ -127,8 +225,11 @@ export const loginUser = async (req, res) => {
     } catch (error) {
 
         console.error(
+
             "Login error:",
+
             error
+
         );
 
         return res.status(500).json({
@@ -136,7 +237,8 @@ export const loginUser = async (req, res) => {
             message:
                 "Error during login",
 
-            error: error.message
+            error:
+                error.message
 
         });
 

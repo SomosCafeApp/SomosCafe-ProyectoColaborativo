@@ -3,15 +3,15 @@ import 'package:provider/provider.dart';
 
 // Módulos y páginas
 import 'core/theme/app_theme.dart';
-import 'presentation/pages/main_navigation_screen.dart';
-import 'presentation/pages/welcome_page.dart';
+import 'pages/main_navigation_screen.dart';
+import 'pages/home_page.dart';
 
 // Providers
-import 'presentation/state/cart_provider.dart';
-import 'presentation/state/auth_provider.dart';
-import 'presentation/state/order_provider.dart';
-import 'presentation/state/favorites_provider.dart';
-import 'presentation/state/theme_provider.dart';
+import 'providers/cart_provider.dart';
+import 'providers/auth_provider.dart';
+import 'providers/order_provider.dart';
+import 'providers/favorites_provider.dart';
+import 'providers/theme_provider.dart';
 
 void main() {
   runApp(

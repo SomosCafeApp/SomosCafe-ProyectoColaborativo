@@ -1,9 +1,9 @@
 import User from "../models/userModel.js";
-import jwt from "jsonwebtoken";
 
 // ===================================
 // REGISTER USER
 // ===================================
+
 export const registerUser = async (req, res) => {
 
     try {
@@ -13,8 +13,7 @@ export const registerUser = async (req, res) => {
             lastName,
             email,
             password,
-            phone,
-            verificationToken
+            phone
         } = req.body;
 
         // ===================================
@@ -25,14 +24,13 @@ export const registerUser = async (req, res) => {
             !name ||
             !lastName ||
             !email ||
-            !password ||
-            !verificationToken
+            !password
         ) {
 
             return res.status(400).json({
 
                 message:
-                    "Name, lastName, email, password and verificationToken are required"
+                    "Name, lastName, email and password are required"
 
             });
 
@@ -64,67 +62,6 @@ export const registerUser = async (req, res) => {
 
                 message:
                     "Invalid email format"
-
-            });
-
-        }
-
-        // ===================================
-        // VALIDATE EMAIL TOKEN
-        // ===================================
-
-        let decodedToken;
-
-        try {
-
-            decodedToken =
-                jwt.verify(
-                    verificationToken,
-                    process.env.JWT_SECRET
-                );
-
-        } catch (tokenError) {
-
-            return res.status(400).json({
-
-                message:
-                    "Invalid or expired email verification token"
-
-            });
-
-        }
-
-        // ===================================
-        // VALIDATE TOKEN PURPOSE
-        // ===================================
-
-        if (
-            decodedToken.purpose !==
-            "EMAIL_VERIFICATION"
-        ) {
-
-            return res.status(400).json({
-
-                message:
-                    "Invalid email verification token"
-
-            });
-
-        }
-
-        // ===================================
-        // VALIDATE TOKEN EMAIL
-        // ===================================
-
-        if (
-            decodedToken.email !==
-            normalizedEmail
-        ) {
-
-            return res.status(400).json({
-
-                message:
-                    "Verification token does not match the email"
 
             });
 
@@ -264,6 +201,21 @@ export const registerUser = async (req, res) => {
 
         if (existingUser) {
 
+            // Permitir volver a registrarse solamente
+            // si existe una cuenta pendiente de verificación.
+            if (
+                !existingUser.isEmailVerified
+            ) {
+
+                return res.status(409).json({
+
+                    message:
+                        "Email is already registered but not verified"
+
+                });
+
+            }
+
             return res.status(409).json({
 
                 message:
@@ -306,7 +258,10 @@ export const registerUser = async (req, res) => {
                     "",
 
                 isActive:
-                    true
+                    true,
+
+                isEmailVerified:
+                    false
 
             });
 
@@ -348,7 +303,10 @@ export const registerUser = async (req, res) => {
                 user.profileImage,
 
             isActive:
-                user.isActive
+                user.isActive,
+
+            isEmailVerified:
+                user.isEmailVerified
 
         };
 
@@ -359,7 +317,7 @@ export const registerUser = async (req, res) => {
         return res.status(201).json({
 
             message:
-                "User registered successfully",
+                "User registered successfully. Please verify your email.",
 
             user:
                 userResponse

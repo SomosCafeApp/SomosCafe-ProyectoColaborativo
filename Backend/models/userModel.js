@@ -3,6 +3,10 @@ import bcrypt from "bcryptjs";
 
 const userSchema = new mongoose.Schema(
     {
+        // ===================================
+        // INFORMACIÓN PERSONAL
+        // ===================================
+
         name: {
             type: String,
             required: true,
@@ -11,8 +15,8 @@ const userSchema = new mongoose.Schema(
 
         lastName: {
             type: String,
-            required: true,
-            trim: true
+            trim: true,
+            default: ""
         },
 
         email: {
@@ -23,23 +27,54 @@ const userSchema = new mongoose.Schema(
             unique: true
         },
 
+        phone: {
+            type: String,
+            trim: true,
+            default: ""
+        },
+
+        // ===================================
+        // AUTENTICACIÓN TRADICIONAL
+        // ===================================
+
+        // La contraseña no es obligatoria porque
+        // los usuarios autenticados mediante Google
+        // pueden no tener contraseña.
         password: {
             type: String,
-            required: true,
             minlength: 6,
-            maxlength: 100
+            maxlength: 100,
+            default: null
         },
+
+        // ===================================
+        // AUTENTICACIÓN CON GOOGLE
+        // ===================================
+
+        googleId: {
+            type: String,
+            unique: true,
+            sparse: true,
+            default: undefined
+        },
+
+        // ===================================
+        // IMAGEN DE PERFIL
+        // ===================================
+
+        profileImage: {
+            type: String,
+            default: ""
+        },
+
+        // ===================================
+        // INFORMACIÓN DEL USUARIO
+        // ===================================
 
         role: {
             type: String,
             enum: ["ADMIN", "USER"],
             default: "USER"
-        },
-
-        phone: {
-            type: String,
-            trim: true,
-            default: ""
         },
 
         points: {
@@ -48,15 +83,25 @@ const userSchema = new mongoose.Schema(
             min: 0
         },
 
-        profileImage: {
-            type: String,
-            default: ""
-        },
-
+        // Estado general de la cuenta.
+        // Permite activar o desactivar usuarios
+        // desde la administración.
         isActive: {
             type: Boolean,
             default: true
         },
+
+        // Estado de verificación del correo.
+        // Los usuarios tradicionales deben verificar
+        // su correo antes de iniciar sesión.
+        isEmailVerified: {
+            type: Boolean,
+            default: false
+        },
+
+        // ===================================
+        // RECUPERACIÓN DE CONTRASEÑA
+        // ===================================
 
         recoveryCode: {
             type: String,
@@ -75,29 +120,37 @@ const userSchema = new mongoose.Schema(
 );
 
 // ===================================
-// HASH PASSWORD
+// HASH DE CONTRASEÑA
 // ===================================
+
 userSchema.pre("save", async function () {
 
-    // DO NOT HASH PASSWORD AGAIN
+    // No intentar encriptar una contraseña
+    // que no existe.
+    if (!this.password) {
+        return;
+    }
+
+    // No volver a encriptar una contraseña
+    // que ya fue almacenada.
     if (!this.isModified("password")) {
         return;
     }
 
-    // GENERATE SALT
+    // Generar salt.
     const salt = await bcrypt.genSalt(10);
 
-    // HASH PASSWORD
+    // Encriptar contraseña.
     this.password = await bcrypt.hash(
         this.password,
         salt
     );
-
 });
 
 // ===================================
 // USER MODEL
 // ===================================
+
 const User = mongoose.model(
     "User",
     userSchema

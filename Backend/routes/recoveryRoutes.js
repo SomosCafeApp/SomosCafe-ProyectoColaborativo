@@ -10,6 +10,7 @@ const router = express.Router();
 // ===================================
 // REQUEST RECOVERY CODE
 // ===================================
+
 router.post(
     "/request",
     requestRecoveryCode
@@ -18,6 +19,7 @@ router.post(
 // ===================================
 // CHANGE PASSWORD
 // ===================================
+
 router.post(
     "/change-password",
     changePassword

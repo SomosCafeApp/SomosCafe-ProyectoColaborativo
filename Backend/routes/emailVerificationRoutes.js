@@ -6,7 +6,8 @@ import {
     resendVerificationCode
 } from "../controllers/emailVerificationController.js";
 
-const router = express.Router();
+const router =
+    express.Router();
 
 // ===================================
 // REQUEST EMAIL VERIFICATION

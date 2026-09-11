@@ -1,34 +1,13 @@
 import User from "../models/userModel.js";
 import EmailVerification from "../models/emailVerificationModel.js";
 
-import nodemailer from "nodemailer";
-import jwt from "jsonwebtoken";
+import {
+    sendVerificationEmail
+} from "../utils/mailer.js";
+
 import dotenv from "dotenv";
 
 dotenv.config();
-
-// ===================================
-// CONFIGURE EMAIL TRANSPORTER
-// ===================================
-
-const transporter = nodemailer.createTransport({
-
-    host: "smtp.gmail.com",
-
-    port: 587,
-
-    secure: false,
-
-    requireTLS: true,
-
-    family: 4,
-
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    }
-
-});
 
 // ===================================
 // GENERATE VERIFICATION CODE
@@ -37,177 +16,41 @@ const transporter = nodemailer.createTransport({
 const generateVerificationCode = () => {
 
     return Math.floor(
-        100000 + Math.random() * 900000
+        100000 +
+        Math.random() * 900000
     ).toString();
 
 };
 
 // ===================================
-// SEND VERIFICATION EMAIL
+// VALIDATE EMAIL
 // ===================================
 
-const sendVerificationEmail = async (
-    email,
-    code
-) => {
+const normalizeEmail = (email) => {
 
-    const mailOptions = {
+    if (
+        typeof email !== "string"
+    ) {
+        return null;
+    }
 
-        from:
-            `"SomosCafeApp" <${process.env.EMAIL_USER}>`,
+    const normalizedEmail =
+        email
+            .trim()
+            .toLowerCase();
 
-        to:
-            email,
+    const emailRegex =
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-        subject:
-            "Email Verification Code - SomosCafeApp",
+    if (
+        !emailRegex.test(
+            normalizedEmail
+        )
+    ) {
+        return null;
+    }
 
-        html: `
-
-<div style="
-    font-family: Arial, sans-serif;
-    max-width: 600px;
-    margin: 0 auto;
-    padding: 30px;
-    background: #f8f3ee;
-    color: #4b2e2b;
-    border-radius: 18px;
-    border: 1px solid #d8c3b5;
-">
-
-    <div style="
-        text-align: center;
-        margin-bottom: 35px;
-    ">
-
-        <h1 style="
-            color: #6f4e37;
-            margin: 0;
-            font-size: 34px;
-            letter-spacing: 1px;
-        ">
-            ☕ SomosCafeApp ☕
-        </h1>
-
-        <p style="
-            color: #8b5e3c;
-            margin-top: 10px;
-            font-size: 15px;
-        ">
-            Your coffee, your account, your security.
-        </p>
-
-    </div>
-
-    <h2 style="
-        color: #5c4033;
-        margin-bottom: 20px;
-    ">
-        Email Verification
-    </h2>
-
-    <p style="
-        font-size: 16px;
-    ">
-        Welcome to
-        <strong>SomosCafeApp</strong>.
-    </p>
-
-    <p style="
-        line-height: 1.7;
-        color: #5f4637;
-    ">
-        Use the following code to verify
-        your email address:
-    </p>
-
-    <div style="
-        background: linear-gradient(
-            135deg,
-            #6f4e37 0%,
-            #8b5e3c 50%,
-            #c4a484 100%
-        );
-        padding: 35px 20px;
-        border-radius: 16px;
-        text-align: center;
-        margin: 35px 0;
-        box-shadow:
-            0 10px 25px
-            rgba(
-                111,
-                78,
-                55,
-                0.25
-            );
-    ">
-
-        <h1 style="
-            color: #fff8f0;
-            font-size: 42px;
-            letter-spacing: 10px;
-            margin: 0;
-            font-family:
-                'Courier New',
-                Courier,
-                monospace;
-        ">
-            ${code}
-        </h1>
-
-    </div>
-
-    <div style="
-        background: #efe2d6;
-        padding: 18px;
-        border-radius: 12px;
-    ">
-
-        <p style="
-            margin: 0;
-            color: #6b4f3b;
-            font-size: 14px;
-        ">
-            ⏱️ This code expires in
-            <strong>15 minutes</strong>.
-        </p>
-
-    </div>
-
-    <p style="
-        color: #7b5e57;
-        font-size: 14px;
-        margin-top: 25px;
-    ">
-        🔒 If you did not request this verification,
-        you can safely ignore this email.
-    </p>
-
-    <hr style="
-        margin: 35px 0;
-        border: none;
-        border-top:
-            1px solid #d6bfae;
-    ">
-
-    <p style="
-        color: #9b7b67;
-        font-size: 12px;
-        text-align: center;
-    ">
-        © 2026 SomosCafeApp · Coffee,
-        technology and security ☕
-    </p>
-
-</div>
-
-`
-
-    };
-
-    await transporter.sendMail(
-        mailOptions
-    );
+    return normalizedEmail;
 
 };
 
@@ -220,7 +63,9 @@ export const requestEmailVerification =
 
         try {
 
-            const { email } = req.body;
+            const {
+                email
+            } = req.body;
 
             // ===================================
             // VALIDATE EMAIL
@@ -237,23 +82,14 @@ export const requestEmailVerification =
 
             }
 
+            // ===================================
+            // NORMALIZE EMAIL
+            // ===================================
+
             const normalizedEmail =
-                email
-                    .trim()
-                    .toLowerCase();
+                normalizeEmail(email);
 
-            // ===================================
-            // VALIDATE EMAIL FORMAT
-            // ===================================
-
-            const emailRegex =
-                /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-            if (
-                !emailRegex.test(
-                    normalizedEmail
-                )
-            ) {
+            if (!normalizedEmail) {
 
                 return res.status(400).json({
 
@@ -265,10 +101,10 @@ export const requestEmailVerification =
             }
 
             // ===================================
-            // CHECK IF EMAIL ALREADY EXISTS
+            // FIND USER
             // ===================================
 
-            const existingUser =
+            const user =
                 await User.findOne({
 
                     email:
@@ -276,12 +112,29 @@ export const requestEmailVerification =
 
                 });
 
-            if (existingUser) {
+            if (!user) {
+
+                return res.status(404).json({
+
+                    message:
+                        "User not found. Please register first."
+
+                });
+
+            }
+
+            // ===================================
+            // CHECK EMAIL STATUS
+            // ===================================
+
+            if (
+                user.isEmailVerified
+            ) {
 
                 return res.status(409).json({
 
                     message:
-                        "Email is already registered"
+                        "Email is already verified"
 
                 });
 
@@ -325,27 +178,57 @@ export const requestEmailVerification =
                 },
 
                 {
-                    upsert: true,
+                    upsert:
+                        true,
 
-                    new: true,
+                    new:
+                        true,
 
-                    setDefaultsOnInsert: true
+                    setDefaultsOnInsert:
+                        true
                 }
 
             );
 
             // ===================================
-            // SEND EMAIL
+            // SEND EMAIL WITH BREVO
             // ===================================
 
-            await sendVerificationEmail(
-                normalizedEmail,
-                code
-            );
+            try {
 
-            console.log(
-                `📧 Verification email sent to ${normalizedEmail}`
-            );
+                await sendVerificationEmail(
+
+                    normalizedEmail,
+
+                    code
+
+                );
+
+            } catch (emailError) {
+
+                await EmailVerification.deleteOne({
+
+                    email:
+                        normalizedEmail
+
+                });
+
+                console.error(
+
+                    "❌ Brevo could not send verification email:",
+
+                    emailError
+
+                );
+
+                return res.status(502).json({
+
+                    message:
+                        "Could not send verification email"
+
+                });
+
+            }
 
             // ===================================
             // RESPONSE
@@ -354,15 +237,21 @@ export const requestEmailVerification =
             return res.status(200).json({
 
                 message:
-                    "Verification code sent successfully"
+                    "Verification code sent successfully",
+
+                email:
+                    normalizedEmail
 
             });
 
         } catch (error) {
 
             console.error(
+
                 "Request email verification error:",
+
                 error
+
             );
 
             return res.status(500).json({
@@ -411,10 +300,63 @@ export const verifyEmail =
 
             }
 
+            // ===================================
+            // NORMALIZE EMAIL
+            // ===================================
+
             const normalizedEmail =
-                email
-                    .trim()
-                    .toLowerCase();
+                normalizeEmail(email);
+
+            if (!normalizedEmail) {
+
+                return res.status(400).json({
+
+                    message:
+                        "Invalid email format"
+
+                });
+
+            }
+
+            // ===================================
+            // FIND USER
+            // ===================================
+
+            const user =
+                await User.findOne({
+
+                    email:
+                        normalizedEmail
+
+                });
+
+            if (!user) {
+
+                return res.status(404).json({
+
+                    message:
+                        "User not found. Please register first."
+
+                });
+
+            }
+
+            // ===================================
+            // CHECK EMAIL STATUS
+            // ===================================
+
+            if (
+                user.isEmailVerified
+            ) {
+
+                return res.status(409).json({
+
+                    message:
+                        "Email is already verified"
+
+                });
+
+            }
 
             // ===================================
             // FIND VERIFICATION
@@ -427,10 +369,15 @@ export const verifyEmail =
                         normalizedEmail,
 
                     code:
-                        code.toString(),
+                        code
+                            .toString()
+                            .trim(),
 
                     expiresAt: {
-                        $gt: new Date()
+
+                        $gt:
+                            new Date()
+
                     }
 
                 });
@@ -451,27 +398,13 @@ export const verifyEmail =
             }
 
             // ===================================
-            // GENERATE VERIFICATION TOKEN
+            // VERIFY USER EMAIL
             // ===================================
 
-            const verificationToken =
-                jwt.sign(
+            user.isEmailVerified =
+                true;
 
-                    {
-                        email:
-                            normalizedEmail,
-
-                        purpose:
-                            "EMAIL_VERIFICATION"
-                    },
-
-                    process.env.JWT_SECRET,
-
-                    {
-                        expiresIn: "15m"
-                    }
-
-                );
+            await user.save();
 
             // ===================================
             // DELETE USED CODE
@@ -484,10 +417,6 @@ export const verifyEmail =
 
             });
 
-            console.log(
-                `✅ Email verified: ${normalizedEmail}`
-            );
-
             // ===================================
             // RESPONSE
             // ===================================
@@ -497,15 +426,19 @@ export const verifyEmail =
                 message:
                     "Email verified successfully",
 
-                verificationToken
+                email:
+                    user.email
 
             });
 
         } catch (error) {
 
             console.error(
+
                 "Verify email error:",
+
                 error
+
             );
 
             return res.status(500).json({
@@ -531,7 +464,9 @@ export const resendVerificationCode =
 
         try {
 
-            const { email } = req.body;
+            const {
+                email
+            } = req.body;
 
             // ===================================
             // VALIDATE EMAIL
@@ -548,16 +483,29 @@ export const resendVerificationCode =
 
             }
 
+            // ===================================
+            // NORMALIZE EMAIL
+            // ===================================
+
             const normalizedEmail =
-                email
-                    .trim()
-                    .toLowerCase();
+                normalizeEmail(email);
+
+            if (!normalizedEmail) {
+
+                return res.status(400).json({
+
+                    message:
+                        "Invalid email format"
+
+                });
+
+            }
 
             // ===================================
-            // CHECK IF USER ALREADY EXISTS
+            // FIND USER
             // ===================================
 
-            const existingUser =
+            const user =
                 await User.findOne({
 
                     email:
@@ -565,12 +513,29 @@ export const resendVerificationCode =
 
                 });
 
-            if (existingUser) {
+            if (!user) {
+
+                return res.status(404).json({
+
+                    message:
+                        "User not found. Please register first."
+
+                });
+
+            }
+
+            // ===================================
+            // CHECK EMAIL STATUS
+            // ===================================
+
+            if (
+                user.isEmailVerified
+            ) {
 
                 return res.status(409).json({
 
                     message:
-                        "Email is already registered"
+                        "Email is already verified"
 
                 });
 
@@ -583,6 +548,10 @@ export const resendVerificationCode =
             const code =
                 generateVerificationCode();
 
+            // ===================================
+            // EXPIRATION
+            // ===================================
+
             const expiresAt =
                 new Date(
                     Date.now() +
@@ -590,7 +559,7 @@ export const resendVerificationCode =
                 );
 
             // ===================================
-            // UPDATE VERIFICATION
+            // SAVE NEW VERIFICATION
             // ===================================
 
             await EmailVerification.findOneAndUpdate(
@@ -610,27 +579,57 @@ export const resendVerificationCode =
                 },
 
                 {
-                    upsert: true,
+                    upsert:
+                        true,
 
-                    new: true,
+                    new:
+                        true,
 
-                    setDefaultsOnInsert: true
+                    setDefaultsOnInsert:
+                        true
                 }
 
             );
 
             // ===================================
-            // SEND EMAIL
+            // SEND EMAIL WITH BREVO
             // ===================================
 
-            await sendVerificationEmail(
-                normalizedEmail,
-                code
-            );
+            try {
 
-            console.log(
-                `📧 New verification code sent to ${normalizedEmail}`
-            );
+                await sendVerificationEmail(
+
+                    normalizedEmail,
+
+                    code
+
+                );
+
+            } catch (emailError) {
+
+                await EmailVerification.deleteOne({
+
+                    email:
+                        normalizedEmail
+
+                });
+
+                console.error(
+
+                    "❌ Brevo could not resend verification email:",
+
+                    emailError
+
+                );
+
+                return res.status(502).json({
+
+                    message:
+                        "Could not send verification email"
+
+                });
+
+            }
 
             // ===================================
             // RESPONSE
@@ -639,15 +638,21 @@ export const resendVerificationCode =
             return res.status(200).json({
 
                 message:
-                    "New verification code sent successfully"
+                    "New verification code sent successfully",
+
+                email:
+                    normalizedEmail
 
             });
 
         } catch (error) {
 
             console.error(
+
                 "Resend verification code error:",
+
                 error
+
             );
 
             return res.status(500).json({
