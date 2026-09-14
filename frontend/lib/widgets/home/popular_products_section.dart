@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../core/constants/app_colors.dart';
 import '../../models/product.dart';
-import '../product_card/product_card.dart';
+import '../product_card.dart';
 
 class PopularProductsSection extends StatelessWidget {
   final List<Product> products;
@@ -17,6 +18,7 @@ class PopularProductsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final primaryBrown = theme.colorScheme.primary;
 
     return Padding(
@@ -26,19 +28,40 @@ class PopularProductsSection extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: primaryBrown,
-                  borderRadius: BorderRadius.circular(12),
+                  color: isDark
+                      ? AppColors.darkSurfaceSubtle
+                      : primaryBrown.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(14),
                 ),
-                child: const Icon(Icons.local_fire_department_rounded, color: Colors.white, size: 20),
+                child: Icon(
+                  Icons.workspace_premium_outlined,
+                  color: isDark ? AppColors.darkTextSecondary : primaryBrown,
+                  size: 22,
+                ),
               ),
               const SizedBox(width: 12),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Lo Más Popular', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface)),
-                  Text('Favoritos de nuestros clientes', style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface.withOpacity(0.55))),
+                  Text(
+                    'Lo Más Popular',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                  Text(
+                    'Favoritos de nuestros clientes',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark
+                          ? AppColors.darkTextSecondary
+                          : AppColors.lightTextSecondary,
+                    ),
+                  ),
                 ],
               ),
               const Spacer(),
@@ -46,9 +69,24 @@ class PopularProductsSection extends StatelessWidget {
                 onPressed: onOrderNow,
                 child: Row(
                   children: [
-                    Text('Ver todo', style: TextStyle(color: primaryBrown, fontSize: 13, fontWeight: FontWeight.w600)),
+                    Text(
+                      'Ver todo',
+                      style: TextStyle(
+                        color: isDark
+                            ? AppColors.darkTextSecondary
+                            : primaryBrown,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     const SizedBox(width: 4),
-                    Icon(Icons.arrow_forward_rounded, size: 14, color: primaryBrown),
+                    Icon(
+                      Icons.arrow_forward_rounded,
+                      size: 14,
+                      color: isDark
+                          ? AppColors.darkTextSecondary
+                          : primaryBrown,
+                    ),
                   ],
                 ),
               ),

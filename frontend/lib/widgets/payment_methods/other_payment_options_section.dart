@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/constants/app_colors.dart';
+
 class OtherPaymentOptionsSection extends StatelessWidget {
   const OtherPaymentOptionsSection({super.key});
 
@@ -7,10 +9,26 @@ class OtherPaymentOptionsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final cardColor = theme.cardColor;
-    final textColor = theme.colorScheme.onSurface;
-    final subtitleColor = textColor.withOpacity(0.6);
-    final outlinedBorderColor = isDark ? Colors.white24 : const Color(0xFFE5DDD3);
+
+    final cardColor = isDark
+        ? AppColors.darkSurface
+        : AppColors.lightSurface;
+
+    final textColor = isDark
+        ? AppColors.darkTextPrimary
+        : AppColors.lightTextPrimary;
+
+    final subtitleColor = isDark
+        ? AppColors.darkTextSecondary
+        : AppColors.lightTextSecondary;
+
+    final iconBg = isDark
+        ? AppColors.darkSurfaceSubtle
+        : AppColors.lightSurfaceSubtle;
+
+    final borderColor = isDark
+        ? AppColors.darkSurfaceSubtle
+        : AppColors.lightSurfaceSubtle;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -23,72 +41,79 @@ class OtherPaymentOptionsSection extends StatelessWidget {
             color: textColor,
           ),
         ),
+
         const SizedBox(height: 12),
+
         _buildOtherOptionTile(
           title: 'Nequi',
           subtitle: 'Transferencia instantánea',
           icon: Icons.account_balance_wallet_outlined,
-          iconBg: isDark ? const Color(0xFF3A1F2B) : const Color(0xFFFCE4EC),
-          iconColor: const Color(0xFFC2185B),
+          iconBg: iconBg,
+          iconColor: AppColors.primary,
           cardColor: cardColor,
           textColor: textColor,
           subtitleColor: subtitleColor,
-          outlinedBorderColor: outlinedBorderColor,
+          borderColor: borderColor,
         ),
+
         _buildOtherOptionTile(
           title: 'PSE',
           subtitle: 'Pago desde tu banco',
           icon: Icons.account_balance_outlined,
-          iconBg: isDark ? const Color(0xFF17324A) : const Color(0xFFE1F5FE),
-          iconColor: const Color(0xFF0288D1),
+          iconBg: iconBg,
+          iconColor: AppColors.primary,
           cardColor: cardColor,
           textColor: textColor,
           subtitleColor: subtitleColor,
-          outlinedBorderColor: outlinedBorderColor,
+          borderColor: borderColor,
         ),
+
         _buildOtherOptionTile(
           title: 'Efecty',
           subtitle: 'Pago en puntos Efecty',
           icon: Icons.location_on_outlined,
-          iconBg: isDark ? const Color(0xFF3D371C) : const Color(0xFFFFF8E1),
-          iconColor: const Color(0xFFF57F17),
+          iconBg: iconBg,
+          iconColor: AppColors.primary,
           cardColor: cardColor,
           textColor: textColor,
           subtitleColor: subtitleColor,
-          outlinedBorderColor: outlinedBorderColor,
+          borderColor: borderColor,
         ),
+
         _buildOtherOptionTile(
           title: 'SuChance',
           subtitle: 'Pago en puntos SuChance',
           icon: Icons.location_on_outlined,
-          iconBg: isDark ? const Color(0xFF35213D) : const Color(0xFFF3E5F5),
-          iconColor: const Color(0xFF7B1FA2),
+          iconBg: iconBg,
+          iconColor: AppColors.primary,
           cardColor: cardColor,
           textColor: textColor,
           subtitleColor: subtitleColor,
-          outlinedBorderColor: outlinedBorderColor,
+          borderColor: borderColor,
         ),
+
         _buildOtherOptionTile(
           title: 'Apple Pay',
           subtitle: 'Pago rápido con Apple',
           icon: Icons.phone_iphone_rounded,
-          iconBg: isDark ? const Color(0xFF2A3236) : const Color(0xFFECEFF1),
-          iconColor: isDark ? Colors.white70 : const Color(0xFF37474F),
+          iconBg: iconBg,
+          iconColor: AppColors.primary,
           cardColor: cardColor,
           textColor: textColor,
           subtitleColor: subtitleColor,
-          outlinedBorderColor: outlinedBorderColor,
+          borderColor: borderColor,
         ),
+
         _buildOtherOptionTile(
           title: 'Google Pay',
           subtitle: 'Pago rápido con Google',
           icon: Icons.phone_android_rounded,
-          iconBg: isDark ? const Color(0xFF23244A) : const Color(0xFFE8EAF6),
-          iconColor: const Color(0xFF3F51B5),
+          iconBg: iconBg,
+          iconColor: AppColors.primary,
           cardColor: cardColor,
           textColor: textColor,
           subtitleColor: subtitleColor,
-          outlinedBorderColor: outlinedBorderColor,
+          borderColor: borderColor,
         ),
       ],
     );
@@ -103,11 +128,14 @@ class OtherPaymentOptionsSection extends StatelessWidget {
     required Color cardColor,
     required Color textColor,
     required Color subtitleColor,
-    required Color outlinedBorderColor,
+    required Color borderColor,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 12,
+      ),
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(20),
@@ -120,9 +148,15 @@ class OtherPaymentOptionsSection extends StatelessWidget {
               color: iconBg,
               borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(icon, color: iconColor, size: 22),
+            child: Icon(
+              icon,
+              color: iconColor,
+              size: 22,
+            ),
           ),
+
           const SizedBox(width: 12),
+
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -135,28 +169,42 @@ class OtherPaymentOptionsSection extends StatelessWidget {
                     color: textColor,
                   ),
                 ),
+
                 const SizedBox(height: 2),
+
                 Text(
                   subtitle,
-                  style: TextStyle(fontSize: 12, color: subtitleColor),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: subtitleColor,
+                  ),
                 ),
               ],
             ),
           ),
+
           OutlinedButton.icon(
             style: OutlinedButton.styleFrom(
-              side: BorderSide(color: outlinedBorderColor),
+              foregroundColor: textColor,
+              side: BorderSide(
+                color: borderColor,
+              ),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 6,
+              ),
             ),
             onPressed: () {},
-            icon: Icon(Icons.add, size: 14, color: textColor),
-            label: Text(
+            icon: const Icon(
+              Icons.add,
+              size: 14,
+            ),
+            label: const Text(
               'Agregar',
               style: TextStyle(
-                color: textColor,
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
               ),

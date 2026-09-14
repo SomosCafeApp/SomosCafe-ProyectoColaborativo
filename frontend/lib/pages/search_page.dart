@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../core/constants/app_colors.dart';
 import '../models/product.dart';
+import '../providers/cart_provider.dart';
 import '../providers/product_provider.dart';
+import '../widgets/product_card.dart';
 import '../widgets/search/search_header.dart';
-import '../widgets/search/search_result_item.dart';
 import '../widgets/search/search_state_message.dart';
 
 class SearchPage extends StatefulWidget {
@@ -53,7 +56,13 @@ class _SearchPageState extends State<SearchPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final primaryBrown = theme.colorScheme.primary;
+    final subtitleColor = isDark
+        ? AppColors.darkTextSecondary
+        : AppColors.lightTextSecondary;
+
+    final cartProvider = Provider.of<CartProvider>(context, listen: false);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -65,21 +74,26 @@ class _SearchPageState extends State<SearchPage> {
             onClear: _clearSearch,
           ),
           Expanded(
-            child: _buildBodyContent(primaryBrown),
+            child: _buildBodyContent(context, primaryBrown, subtitleColor, cartProvider),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildBodyContent(Color primaryBrown) {
-    if (_searchController.text.isEmpty) {
-      return SearchStateMessage(
+  Widget _buildBodyContent(
+    BuildContext context,
+    Color primaryBrown,
+    Color subtitleColor,
+    CartProvider cartProvider,
+  ) {
+    final query = _searchController.text.trim();
+
+    if (query.isEmpty) {
+      return const SearchStateMessage(
         icon: Icons.search,
         title: 'Busca tu bebida favorita',
         subtitle: 'Encuentra cafés, bebidas frías y postres',
-        iconColor: primaryBrown,
-        iconBgColor: primaryBrown.withAlpha(38),
       );
     }
 
@@ -91,12 +105,54 @@ class _SearchPageState extends State<SearchPage> {
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      itemCount: _filteredProducts.length,
-      itemBuilder: (context, index) {
-        return SearchResultItem(product: _filteredProducts[index]);
-      },
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Contador de resultados exacto como Figma
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+          child: Text(
+            '${_filteredProducts.length} resultados para "$query"',
+            style: TextStyle(
+              fontSize: 13,
+              color: subtitleColor,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: GridView.builder(
+              padding: const EdgeInsets.only(bottom: 20),
+              physics: const BouncingScrollPhysics(),
+              itemCount: _filteredProducts.length,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                mainAxisSpacing: 16,
+                crossAxisSpacing: 16,
+                childAspectRatio: 0.68,
+              ),
+              itemBuilder: (context, index) {
+                final product = _filteredProducts[index];
+                return ProductCard(
+                  product: product,
+                  onAddToCart: () {
+                    cartProvider.addToCart(product);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('${product.name} añadido al carrito'),
+                        backgroundColor: AppColors.primary,
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

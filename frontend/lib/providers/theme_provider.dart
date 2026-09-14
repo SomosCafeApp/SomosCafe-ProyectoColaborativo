@@ -1,17 +1,29 @@
 import 'package:flutter/material.dart';
 
 class ThemeProvider extends ChangeNotifier {
-  bool _isDarkMode = false;
+  // Inicializamos por defecto en ThemeMode.system para que tome la config del dispositivo
+  ThemeMode _themeMode = ThemeMode.system;
 
-  bool get isDarkMode => _isDarkMode;
+  ThemeMode get themeMode => _themeMode;
 
-  void toggleTheme(bool value) {
-    _isDarkMode = value;
+  // Saber si el tema actual resulta en oscuro (útil para switches en la UI)
+  bool get isDarkMode => _themeMode == ThemeMode.dark;
+
+  // Cambiar explícitamente a Claro u Oscuro desde los ajustes de la app
+  void setThemeMode(ThemeMode mode) {
+    _themeMode = mode;
+    notifyListeners();
+  }
+
+  // Método auxiliar si solo usas un Switch booleano simple en tu UI
+  void toggleTheme(bool isDark) {
+    _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;
     notifyListeners();
   }
 
   static const primaryBrown = Color(0xFFA2784F);
 
+  // Tus temas se mantienen igual...
   ThemeData get lightTheme => ThemeData(
         useMaterial3: true,
         brightness: Brightness.light,

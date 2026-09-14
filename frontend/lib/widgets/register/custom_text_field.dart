@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/constants/app_colors.dart';
 
 class CustomTextField extends StatelessWidget {
   final String label;
@@ -8,8 +9,6 @@ class CustomTextField extends StatelessWidget {
   final TextInputType keyboardType;
   final bool obscureText;
   final Widget? suffixIcon;
-  final Color primaryColor;
-  final Color inputBgColor;
 
   const CustomTextField({
     super.key,
@@ -20,21 +19,26 @@ class CustomTextField extends StatelessWidget {
     this.keyboardType = TextInputType.text,
     this.obscureText = false,
     this.suffixIcon,
-    this.primaryColor = const Color(0xFF9E754B),
-    this.inputBgColor = const Color(0xFFF7F4EF),
   });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final inputBgColor = isDark ? AppColors.darkSurfaceSubtle : AppColors.lightSurfaceSubtle;
+    final textColor = isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
+    final subtitleColor = isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF555555),
+            color: subtitleColor,
           ),
         ),
         const SizedBox(height: 8),
@@ -42,10 +46,11 @@ class CustomTextField extends StatelessWidget {
           controller: controller,
           obscureText: obscureText,
           keyboardType: keyboardType,
+          style: TextStyle(color: textColor, fontSize: 14),
           decoration: InputDecoration(
             hintText: hintText,
-            hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-            prefixIcon: Icon(prefixIcon, color: primaryColor, size: 20),
+            hintStyle: TextStyle(color: subtitleColor.withOpacity(0.5), fontSize: 14),
+            prefixIcon: const Icon(Icons.email_outlined, color: AppColors.primary, size: 20),
             suffixIcon: suffixIcon,
             filled: true,
             fillColor: inputBgColor,

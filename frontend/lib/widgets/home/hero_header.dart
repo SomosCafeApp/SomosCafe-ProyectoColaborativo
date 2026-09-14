@@ -5,10 +5,6 @@ class HeroHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final primaryBrown = theme.colorScheme.primary;
-    const darkBrown = Color(0xFF634832);
-
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.only(top: 60, bottom: 36, left: 20, right: 20),
@@ -17,18 +13,9 @@ class HeroHeader extends StatelessWidget {
           image: const AssetImage('assets/images/hero_home_image.jpeg'),
           fit: BoxFit.cover,
           colorFilter: ColorFilter.mode(
-            Colors.black.withOpacity(0.45),
+            Colors.black.withOpacity(0.55),
             BlendMode.darken,
           ),
-        ),
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            darkBrown.withOpacity(0.7),
-            primaryBrown.withOpacity(0.6),
-            darkBrown.withOpacity(0.85),
-          ],
         ),
       ),
       child: Column(

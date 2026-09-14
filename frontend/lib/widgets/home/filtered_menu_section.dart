@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../core/constants/app_colors.dart';
 import '../../models/product.dart';
-import '../product_card/product_card.dart';
+import '../product_card.dart';
 
 class FilteredMenuSection extends StatelessWidget {
   final List<Product> products;
@@ -15,22 +16,38 @@ class FilteredMenuSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final subtitleColor = theme.colorScheme.onSurface.withOpacity(0.55);
+    final isDark = theme.brightness == Brightness.dark;
+    final subtitleColor = isDark
+        ? AppColors.darkTextSecondary
+        : AppColors.lightTextSecondary;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Nuestro Menú Completo', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface)),
+          Text(
+            'Nuestro Menú Completo',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
           const SizedBox(height: 2),
-          Text('Descubre todas nuestras especialidades artesanales', style: TextStyle(fontSize: 12, color: subtitleColor)),
+          Text(
+            'Descubre todas nuestras especialidades artesanales',
+            style: TextStyle(fontSize: 12, color: subtitleColor),
+          ),
           const SizedBox(height: 16),
           products.isEmpty
               ? Padding(
                   padding: const EdgeInsets.symmetric(vertical: 32),
                   child: Center(
-                    child: Text('No hay productos disponibles en esta categoría', style: TextStyle(color: subtitleColor, fontSize: 14)),
+                    child: Text(
+                      'No hay productos disponibles en esta categoría',
+                      style: TextStyle(color: subtitleColor, fontSize: 14),
+                    ),
                   ),
                 )
               : GridView.builder(

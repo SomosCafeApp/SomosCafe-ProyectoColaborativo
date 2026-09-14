@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../core/constants/app_colors.dart';
 import '../providers/auth_provider.dart';
 import 'cart_tab.dart';
 import 'menu_page.dart';
 import 'login_page.dart';
+import 'register_page.dart'; // <--- Importación necesaria para el flujo de registro
 import 'profile_page.dart';
 import 'search_page.dart';
 import 'home_page.dart';
@@ -24,40 +26,35 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     });
   }
 
-  final List<Map<String, dynamic>> _navItems = [
-    {'icon': Icons.home_outlined, 'activeIcon': Icons.home_outlined, 'label': 'Inicio'},
-    {'icon': Icons.menu_outlined, 'activeIcon': Icons.menu_outlined, 'label': 'Menú'},
-    {'icon': Icons.search_outlined, 'activeIcon': Icons.search_outlined, 'label': 'Buscar'},
-    {'icon': Icons.shopping_cart_outlined, 'activeIcon': Icons.shopping_cart_outlined, 'label': 'Carrito'},
-    {'icon': Icons.person_outline, 'activeIcon': Icons.person_outline, 'label': 'Perfil'},
+  final List<Map<String, dynamic>> _navItems = const [
+    {'icon': Icons.home_outlined, 'activeIcon': Icons.home_rounded, 'label': 'Inicio'},
+    {'icon': Icons.menu_outlined, 'activeIcon': Icons.menu_rounded, 'label': 'Menú'},
+    {'icon': Icons.search_outlined, 'activeIcon': Icons.search_rounded, 'label': 'Buscar'},
+    {'icon': Icons.shopping_cart_outlined, 'activeIcon': Icons.shopping_cart_rounded, 'label': 'Carrito'},
+    {'icon': Icons.person_outline, 'activeIcon': Icons.person_rounded, 'label': 'Perfil'},
   ];
 
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
-    
-    // Obtenemos los temas y colores actuales dinámicamente
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final activeColor = theme.colorScheme.primary;
-    final navBackgroundColor = theme.cardColor;
-    final borderColor = isDark ? const Color(0xFF2C1E18) : const Color(0xFFEEEEEE);
-    final inactiveColor = isDark ? Colors.white54 : const Color(0xFF757575);
+    // Colores de la barra de navegación sincronizados con Figma y AppColors
+    final navBackgroundColor = isDark ? AppColors.darkSurface : AppColors.lightSurface;
+    final activePillColor = AppColors.primary;
+    final activeTextColor = AppColors.primary;
+    final inactiveColor = isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
+    final borderColor = isDark ? AppColors.darkSurfaceSubtle : const Color(0xFFEEEEEE);
 
-    // Exactamente 5 elementos correspondientes a los botones de navegación
     final List<Widget> pages = [
-      WelcomePage(onOrderNow: () => _changeTab(1)),
-      const HomePage(),
+      HomePage(onOrderNow: () => _changeTab(1)),
+      const MenuPage(),
       const SearchPage(),
       CartTab(onExploreMenu: () => _changeTab(1)),
       authProvider.isLoggedIn
           ? const ProfilePage()
-          : LoginPage(
-              onRegisterTap: () {
-                _changeTab(4); // Redirige a la pestaña de perfil
-              },
-            ),
+          : const _AuthFlowWrapper(),
     ];
 
     return Scaffold(
@@ -71,13 +68,13 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         child: Container(
           height: 65,
           decoration: BoxDecoration(
-            color: navBackgroundColor, // 👈 Fondo dinámico
+            color: navBackgroundColor,
             border: Border(
-              top: BorderSide(color: borderColor, width: 1), // 👈 Borde dinámico
+              top: BorderSide(color: borderColor, width: 1),
             ),
           ),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround, // 👈 Corregido
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: List.generate(_navItems.length, (index) {
               final isSelected = _currentIndex == index;
               final item = _navItems[index];
@@ -86,19 +83,19 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 onTap: () => _changeTab(index),
                 behavior: HitTestBehavior.opaque,
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center, // 👈 Corregido
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
                       width: 56,
                       height: 32,
                       decoration: BoxDecoration(
-                        color: isSelected ? activeColor : Colors.transparent, // 👈 Píldora activa dinámica
+                        color: isSelected ? activePillColor : Colors.transparent,
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Icon(
                         isSelected ? item['activeIcon'] : item['icon'],
-                        color: isSelected ? Colors.white : inactiveColor, // 👈 Icono dinámico
+                        color: isSelected ? Colors.white : inactiveColor,
                         size: 22,
                       ),
                     ),
@@ -107,8 +104,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                       item['label'],
                       style: TextStyle(
                         fontSize: 11,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                        color: isSelected ? activeColor : inactiveColor, // 👈 Texto dinámico
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.normal,
+                        color: isSelected ? activeTextColor : inactiveColor,
                       ),
                     ),
                   ],
@@ -119,5 +116,38 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         ),
       ),
     );
+  }
+}
+
+// Widget encargado de alternar entre Login y Registro manteniendo la Navbar
+class _AuthFlowWrapper extends StatefulWidget {
+  const _AuthFlowWrapper();
+
+  @override
+  State<_AuthFlowWrapper> createState() => _AuthFlowWrapperState();
+}
+
+class _AuthFlowWrapperState extends State<_AuthFlowWrapper> {
+  bool _showLogin = true;
+
+  @override
+  Widget build(BuildContext context) {
+    if (_showLogin) {
+      return LoginPage(
+        onRegisterTap: () {
+          setState(() {
+            _showLogin = false;
+          });
+        },
+      );
+    } else {
+      return RegisterPage(
+        onLoginTap: () {
+          setState(() {
+            _showLogin = true;
+          });
+        },
+      );
+    }
   }
 }

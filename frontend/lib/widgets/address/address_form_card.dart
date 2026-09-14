@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/constants/app_colors.dart';
 
 class AddressFormCard extends StatelessWidget {
   final Color primaryBrown;
@@ -18,14 +19,28 @@ class AddressFormCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final cardBgColor = theme.cardTheme.color ??
+        (isDark ? AppColors.darkSurface : AppColors.lightSurface);
+    final textColor = theme.colorScheme.onSurface;
+    final subtitleColor = isDark
+        ? AppColors.darkTextSecondary
+        : AppColors.lightTextSecondary;
+
+    final inputFillColor = isDark
+        ? AppColors.darkSurfaceSubtle
+        : AppColors.lightSurfaceSubtle;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBgColor,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withAlpha(isDark ? 50 : 10),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -37,48 +52,49 @@ class AddressFormCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Agregar Nueva Dirección',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                  color: textColor,
                 ),
               ),
               GestureDetector(
                 onTap: onClose,
                 child: Container(
                   padding: const EdgeInsets.all(6),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFF4F0EA),
+                  decoration: BoxDecoration(
+                    color: inputFillColor,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.close,
                     size: 16,
-                    color: Colors.black54,
+                    color: subtitleColor,
                   ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Nombre de la ubicación',
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,
-              color: Colors.black87,
+              color: textColor,
             ),
           ),
           const SizedBox(height: 8),
           TextField(
             controller: nameController,
+            style: TextStyle(color: textColor),
             decoration: InputDecoration(
               hintText: 'Ej: Casa, Trabajo, Cafetería...',
-              hintStyle: const TextStyle(color: Colors.black38, fontSize: 14),
+              hintStyle: TextStyle(color: subtitleColor.withAlpha(180), fontSize: 14),
               filled: true,
-              fillColor: const Color(0xFFF9F6F0),
+              fillColor: inputFillColor,
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(30),
@@ -87,23 +103,24 @@ class AddressFormCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Buscar dirección',
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,
-              color: Colors.black87,
+              color: textColor,
             ),
           ),
           const SizedBox(height: 8),
           TextField(
             controller: addressController,
+            style: TextStyle(color: textColor),
             decoration: InputDecoration(
-              prefixIcon: const Icon(Icons.search, color: Colors.black45),
+              prefixIcon: Icon(Icons.search, color: subtitleColor),
               hintText: 'Ingresa la dirección o ubicación',
-              hintStyle: const TextStyle(color: Colors.black38, fontSize: 14),
+              hintStyle: TextStyle(color: subtitleColor.withAlpha(180), fontSize: 14),
               filled: true,
-              fillColor: const Color(0xFFF9F6F0),
+              fillColor: inputFillColor,
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(30),
@@ -119,16 +136,16 @@ class AddressFormCard extends StatelessWidget {
                   height: 46,
                   child: OutlinedButton(
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFFE5DDD3)),
+                      side: BorderSide(color: isDark ? Colors.white.withAlpha(30) : const Color(0xFFE5DDD3)),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
                       ),
                     ),
                     onPressed: onClose,
-                    child: const Text(
+                    child: Text(
                       'Cancelar',
                       style: TextStyle(
-                        color: Colors.black87,
+                        color: textColor,
                         fontWeight: FontWeight.bold,
                       ),
                     ),

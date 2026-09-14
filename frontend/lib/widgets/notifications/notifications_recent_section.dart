@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+
+import '../../core/constants/app_colors.dart';
 import '../../models/notification_item.dart';
-import '../notification_card.dart';
-import '../notification_schedule_card.dart';
+import 'notification_card.dart';
+import 'notification_schedule_card.dart';
 
 class NotificationsRecentSection extends StatelessWidget {
   final List<NotificationItem> recentActivity;
@@ -15,18 +17,44 @@ class NotificationsRecentSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final cardColor = theme.cardColor;
-    final textColor = theme.colorScheme.onSurface;
-    final subtitleColor = textColor.withOpacity(0.6);
-    final mutedColor = textColor.withOpacity(0.4);
-    final unreadDotColor = theme.colorScheme.primary;
-    final unreadBadgeBg = isDark ? const Color(0xFF3D2E26) : const Color(0xFFEFEBE4);
-    final unreadBadgeText = isDark ? const Color(0xFFD7B89A) : const Color(0xFF6D4C41);
-    final unreadBorderColor = isDark ? const Color(0xFF6D4C41) : const Color(0xFFD7CCC8);
-    final infoCardBg = isDark ? const Color(0xFF17324A).withOpacity(0.5) : const Color(0xFFE1F5FE).withOpacity(0.6);
-    final infoIconBg = isDark ? const Color(0xFF1E4A6B) : const Color(0xFFBBDEFB);
 
-    final unreadCount = recentActivity.where((n) => n.isUnread).length;
+    final cardColor = isDark
+        ? AppColors.darkSurface
+        : AppColors.lightSurface;
+
+    final textColor = isDark
+        ? AppColors.darkTextPrimary
+        : AppColors.lightTextPrimary;
+
+    final subtitleColor = isDark
+        ? AppColors.darkTextSecondary
+        : AppColors.lightTextSecondary;
+
+    final mutedColor = subtitleColor.withValues(alpha: 0.7);
+
+    final unreadDotColor = AppColors.primary;
+
+    final unreadBadgeBg = isDark
+        ? AppColors.darkSurfaceSubtle
+        : AppColors.lightSurfaceSubtle;
+
+    final unreadBadgeText = AppColors.primary;
+
+    final unreadBorderColor = isDark
+        ? AppColors.darkSurfaceSubtle
+        : AppColors.lightSurfaceSubtle;
+
+    final infoCardBg = isDark
+        ? AppColors.darkSurfaceSubtle
+        : AppColors.lightSurfaceSubtle;
+
+    final infoIconBg = isDark
+        ? AppColors.darkSurface
+        : AppColors.lightSurface;
+
+    final unreadCount = recentActivity
+        .where((notification) => notification.isUnread)
+        .length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -34,22 +62,44 @@ class NotificationsRecentSection extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              'Actividad Reciente',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textColor),
-            ),
-            if (unreadCount > 0)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(color: unreadBadgeBg, borderRadius: BorderRadius.circular(12)),
-                child: Text(
-                  '$unreadCount nuevas',
-                  style: TextStyle(fontSize: 12, color: unreadBadgeText, fontWeight: FontWeight.bold),
+            Expanded(
+              child: Text(
+                'Actividad Reciente',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: textColor,
                 ),
               ),
+            ),
+
+            if (unreadCount > 0) ...[
+              const SizedBox(width: 12),
+
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: unreadBadgeBg,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '$unreadCount nuevas',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: unreadBadgeText,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
+
         const SizedBox(height: 12),
+
         ...recentActivity.map(
           (item) => NotificationCard(
             item: item,
@@ -61,7 +111,9 @@ class NotificationsRecentSection extends StatelessWidget {
             unreadBorderColor: unreadBorderColor,
           ),
         ),
+
         const SizedBox(height: 12),
+
         NotificationInfoCard(
           infoCardBg: infoCardBg,
           infoIconBg: infoIconBg,

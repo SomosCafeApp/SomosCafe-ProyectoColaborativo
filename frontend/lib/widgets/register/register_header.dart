@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import '../../core/constants/app_colors.dart';
 
 class HeaderSection extends StatelessWidget {
-  final Color primaryColor;
+  final VoidCallback? onBackFallback;
 
-  const HeaderSection({super.key, required this.primaryColor});
+  const HeaderSection({super.key, this.onBackFallback});
 
   @override
   Widget build(BuildContext context) {
@@ -12,7 +13,7 @@ class HeaderSection extends StatelessWidget {
         Container(
           height: 260,
           width: double.infinity,
-          color: primaryColor,
+          color: AppColors.primary,
           child: SafeArea(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -26,9 +27,15 @@ class HeaderSection extends StatelessWidget {
                   child: const Icon(Icons.local_cafe_outlined, color: Colors.white, size: 36),
                 ),
                 const SizedBox(height: 16),
-                const Text('Bienvenido', style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.white)),
+                const Text(
+                  'Bienvenido',
+                  style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.white),
+                ),
                 const SizedBox(height: 6),
-                Text('Únete a nuestra comunidad de amantes del café', style: TextStyle(fontSize: 13, color: Colors.white.withAlpha(230))),
+                Text(
+                  'Únete a nuestra comunidad de amantes del café',
+                  style: TextStyle(fontSize: 13, color: Colors.white.withAlpha(230)),
+                ),
                 const SizedBox(height: 30),
               ],
             ),
@@ -43,7 +50,12 @@ class HeaderSection extends StatelessWidget {
             child: IconButton(
               padding: EdgeInsets.zero,
               icon: const Icon(Icons.arrow_back, color: Colors.white, size: 18),
-              onPressed: () => Navigator.maybePop(context),
+              onPressed: () async {
+                final popped = await Navigator.maybePop(context);
+                if (!popped) {
+                  onBackFallback?.call();
+                }
+              },
             ),
           ),
         ),

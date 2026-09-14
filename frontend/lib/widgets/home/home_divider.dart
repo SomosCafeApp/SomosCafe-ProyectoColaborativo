@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
+import '../../core/constants/app_colors.dart';
 
-class WelcomeDivider extends StatelessWidget {
-  const WelcomeDivider({super.key});
+class HomeDivider extends StatelessWidget {
+  const HomeDivider({super.key});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final primaryBrown = theme.colorScheme.primary;
-    final dividerColor = theme.colorScheme.onSurface.withOpacity(0.08);
+    final dividerColor = isDark
+        ? AppColors.darkSurfaceSubtle
+        : theme.colorScheme.onSurface.withOpacity(0.08);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -18,7 +22,11 @@ class WelcomeDivider extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Row(
               children: [
-                Icon(Icons.auto_awesome, size: 12, color: primaryBrown.withOpacity(0.6)),
+                Icon(
+                  Icons.auto_awesome,
+                  size: 12,
+                  color: isDark ? AppColors.accentYellow : primaryBrown.withOpacity(0.6),
+                ),
                 const SizedBox(width: 6),
                 Text(
                   'EXPLORA MÁS',
@@ -26,7 +34,9 @@ class WelcomeDivider extends StatelessWidget {
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1.2,
-                    color: theme.colorScheme.onSurface.withOpacity(0.55),
+                    color: isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.lightTextSecondary,
                   ),
                 ),
               ],

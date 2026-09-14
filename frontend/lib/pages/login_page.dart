@@ -19,10 +19,6 @@ class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  static const primaryBrown = Color(0xFF9E754B);
-  static const backgroundColor = Color(0xFFFAF7F2);
-  static const inputBgColor = Color(0xFFF7F4EF);
-
   @override
   void dispose() {
     _emailController.dispose();
@@ -32,12 +28,14 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SingleChildScrollView(
         child: Column(
           children: [
-            const LoginHeader(primaryBrown: primaryBrown),
+            const LoginHeader(),
             Transform.translate(
               offset: const Offset(0, -30),
               child: Padding(
@@ -45,14 +43,11 @@ class _LoginPageState extends State<LoginPage> {
                 child: Column(
                   children: [
                     LoginFormCard(
-                      primaryBrown: primaryBrown,
-                      inputBgColor: inputBgColor,
                       emailController: _emailController,
                       passwordController: _passwordController,
                     ),
                     const SizedBox(height: 20),
                     LoginFooter(
-                      primaryBrown: primaryBrown,
                       onRegisterTap: widget.onRegisterTap,
                     ),
                     const SizedBox(height: 20),

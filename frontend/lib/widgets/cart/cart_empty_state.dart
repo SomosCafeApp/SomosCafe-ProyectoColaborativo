@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/constants/app_colors.dart';
 
 class CartEmptyState extends StatelessWidget {
   final Color primaryBrown;
@@ -12,6 +13,14 @@ class CartEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final textColor = theme.colorScheme.onSurface;
+    final subtitleColor = isDark
+        ? AppColors.darkTextSecondary
+        : AppColors.lightTextSecondary;
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -30,12 +39,12 @@ class CartEmptyState extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
-          const Text(
+          Text(
             'Tu carrito está vacío',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
+              color: textColor,
             ),
           ),
           const SizedBox(height: 8),
@@ -43,7 +52,7 @@ class CartEmptyState extends StatelessWidget {
             'Añade productos para continuar',
             style: TextStyle(
               fontSize: 14,
-              color: Colors.grey.shade600,
+              color: subtitleColor,
             ),
           ),
           const SizedBox(height: 24),

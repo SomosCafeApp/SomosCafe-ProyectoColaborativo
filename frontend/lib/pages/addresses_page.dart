@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import '../core/constants/app_colors.dart';
 import '../widgets/address/address_card_item.dart';
 import '../widgets/address/address_form_card.dart';
+import '../widgets/profile/profile_sub_page_header.dart';
 
 class AddressItem {
   final String id;
@@ -22,15 +24,15 @@ class AddressesPage extends StatefulWidget {
   const AddressesPage({super.key});
 
   @override
-  State<AddressesPage> createState() => _AddressesPageState();
+  State createState() => _AddressesPageState();
 }
 
-class _AddressesPageState extends State<AddressesPage> {
+class _AddressesPageState extends State {
   bool _showForm = false;
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
 
-  final List<AddressItem> _addresses = [
+  final List _addresses = [
     AddressItem(
       id: '1',
       name: 'Catación',
@@ -77,30 +79,18 @@ class _AddressesPageState extends State<AddressesPage> {
 
   @override
   Widget build(BuildContext context) {
-    const primaryBrown = Color(0xFF9E7247);
+    final theme = Theme.of(context);
+
+    final primaryBrown = AppColors.primary;
+    final textColor = theme.colorScheme.onSurface;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF7F2),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.only(top: 50, bottom: 20, left: 16, right: 16),
-            color: primaryBrown,
-            child: Row(
-              children: [
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
-                ),
-                const SizedBox(width: 8),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Direcciones', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
-                    Text('${_addresses.length} ubicaciones guardadas', style: TextStyle(fontSize: 13, color: Colors.white.withOpacity(0.85))),
-                  ],
-                ),
-              ],
-            ),
+          ProfileSubPageHeader(
+            title: 'Direcciones',
+            subtitle: '${_addresses.length} ubicaciones guardadas',
           ),
           Expanded(
             child: SingleChildScrollView(
@@ -131,8 +121,8 @@ class _AddressesPageState extends State<AddressesPage> {
                     const SizedBox(height: 20),
                   ],
                   const SizedBox(height: 16),
-                  const Text('Ubicaciones Guardadas', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
-                  const SizedBox(height: 12),
+                  Text('Ubicaciones Guardadas', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textColor)),
+                  const SizedBox(height: 0),
                   ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/constants/app_colors.dart';
 
 class SearchHeader extends StatelessWidget {
   final TextEditingController controller;
@@ -16,43 +17,48 @@ class SearchHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final primaryColor = theme.colorScheme.primary;
-    final textColor = theme.colorScheme.onSurface;
-    final searchFieldBg = isDark ? const Color(0xFF3D2E26) : Colors.white;
-    final searchHintColor = isDark ? Colors.white54 : Colors.grey.shade500;
+
+    // Header café/moca consistente con MenuPage
+    final headerBgColor = AppColors.primary;
+    final headerTitleColor = Colors.white;
+
+    // Campo de texto según las capturas de Figma
+    final searchFieldBg = isDark ? const Color(0xFF281C16) : Colors.white;
+    final searchTextColor = isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
+    final searchHintColor = isDark ? AppColors.darkTextSecondary.withOpacity(0.6) : Colors.grey.shade500;
 
     return Container(
-      color: primaryColor,
-      padding: const EdgeInsets.only(top: 50, bottom: 20, left: 20, right: 20),
+      color: headerBgColor,
+      padding: const EdgeInsets.only(top: 55, bottom: 20, left: 20, right: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Buscar',
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: headerTitleColor,
             ),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: controller,
             onChanged: onChanged,
-            style: TextStyle(color: textColor),
+            style: TextStyle(color: searchTextColor, fontSize: 14),
             decoration: InputDecoration(
               hintText: 'Buscar café, postre...',
               hintStyle: TextStyle(color: searchHintColor, fontSize: 14),
-              prefixIcon: Icon(Icons.search, color: searchHintColor),
+              prefixIcon: Icon(Icons.search, color: searchHintColor, size: 20),
               suffixIcon: controller.text.isNotEmpty
                   ? IconButton(
-                      icon: Icon(Icons.clear, color: searchHintColor),
+                      icon: Icon(Icons.cancel_rounded, color: searchHintColor, size: 18),
                       onPressed: onClear,
                     )
                   : null,
               filled: true,
               fillColor: searchFieldBg,
-              contentPadding: const EdgeInsets.symmetric(vertical: 0),
+              contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(30),
                 borderSide: BorderSide.none,

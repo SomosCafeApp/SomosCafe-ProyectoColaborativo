@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class CustomChipGrid extends StatelessWidget {
-  final List<Map<String, String?>> options;
+  final List<Map<String, String>> options;
   final String? selectedValue;
   final Set<String>? selectedSet;
   final ValueChanged<String> onTap;
@@ -36,7 +36,9 @@ class CustomChipGrid extends StatelessWidget {
       children: options.map((opt) {
         final title = opt['title']!;
         final price = opt['price'];
-        final isSelected = selectedSet != null ? selectedSet!.contains(title) : selectedValue == title;
+        final isSelected = selectedSet != null
+            ? selectedSet!.contains(title)
+            : selectedValue == title;
 
         return GestureDetector(
           onTap: () => onTap(title),
@@ -44,14 +46,33 @@ class CustomChipGrid extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
               color: isSelected ? selectedBg : Colors.transparent,
-              border: Border.all(color: isSelected ? primaryColor : borderColor),
+              border: Border.all(
+                color: isSelected ? primaryColor : borderColor,
+              ),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(title, style: TextStyle(fontSize: 11, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal, color: textColor)),
-                if (price != null) Text(price, style: TextStyle(fontSize: 9, color: mutedColor)),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: textColor,
+                  ),
+                ),
+                if (price != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    price,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: mutedColor,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

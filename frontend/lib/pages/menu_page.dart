@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../core/constants/app_colors.dart';
 import '../models/product.dart';
-import '../widgets/product_card/product_card.dart';
+import '../widgets/product_card.dart';
 import '../providers/cart_provider.dart';
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+class MenuPage extends StatefulWidget {
+  const MenuPage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<MenuPage> createState() => _MenuPageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _MenuPageState extends State<MenuPage> {
   int _selectedCategoryIndex = 0;
 
   final List<Map<String, dynamic>> _categories = const [
@@ -48,11 +49,12 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final primaryBrown = theme.colorScheme.primary;
-    final headerBgColor = primaryBrown;
+    final isDark = theme.brightness == Brightness.dark;
+    
+    // El header mantiene el tono café de marca en ambos modos según Figma
+    final headerBgColor = AppColors.primary;
     final scaffoldBgColor = theme.scaffoldBackgroundColor;
-    final textColor = theme.colorScheme.onSurface;
-    final subtitleColor = textColor.withOpacity(0.6);
+    final subtitleColor = isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
 
     final cartProvider = Provider.of<CartProvider>(context, listen: false);
 
@@ -63,7 +65,6 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           children: [
             // --- HEADER CON CATEGORÍAS ---
-            // Se mantiene con el color café de marca a propósito (encabezado de sección)
             Container(
               padding: const EdgeInsets.only(top: 50, bottom: 20, left: 20, right: 20),
               decoration: BoxDecoration(
@@ -76,7 +77,7 @@ class _HomePageState extends State<HomePage> {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.2),
                           shape: BoxShape.circle,
@@ -127,7 +128,7 @@ class _HomePageState extends State<HomePage> {
                             duration: const Duration(milliseconds: 200),
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                             decoration: BoxDecoration(
-                              color: isSelected ? Colors.white : Colors.white.withOpacity(0.2),
+                              color: isSelected ? Colors.white : Colors.white.withOpacity(0.25),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Row(
@@ -135,13 +136,13 @@ class _HomePageState extends State<HomePage> {
                                 Icon(
                                   _categories[index]['icon'],
                                   size: 16,
-                                  color: isSelected ? primaryBrown : Colors.white,
+                                  color: isSelected ? AppColors.primary : Colors.white,
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
                                   _categories[index]['label'],
                                   style: TextStyle(
-                                    color: isSelected ? primaryBrown : Colors.white,
+                                    color: isSelected ? AppColors.primary : Colors.white,
                                     fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                                     fontSize: 13,
                                   ),
@@ -162,7 +163,11 @@ class _HomePageState extends State<HomePage> {
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
               child: Row(
                 children: [
-                  Icon(Icons.auto_awesome, size: 16, color: primaryBrown),
+                  Icon(
+                    Icons.auto_awesome,
+                    size: 16,
+                    color: isDark ? AppColors.accentYellow : AppColors.primary,
+                  ),
                   const SizedBox(width: 6),
                   Text(
                     '${_products.length} productos disponibles',
@@ -199,7 +204,7 @@ class _HomePageState extends State<HomePage> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text('${product.name} añadido al carrito'),
-                            backgroundColor: primaryBrown,
+                            backgroundColor: AppColors.primary,
                             duration: const Duration(seconds: 2),
                           ),
                         );

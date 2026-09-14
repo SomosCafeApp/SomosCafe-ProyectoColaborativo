@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 // Módulos y páginas
 import 'core/theme/app_theme.dart';
 import 'pages/main_navigation_screen.dart';
-import 'pages/home_page.dart';
 
 // Providers
 import 'providers/cart_provider.dart';
@@ -12,16 +11,34 @@ import 'providers/auth_provider.dart';
 import 'providers/order_provider.dart';
 import 'providers/favorites_provider.dart';
 import 'providers/theme_provider.dart';
+import 'providers/font_size_provider.dart';
 
 void main() {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => CartProvider()),
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => OrderProvider()),
-        ChangeNotifierProvider(create: (_) => FavoritesProvider()),
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(
+          create: (_) => CartProvider(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => AuthProvider(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => OrderProvider(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => FavoritesProvider(),
+        ),
+
+        // Tema
+        ChangeNotifierProvider(
+          create: (_) => ThemeProvider(),
+        ),
+
+        // Tamaño de fuente
+        ChangeNotifierProvider(
+          create: (_) => FontSizeProvider(),
+        ),
       ],
       child: const MyApp(),
     ),
@@ -33,32 +50,45 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = context.watch<ThemeProvider>().isDarkMode;
+    // Escuchamos el ThemeProvider
+    final themeProvider = context.watch<ThemeProvider>();
+
+    // Escuchamos el FontSizeProvider
+    final fontSizeProvider = context.watch<FontSizeProvider>();
+
+    // Definimos la escala del texto
+    double textScaleFactor = 1.0;
+
+    if (fontSizeProvider.fontSize == 'Pequeño') {
+      textScaleFactor = 0.85;
+    } else if (fontSizeProvider.fontSize == 'Grande') {
+      textScaleFactor = 1.15;
+    } else {
+      textScaleFactor = 1.0;
+    }
 
     return MaterialApp(
       title: 'SOMOS CafeApp',
       debugShowCheckedModeBanner: false,
+
+      // Temas
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
-      home: Consumer<AuthProvider>(
-        builder: (context, auth, child) {
-          if (auth.isLoggedIn) {
-            return const MainNavigationScreen();
-          }
 
-          return WelcomePage(
-            onOrderNow: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const MainNavigationScreen(),
-                ),
-              );
-            },
-          );
-        },
-      ),
+      // Tema seleccionado
+      themeMode: themeProvider.themeMode,
+
+      // Escala global de texto
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            textScaler: TextScaler.linear(textScaleFactor),
+          ),
+          child: child ?? const SizedBox(),
+        );
+      },
+
+      home: const MainNavigationScreen(),
     );
   }
 }

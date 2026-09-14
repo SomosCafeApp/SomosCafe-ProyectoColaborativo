@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/constants/app_colors.dart';
 import 'main_navigation_screen.dart';
 
 class OrderSuccessPage extends StatelessWidget {
@@ -6,22 +7,28 @@ class OrderSuccessPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const primaryBrown = Color(0xFFA2784F);
-    const darkBrown = Color(0xFF634832);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final primaryBrown = AppColors.primary;
+    final textColor = theme.colorScheme.onSurface;
+    final subtitleColor = isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
+
+    final iconContainerBg = isDark ? const Color(0xFF1E3326) : const Color(0xFFE8F5E9);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF7F2),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Icono con contenedor decorativo
+              // Icono con contenedor decorativo adaptativo
               Container(
                 padding: const EdgeInsets.all(20),
-                decoration: const BoxDecoration(
-                  color: Color(0xFFE8F5E9),
+                decoration: BoxDecoration(
+                  color: iconContainerBg,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -31,12 +38,12 @@ class OrderSuccessPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 28),
-              const Text(
+              Text(
                 '¡Pedido Confirmado!',
                 style: TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.bold,
-                  color: darkBrown,
+                  color: textColor,
                 ),
               ),
               const SizedBox(height: 12),
@@ -45,7 +52,7 @@ class OrderSuccessPage extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 15,
-                  color: Colors.black.withOpacity(0.6),
+                  color: subtitleColor,
                   height: 1.4,
                 ),
               ),

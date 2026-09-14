@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
+import '../../core/constants/app_colors.dart';
+import '../../pages/main_navigation_screen.dart'; // Asegúrate de ajustar la ruta si es necesario
 
 class LoginHeader extends StatelessWidget {
-  final Color primaryBrown;
-
-  const LoginHeader({
-    super.key,
-    required this.primaryBrown,
-  });
+  const LoginHeader({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +12,7 @@ class LoginHeader extends StatelessWidget {
         Container(
           height: 260,
           width: double.infinity,
-          color: primaryBrown,
+          color: AppColors.primary,
           child: SafeArea(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -63,7 +60,14 @@ class LoginHeader extends StatelessWidget {
             child: IconButton(
               padding: EdgeInsets.zero,
               icon: const Icon(Icons.arrow_back, color: Colors.white, size: 18),
-              onPressed: () => Navigator.maybePop(context),
+              // CAMBIO AQUÍ: Forzamos la redirección limpia al Home/MainNavigationScreen
+              onPressed: () {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
+                  (route) => false,
+                );
+              },
             ),
           ),
         ),

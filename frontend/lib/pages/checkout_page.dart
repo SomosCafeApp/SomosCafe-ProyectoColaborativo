@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import '../core/constants/app_colors.dart';
 import '../providers/cart_provider.dart';
-import '../providers/order_provider.dart'; // <-- Conexión agregada
+import '../providers/order_provider.dart';
+
 import 'order_success_page.dart';
 
 class CheckoutPage extends StatefulWidget {
@@ -13,6 +16,7 @@ class CheckoutPage extends StatefulWidget {
 
 class _CheckoutPageState extends State<CheckoutPage> {
   final _addressController = TextEditingController();
+
   String _selectedPaymentMethod = 'Efectivo';
 
   @override
@@ -24,8 +28,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
   @override
   Widget build(BuildContext context) {
     final cart = context.watch<CartProvider>();
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Finalizar Pedido'),
       ),
@@ -34,97 +41,246 @@ class _CheckoutPageState extends State<CheckoutPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Dirección de Entrega',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _addressController,
-              decoration: const InputDecoration(
-                hintText: 'Ej: Calle 7 # 10-20, Barrio Centro',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.location_on),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onSurface,
               ),
             ),
+            const SizedBox(height: 10),
+
+            TextField(
+              controller: _addressController,
+              decoration: InputDecoration(
+                hintText: 'Ej: Calle 7 # 10-20, Barrio Centro',
+                hintStyle: TextStyle(
+                  color: isDark ? Colors.white54 : Colors.grey.shade400,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(
+                    color: isDark ? Colors.white24 : Colors.grey.shade300,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(
+                    color: isDark ? Colors.white24 : Colors.grey.shade300,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: const BorderSide(
+                    color: AppColors.primary,
+                    width: 2,
+                  ),
+                ),
+                prefixIcon: const Icon(
+                  Icons.location_on,
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+
             const SizedBox(height: 24),
-            const Text(
+
+            Text(
               'Método de Pago',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onSurface,
+              ),
             ),
             const SizedBox(height: 10),
-            RadioListTile<String>(
-              title: const Text('Efectivo contra entrega'),
+
+            _buildCustomRadio(
+              title: 'Efectivo contra entrega',
               value: 'Efectivo',
-              groupValue: _selectedPaymentMethod,
-              onChanged: (val) => setState(() => _selectedPaymentMethod = val!),
+              theme: theme,
             ),
-            RadioListTile<String>(
-              title: const Text('Nequi / Daviplata'),
+
+            _buildCustomRadio(
+              title: 'Nequi / Daviplata',
               value: 'Transferencia',
-              groupValue: _selectedPaymentMethod,
-              onChanged: (val) => setState(() => _selectedPaymentMethod = val!),
+              theme: theme,
             ),
-            RadioListTile<String>(
-              title: const Text('Tarjeta de Crédito / Débito'),
+
+            _buildCustomRadio(
+              title: 'Tarjeta de Crédito / Débito',
               value: 'Tarjeta',
-              groupValue: _selectedPaymentMethod,
-              onChanged: (val) => setState(() => _selectedPaymentMethod = val!),
+              theme: theme,
             ),
+
             const SizedBox(height: 24),
-            Card(
-              color: Colors.brown[50],
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Total a Pagar:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    Text(
-                      '\$${cart.total.toStringAsFixed(0)} COP',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.brown[800]),
-                    ),
-                  ],
+
+            Container(
+              padding: const EdgeInsets.all(20.0),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? const Color(0xFF332B1E)
+                    : const Color(0xFFFDF6E2),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white12
+                      : const Color(0xFFF3E5AB),
                 ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Total a Pagar:',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                  Text(
+                    '\$${cart.total.toStringAsFixed(0)} COP',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
         ),
       ),
+
       bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF4E342E),
+            backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,
+            elevation: 0,
             padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
           ),
           onPressed: () {
+            // Validar dirección
             if (_addressController.text.trim().isEmpty) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Por favor ingresa una dirección de entrega')),
+                const SnackBar(
+                  content: Text(
+                    'Por favor ingresa una dirección de entrega',
+                  ),
+                ),
               );
               return;
             }
 
-            // <-- Guardamos el pedido en el OrderProvider antes de limpiar el carrito
+            // Crear pedido
             context.read<OrderProvider>().addOrder(
-              items: cart.items,
-              total: cart.total,
-              address: _addressController.text,
-              paymentMethod: _selectedPaymentMethod,
-            );
+                  items: cart.items,
+                  total: cart.total,
+                  address: _addressController.text.trim(),
+                  paymentMethod: _selectedPaymentMethod,
+                );
 
+            // Vaciar carrito
             context.read<CartProvider>().clearCart();
 
-            Navigator.pushAndRemoveUntil(
+            // Ir a pantalla de pedido exitoso
+            //
+            // IMPORTANTE:
+            // No usamos pushAndRemoveUntil porque eliminaría
+            // todas las rutas anteriores.
+            Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const OrderSuccessPage()),
-              (route) => false,
+              MaterialPageRoute(
+                builder: (_) => const OrderSuccessPage(),
+              ),
             );
           },
-          child: const Text('Pagar y Realizar Pedido', style: TextStyle(fontSize: 16)),
+          child: const Text(
+            'Pagar y Realizar Pedido',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCustomRadio({
+    required String title,
+    required String value,
+    required ThemeData theme,
+  }) {
+    final isSelected = _selectedPaymentMethod == value;
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: InkWell(
+        onTap: () {
+          setState(() {
+            _selectedPaymentMethod = value;
+          });
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 8,
+          ),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isSelected
+                  ? AppColors.primary
+                  : (isDark
+                      ? Colors.white24
+                      : Colors.grey.shade300),
+              width: isSelected ? 2 : 1,
+            ),
+            color: isSelected
+                ? (isDark
+                    ? const Color(0xFF332B1E).withOpacity(0.5)
+                    : const Color(0xFFFDF6E2).withOpacity(0.5))
+                : Colors.transparent,
+          ),
+          child: Row(
+            children: [
+              Radio<String>(
+                value: value,
+                groupValue: _selectedPaymentMethod,
+                activeColor: AppColors.primary,
+                onChanged: (val) {
+                  if (val == null) return;
+
+                  setState(() {
+                    _selectedPaymentMethod = val;
+                  });
+                },
+              ),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

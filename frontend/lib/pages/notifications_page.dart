@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+
 import '../models/notification_item.dart';
-import '../widgets/notifications/notifications_header.dart';
+import '../widgets/profile/profile_sub_page_header.dart'; 
 import '../widgets/notifications/notifications_recent_section.dart';
 import '../widgets/notifications/notifications_channels_section.dart';
 import '../widgets/notifications/notifications_preferences_section.dart';
@@ -70,33 +71,55 @@ class _NotificationsPageState extends State<NotificationsPage> {
       backgroundColor: theme.scaffoldBackgroundColor,
       body: Column(
         children: [
-          NotificationsHeader(headerColor: theme.colorScheme.primary),
+          ProfileSubPageHeader(
+            title: 'Notificaciones',
+            subtitle: 'Gestiona tus preferencias de notificación',
+          ),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(16),
               physics: const BouncingScrollPhysics(),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  NotificationsRecentSection(recentActivity: _recentActivity),
+                  NotificationsRecentSection(
+                    recentActivity: _recentActivity,
+                  ),
+
                   const SizedBox(height: 24),
+
                   NotificationsChannelsSection(
                     pushNotifications: _pushNotifications,
                     emailNotifications: _emailNotifications,
                     smsNotifications: _smsNotifications,
                     soundNotifications: _soundNotifications,
-                    onPushChanged: (val) => setState(() => _pushNotifications = val),
-                    onEmailChanged: (val) => setState(() => _emailNotifications = val),
-                    onSmsChanged: (val) => setState(() => _smsNotifications = val),
-                    onSoundChanged: (val) => setState(() => _soundNotifications = val),
+                    onPushChanged: (value) {
+                      setState(() => _pushNotifications = value);
+                    },
+                    onEmailChanged: (value) {
+                      setState(() => _emailNotifications = value);
+                    },
+                    onSmsChanged: (value) {
+                      setState(() => _smsNotifications = value);
+                    },
+                    onSoundChanged: (value) {
+                      setState(() => _soundNotifications = value);
+                    },
                   ),
+
                   const SizedBox(height: 24),
+
                   NotificationsPreferencesSection(
                     startTime: _startTime,
                     endTime: _endTime,
-                    onStartTimeChanged: (time) => setState(() => _startTime = time),
-                    onEndTimeChanged: (time) => setState(() => _endTime = time),
+                    onStartTimeChanged: (time) {
+                      setState(() => _startTime = time);
+                    },
+                    onEndTimeChanged: (time) {
+                      setState(() => _endTime = time);
+                    },
                   ),
+
                   const SizedBox(height: 24),
                 ],
               ),

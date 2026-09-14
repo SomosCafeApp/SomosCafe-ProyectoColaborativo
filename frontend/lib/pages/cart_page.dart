@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../core/constants/app_colors.dart';
 import '../providers/cart_provider.dart';
 import '../models/product.dart';
 import '../widgets/cart/cart_item_card.dart';
@@ -20,17 +21,21 @@ class CartPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const primaryBrown = Color(0xFF9E754B);
-    const scaffoldBgColor = Color(0xFFF7F4EF);
-    const cardBgColor = Colors.white;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final primaryBrown = AppColors.primary;
+    final scaffoldBgColor = theme.scaffoldBackgroundColor;
+    final cardBgColor = theme.cardTheme.color ??
+        (isDark ? AppColors.darkSurface : AppColors.lightSurface);
 
     return Scaffold(
       backgroundColor: scaffoldBgColor,
-      body: Consumer<CartProvider>(
-        builder: (context, cart, child) {
+      body: Consumer(
+        builder: (BuildContext context, CartProvider cart, Widget? child) {
           final int totalItems = cart.items.length;
 
-          final Map<String, _CartGroup> groupedItems = {};
+          final Map groupedItems = {};
           for (var product in cart.items) {
             if (groupedItems.containsKey(product.id)) {
               groupedItems[product.id]!.quantity++;
@@ -71,7 +76,10 @@ class CartPage extends StatelessWidget {
                           ),
                           Text(
                             '$totalItems ${totalItems == 1 ? "producto" : "productos"}',
-                            style: TextStyle(fontSize: 13, color: Colors.white.withOpacity(0.8)),
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.white.withOpacity(0.8),
+                            ),
                           ),
                         ],
                       ),
@@ -120,8 +128,8 @@ class CartPage extends StatelessWidget {
                             onCheckout: () {
                               cart.clearCart();
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('¡Pedido realizado con éxito!'),
+                                SnackBar(
+                                  content: const Text('¡Pedido realizado con éxito!'),
                                   backgroundColor: primaryBrown,
                                 ),
                               );

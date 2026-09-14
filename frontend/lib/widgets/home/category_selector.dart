@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/constants/app_colors.dart';
 
 class CategorySelector extends StatelessWidget {
   final List<Map<String, dynamic>> categories;
@@ -14,12 +15,19 @@ class CategorySelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primaryBrown = Theme.of(context).colorScheme.primary;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primaryBrown = theme.colorScheme.primary;
 
     return Row(
       children: List.generate(categories.length, (index) {
         final cat = categories[index];
         final isSelected = selectedIndex == index;
+
+        final lightBg = cat['bgColor'] ?? AppColors.catWarm;
+        final cardBgColor = isDark ? AppColors.darkSurface : lightBg;
+        final iconBgColor = isDark ? AppColors.darkSurfaceSubtle : cat['iconBgColor'];
+        final textColor = isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
 
         return Expanded(
           child: GestureDetector(
@@ -31,7 +39,7 @@ class CategorySelector extends StatelessWidget {
               ),
               padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
               decoration: BoxDecoration(
-                color: cat['bgColor'],
+                color: cardBgColor,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: isSelected ? primaryBrown : Colors.transparent,
@@ -43,10 +51,14 @@ class CategorySelector extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: cat['iconBgColor'],
+                      color: iconBgColor,
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(cat['icon'], color: cat['iconColor'], size: 24),
+                    child: Icon(
+                      cat['icon'],
+                      color: cat['iconColor'] ?? primaryBrown,
+                      size: 24,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Text(
@@ -55,7 +67,7 @@ class CategorySelector extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: isSelected ? FontWeight.w800 : FontWeight.bold,
-                      color: Colors.black87,
+                      color: textColor,
                       height: 1.2,
                     ),
                   ),

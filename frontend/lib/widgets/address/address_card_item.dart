@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/constants/app_colors.dart';
 import '../../pages/addresses_page.dart';
 
 class AddressCardItem extends StatelessWidget {
@@ -13,14 +14,28 @@ class AddressCardItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final cardBgColor = theme.cardTheme.color ??
+        (isDark ? AppColors.darkSurface : AppColors.lightSurface);
+    final textColor = theme.colorScheme.onSurface;
+    final subtitleColor = isDark
+        ? AppColors.darkTextSecondary
+        : AppColors.lightTextSecondary;
+
+    final buttonBgColor = isDark
+        ? AppColors.darkSurfaceSubtle
+        : AppColors.lightSurfaceSubtle;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBgColor,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withAlpha(isDark ? 50 : 8),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -36,14 +51,18 @@ class AddressCardItem extends StatelessWidget {
                 child: Container(
                   height: 140,
                   width: double.infinity,
-                  color: const Color(0xFFE3F2FD),
+                  color: isDark ? const Color(0xFF1E2B35) : const Color(0xFFE3F2FD),
                   child: Stack(
                     children: [
                       Positioned.fill(
-                        child: CustomPaint(painter: MapGridPainter()),
+                        child: CustomPaint(painter: MapGridPainter(isDark: isDark)),
                       ),
-                      const Center(
-                        child: Icon(Icons.location_on, color: Color(0xFF1976D2), size: 32),
+                      Center(
+                        child: Icon(
+                          Icons.location_on,
+                          color: isDark ? const Color(0xFF64B5F6) : const Color(0xFF1976D2),
+                          size: 32,
+                        ),
                       ),
                     ],
                   ),
@@ -55,11 +74,11 @@ class AddressCardItem extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: isDark ? AppColors.darkSurface : Colors.white,
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: Colors.black.withAlpha(25),
                         blurRadius: 4,
                       ),
                     ],
@@ -67,14 +86,14 @@ class AddressCardItem extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.local_cafe_outlined, size: 14, color: Colors.black87),
+                      Icon(Icons.local_cafe_outlined, size: 14, color: textColor),
                       const SizedBox(width: 6),
                       Text(
                         item.mapLabel,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                          color: textColor,
                         ),
                       ),
                     ],
@@ -90,22 +109,22 @@ class AddressCardItem extends StatelessWidget {
               children: [
                 Text(
                   item.name,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: textColor,
                   ),
                 ),
                 const SizedBox(height: 6),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.location_on_outlined, size: 16, color: Colors.black45),
+                    Icon(Icons.location_on_outlined, size: 16, color: subtitleColor),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
                         item.address,
-                        style: const TextStyle(fontSize: 13, color: Colors.black87),
+                        style: TextStyle(fontSize: 13, color: textColor),
                       ),
                     ),
                   ],
@@ -115,7 +134,7 @@ class AddressCardItem extends StatelessWidget {
                   padding: const EdgeInsets.only(left: 20),
                   child: Text(
                     item.details,
-                    style: const TextStyle(fontSize: 12, color: Colors.black45),
+                    style: TextStyle(fontSize: 12, color: subtitleColor),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -125,8 +144,8 @@ class AddressCardItem extends StatelessWidget {
                       child: _buildActionButton(
                         icon: Icons.near_me_outlined,
                         label: 'Ir',
-                        bgColor: const Color(0xFFFAF7F2),
-                        textColor: Colors.black87,
+                        bgColor: buttonBgColor,
+                        textColor: textColor,
                         borderColor: Colors.transparent,
                         onTap: () {},
                       ),
@@ -136,8 +155,8 @@ class AddressCardItem extends StatelessWidget {
                       child: _buildActionButton(
                         icon: Icons.edit_outlined,
                         label: 'Editar',
-                        bgColor: const Color(0xFFFAF7F2),
-                        textColor: Colors.black87,
+                        bgColor: buttonBgColor,
+                        textColor: textColor,
                         borderColor: Colors.transparent,
                         onTap: () {},
                       ),
@@ -147,9 +166,9 @@ class AddressCardItem extends StatelessWidget {
                       child: _buildActionButton(
                         icon: Icons.delete_outline,
                         label: 'Eliminar',
-                        bgColor: const Color(0xFFFFF5F5),
+                        bgColor: isDark ? const Color(0xFF381C1C) : const Color(0xFFFFF5F5),
                         textColor: const Color(0xFFE53935),
-                        borderColor: const Color(0xFFFFCDD2),
+                        borderColor: isDark ? const Color(0xFF5C2424) : const Color(0xFFFFCDD2),
                         onTap: onDelete,
                       ),
                     ),
@@ -202,10 +221,14 @@ class AddressCardItem extends StatelessWidget {
 }
 
 class MapGridPainter extends CustomPainter {
+  final bool isDark;
+
+  MapGridPainter({this.isDark = false});
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.blue.withOpacity(0.12)
+      ..color = (isDark ? Colors.blue.shade200 : Colors.blue).withAlpha(30)
       ..strokeWidth = 2.0;
 
     canvas.drawLine(Offset(0, size.height * 0.4), Offset(size.width, size.height * 0.7), paint);

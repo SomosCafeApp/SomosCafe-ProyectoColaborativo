@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import '../core/constants/app_colors.dart';
 import '../providers/theme_provider.dart';
 import '../providers/font_size_provider.dart';
+
+import '../widgets/profile/profile_sub_page_header.dart';
 import '../widgets/settings/settings_section_header.dart';
 import '../widgets/settings/settings_card_tile.dart';
 import '../widgets/settings/settings_dropdown_selector.dart';
@@ -13,134 +17,157 @@ class SettingsPage extends StatefulWidget {
   State<SettingsPage> createState() => _SettingsPageState();
 }
 
-class _SettingsPageState extends State<SettingsPage> {
-  String _selectedLanguage = 'Español';
+  class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final isDark = themeProvider.isDarkMode;
+    // Provider del tema
+    final themeProvider = context.watch<ThemeProvider>();
+
+    // Provider del tamaño de fuente
     final fontSizeProvider = context.watch<FontSizeProvider>();
 
-    final primaryBrown = const Color(0xFFA2784F);
-    final darkBrown = isDark ? const Color(0xFFC3A382) : const Color(0xFF634832);
-    final scaffoldBgColor = isDark ? const Color(0xFF1E1410) : const Color(0xFFFAF7F2);
+    final theme = Theme.of(context);
+    final primaryBrown = AppColors.primary;
 
     return Scaffold(
-      backgroundColor: scaffoldBgColor,
-      appBar: AppBar(
-        backgroundColor: darkBrown,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: isDark ? Colors.black : Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Configuración',
-              style: TextStyle(
-                color: isDark ? Colors.black : Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
+      backgroundColor: theme.scaffoldBackgroundColor,
+      body: Column(
+        children: [
+          // Header reutilizable
+          const ProfileSubPageHeader(
+            title: 'Configuración',
+            subtitle: 'Personaliza tu experiencia',
+          ),
+
+          Expanded(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // APARIENCIA
+
+                  const SettingsSectionHeader(
+                    title: 'Apariencia',
+                  ),
+
+                  SettingsCardTile(
+                    icon: Theme.of(context).brightness == Brightness.dark
+                        ? Icons.nightlight_round
+                        : Icons.wb_sunny_outlined,
+                    title: 'Modo Oscuro',
+                    subtitle: 'Cambia a tema oscuro',
+                    trailing: Switch(
+                      // Evaluamos el brillo real del contexto para que refleje si el sistema o la app lo tienen activo
+                      value: Theme.of(context).brightness == Brightness.dark,
+                      activeColor: Colors.white,
+                      activeTrackColor: primaryBrown,
+                      onChanged: (value) {
+                        // Al hacer clic, cambia el estado en el provider (apaga o enciende el modo oscuro)
+                        themeProvider.toggleTheme(value);
+                      },
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  SettingsCardTile(
+                    icon: Icons.remove_red_eye_outlined,
+                    title: 'Tamaño de Texto',
+                    subtitle: 'Ajusta el tamaño de la fuente',
+                    trailing: SettingsDropdownSelector(
+                      value: fontSizeProvider.fontSize,
+                      items: const [
+                        'Pequeño',
+                        'Mediano',
+                        'Grande',
+                      ],
+                      onChanged: (value) {
+                        if (value != null) {
+                          context
+                              .read<FontSizeProvider>()
+                              .setFontSize(value);
+                        }
+                      },
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+                  
+                  // PRIVACIDAD Y SEGURIDAD
+
+                  const SettingsSectionHeader(
+                    title: 'Privacidad y Seguridad',
+                  ),
+
+                  SettingsCardTile(
+                    icon: Icons.shield_outlined,
+                    title: 'Privacidad',
+                    subtitle: 'Gestiona tus datos',
+                    trailing: Icon(
+                      Icons.arrow_forward_rounded,
+                      color: primaryBrown,
+                      size: 20,
+                    ),
+                    onTap: () {},
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  SettingsCardTile(
+                    icon: Icons.lock_outline_rounded,
+                    title: 'Seguridad',
+                    subtitle: 'Cambiar contraseña',
+                    trailing: Icon(
+                      Icons.arrow_forward_rounded,
+                      color: primaryBrown,
+                      size: 20,
+                    ),
+                    onTap: () {},
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // SOPORTE
+
+                  const SettingsSectionHeader(
+                    title: 'Soporte',
+                  ),
+
+                  SettingsCardTile(
+                    icon: Icons.help_outline_rounded,
+                    title: 'Centro de Ayuda',
+                    subtitle: 'Preguntas frecuentes',
+                    trailing: Icon(
+                      Icons.arrow_forward_rounded,
+                      color: primaryBrown,
+                      size: 20,
+                    ),
+                    onTap: () {},
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  SettingsCardTile(
+                    icon: Icons.description_outlined,
+                    title: 'Términos y Condiciones',
+                    subtitle: 'Lee nuestros términos',
+                    trailing: Icon(
+                      Icons.arrow_forward_rounded,
+                      color: primaryBrown,
+                      size: 20,
+                    ),
+                    onTap: () {},
+                  ),
+
+                  const SizedBox(height: 30),
+                ],
               ),
             ),
-            Text(
-              'Personaliza tu experiencia',
-              style: TextStyle(
-                color: isDark ? Colors.black87 : Colors.white70,
-                fontSize: 12,
-              ),
-            ),
-          ],
-        ),
-        toolbarHeight: 70,
-      ),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SettingsSectionHeader(title: 'Apariencia'),
-            SettingsCardTile(
-              icon: isDark ? Icons.nightlight_round : Icons.wb_sunny_outlined,
-              title: 'Modo Oscuro',
-              subtitle: 'Cambia a tema oscuro',
-              trailing: Switch(
-                value: isDark,
-                activeColor: Colors.white,
-                activeTrackColor: primaryBrown,
-                onChanged: (val) => themeProvider.toggleTheme(val),
-              ),
-            ),
-            const SizedBox(height: 12),
-            SettingsCardTile(
-              icon: Icons.remove_red_eye_outlined,
-              title: 'Tamaño de Texto',
-              subtitle: 'Ajusta el tamaño de la fuente',
-              trailing: SettingsDropdownSelector<String>(
-                value: fontSizeProvider.fontSize,
-                items: const ['Pequeño', 'Mediano', 'Grande'],
-                onChanged: (val) {
-                  if (val != null) {
-                    context.read<FontSizeProvider>().setFontSize(val);
-                  }
-                },
-              ),
-            ),
-            const SizedBox(height: 24),
-            const SettingsSectionHeader(title: 'Idioma'),
-            SettingsCardTile(
-              icon: Icons.language_rounded,
-              title: 'Idioma',
-              subtitle: 'Cambiar idioma de la app',
-              trailing: SettingsDropdownSelector<String>(
-                value: _selectedLanguage,
-                items: const ['Español', 'English'],
-                onChanged: (val) {
-                  if (val != null) setState(() => _selectedLanguage = val);
-                },
-              ),
-            ),
-            const SizedBox(height: 24),
-            const SettingsSectionHeader(title: 'Privacidad y Seguridad'),
-            SettingsCardTile(
-              icon: Icons.shield_outlined,
-              title: 'Privacidad',
-              subtitle: 'Gestiona tus datos',
-              trailing: Icon(Icons.arrow_forward_rounded, color: primaryBrown, size: 20),
-              onTap: () {},
-            ),
-            const SizedBox(height: 12),
-            SettingsCardTile(
-              icon: Icons.lock_outline_rounded,
-              title: 'Seguridad',
-              subtitle: 'Cambiar contraseña',
-              trailing: Icon(Icons.arrow_forward_rounded, color: primaryBrown, size: 20),
-              onTap: () {},
-            ),
-            const SizedBox(height: 24),
-            const SettingsSectionHeader(title: 'Soporte'),
-            SettingsCardTile(
-              icon: Icons.help_outline_rounded,
-              title: 'Centro de Ayuda',
-              subtitle: 'Preguntas frecuentes',
-              trailing: Icon(Icons.arrow_forward_rounded, color: primaryBrown, size: 20),
-              onTap: () {},
-            ),
-            const SizedBox(height: 12),
-            SettingsCardTile(
-              icon: Icons.description_outlined,
-              title: 'Términos y Condiciones',
-              subtitle: 'Lee nuestros términos',
-              trailing: Icon(Icons.arrow_forward_rounded, color: primaryBrown, size: 20),
-              onTap: () {},
-            ),
-            const SizedBox(height: 30),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/constants/app_colors.dart';
 
 class OfferCard extends StatelessWidget {
   final VoidCallback? onOrderNow;
@@ -8,7 +9,7 @@ class OfferCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final primaryBrown = theme.colorScheme.primary;
+    final isDark = theme.brightness == Brightness.dark;
 
     return Padding(
       padding: const EdgeInsets.all(20),
@@ -19,15 +20,18 @@ class OfferCard extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(22),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFE2CBB4), Color(0xFFB8936C)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              color: isDark ? AppColors.darkSurface : null,
+              gradient: isDark
+                  ? null
+                  : const LinearGradient(
+                      colors: [Color(0xFFE2CBB4), Color(0xFFB8936C)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: primaryBrown.withOpacity(0.2),
+                  color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
                   blurRadius: 15,
                   offset: const Offset(0, 8),
                 ),
@@ -39,18 +43,28 @@ class OfferCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.3),
+                    color: isDark
+                        ? AppColors.darkSurfaceSubtle
+                        : Colors.white.withOpacity(0.3),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.auto_awesome, color: Colors.white, size: 14),
-                      SizedBox(width: 6),
+                      Icon(
+                        Icons.auto_awesome,
+                        color: isDark
+                            ? AppColors.darkTextSecondary
+                            : Colors.white,
+                        size: 14,
+                      ),
+                      const SizedBox(width: 6),
                       Text(
                         'Oferta Especial del Día',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: isDark
+                              ? AppColors.darkTextSecondary
+                              : Colors.white,
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
                         ),
@@ -59,12 +73,12 @@ class OfferCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 14),
-                const Text(
+                Text(
                   '¡30% de Descuento!',
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: theme.colorScheme.onPrimary,
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -72,7 +86,9 @@ class OfferCard extends StatelessWidget {
                   'En tu segunda compra del día.\nSolo por tiempo limitado.',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.white.withOpacity(0.9),
+                    color: isDark
+                        ? AppColors.darkTextSecondary
+                        : Colors.white.withOpacity(0.9),
                     height: 1.3,
                   ),
                 ),
@@ -80,8 +96,10 @@ class OfferCard extends StatelessWidget {
                 ElevatedButton(
                   onPressed: onOrderNow,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: primaryBrown,
+                    backgroundColor: isDark
+                        ? Colors.white
+                        : Colors.white,
+                    foregroundColor: AppColors.primary,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                     shape: RoundedRectangleBorder(
@@ -113,7 +131,7 @@ class OfferCard extends StatelessWidget {
               width: 58,
               height: 58,
               decoration: BoxDecoration(
-                color: const Color(0xFFFFCC00),
+                color: AppColors.accentYellow,
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(

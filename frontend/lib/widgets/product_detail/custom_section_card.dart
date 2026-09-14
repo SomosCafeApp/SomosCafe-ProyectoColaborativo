@@ -20,6 +20,7 @@ class CustomSectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -28,7 +29,7 @@ class CustomSectionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withAlpha(isDark ? 40 : 8),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

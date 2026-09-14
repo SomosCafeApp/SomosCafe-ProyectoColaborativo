@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class TypeSelector extends StatelessWidget {
   final String selectedType;
-  final ValueChanged<String> onChanged;
+  final ValueChanged onChanged;
   final Color selectedBg;
   final Color primaryColor;
   final Color borderColor;

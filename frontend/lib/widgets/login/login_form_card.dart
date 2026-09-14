@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/constants/app_colors.dart';
 import '../../providers/auth_provider.dart';
 
 class LoginFormCard extends StatefulWidget {
-  final Color primaryBrown;
-  final Color inputBgColor;
   final TextEditingController emailController;
   final TextEditingController passwordController;
 
   const LoginFormCard({
     super.key,
-    required this.primaryBrown,
-    required this.inputBgColor,
     required this.emailController,
     required this.passwordController,
   });
@@ -26,14 +23,22 @@ class _LoginFormCardState extends State<LoginFormCard> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final cardColor = isDark ? AppColors.darkSurface : AppColors.lightSurface;
+    final inputBgColor = isDark ? AppColors.darkSurfaceSubtle : AppColors.lightSurfaceSubtle;
+    final textColor = isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
+    final subtitleColor = isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.06),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -42,24 +47,25 @@ class _LoginFormCardState extends State<LoginFormCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Correo electrónico',
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF555555),
+              color: subtitleColor,
             ),
           ),
           const SizedBox(height: 8),
           TextField(
             controller: widget.emailController,
             keyboardType: TextInputType.emailAddress,
+            style: TextStyle(color: textColor, fontSize: 14),
             decoration: InputDecoration(
               hintText: 'tu@email.com',
-              hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-              prefixIcon: Icon(Icons.email_outlined, color: widget.primaryBrown, size: 20),
+              hintStyle: TextStyle(color: subtitleColor.withOpacity(0.5), fontSize: 14),
+              prefixIcon: const Icon(Icons.email_outlined, color: AppColors.primary, size: 20),
               filled: true,
-              fillColor: widget.inputBgColor,
+              fillColor: inputBgColor,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
                 borderSide: BorderSide.none,
@@ -68,26 +74,27 @@ class _LoginFormCardState extends State<LoginFormCard> {
             ),
           ),
           const SizedBox(height: 18),
-          const Text(
+          Text(
             'Contraseña',
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF555555),
+              color: subtitleColor,
             ),
           ),
           const SizedBox(height: 8),
           TextField(
             controller: widget.passwordController,
             obscureText: _obscurePassword,
+            style: TextStyle(color: textColor, fontSize: 14),
             decoration: InputDecoration(
               hintText: '••••••••',
-              hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-              prefixIcon: Icon(Icons.lock_outline, color: widget.primaryBrown, size: 20),
+              hintStyle: TextStyle(color: subtitleColor.withOpacity(0.5), fontSize: 14),
+              prefixIcon: const Icon(Icons.lock_outline, color: AppColors.primary, size: 20),
               suffixIcon: IconButton(
                 icon: Icon(
                   _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                  color: Colors.grey.shade600,
+                  color: subtitleColor,
                   size: 20,
                 ),
                 onPressed: () {
@@ -97,7 +104,7 @@ class _LoginFormCardState extends State<LoginFormCard> {
                 },
               ),
               filled: true,
-              fillColor: widget.inputBgColor,
+              fillColor: inputBgColor,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
                 borderSide: BorderSide.none,
@@ -116,7 +123,7 @@ class _LoginFormCardState extends State<LoginFormCard> {
                     height: 20,
                     child: Checkbox(
                       value: _rememberMe,
-                      activeColor: widget.primaryBrown,
+                      activeColor: AppColors.primary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(4),
                       ),
@@ -128,19 +135,19 @@ class _LoginFormCardState extends State<LoginFormCard> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  const Text(
+                  Text(
                     'Recordarme',
-                    style: TextStyle(fontSize: 13, color: Color(0xFF666666)),
+                    style: TextStyle(fontSize: 13, color: subtitleColor),
                   ),
                 ],
               ),
               GestureDetector(
                 onTap: () {},
-                child: Text(
+                child: const Text(
                   '¿Olvidaste tu contraseña?',
                   style: TextStyle(
                     fontSize: 12,
-                    color: widget.primaryBrown,
+                    color: AppColors.primary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -167,7 +174,7 @@ class _LoginFormCardState extends State<LoginFormCard> {
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: widget.primaryBrown,
+                backgroundColor: AppColors.primary,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -193,23 +200,23 @@ class _LoginFormCardState extends State<LoginFormCard> {
           const SizedBox(height: 20),
           Row(
             children: [
-              Expanded(child: Divider(color: Colors.grey.shade300)),
+              Expanded(child: Divider(color: subtitleColor.withOpacity(0.2))),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 child: Text(
                   'O continúa con',
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                  style: TextStyle(fontSize: 12, color: subtitleColor),
                 ),
               ),
-              Expanded(child: Divider(color: Colors.grey.shade300)),
+              Expanded(child: Divider(color: subtitleColor.withOpacity(0.2))),
             ],
           ),
           const SizedBox(height: 20),
           OutlinedButton(
             onPressed: () {},
             style: OutlinedButton.styleFrom(
-              backgroundColor: widget.inputBgColor,
-              side: BorderSide(color: Colors.grey.shade300),
+              backgroundColor: inputBgColor,
+              side: BorderSide(color: subtitleColor.withOpacity(0.2)),
               minimumSize: const Size(double.infinity, 50),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -218,17 +225,17 @@ class _LoginFormCardState extends State<LoginFormCard> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Image.network(
-                  'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Google_Favicon_2025.svg/250px-Google_Favicon_2025.svg.png?utm_source=commons.wikimedia.org&utm_campaign=parser&utm_content=thumbnail',
+                Image.asset(
+                  'assets/icons/google.png',
                   height: 18,
                   errorBuilder: (context, error, stackTrace) =>
                       const Icon(Icons.g_mobiledata, color: Colors.red, size: 24),
                 ),
                 const SizedBox(width: 10),
-                const Text(
+                Text(
                   'Google',
                   style: TextStyle(
-                    color: Colors.black87,
+                    color: textColor,
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
                   ),

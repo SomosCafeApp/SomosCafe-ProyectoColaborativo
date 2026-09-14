@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/constants/app_colors.dart';
+
 class SecurePaymentInfoCard extends StatelessWidget {
   const SecurePaymentInfoCard({super.key});
 
@@ -7,10 +9,22 @@ class SecurePaymentInfoCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final textColor = theme.colorScheme.onSurface;
-    final subtitleColor = textColor.withOpacity(0.6);
-    final infoCardBg = isDark ? const Color(0xFF0E3A3F).withOpacity(0.5) : const Color(0xFFE0F7FA).withOpacity(0.5);
-    final infoIconBg = isDark ? const Color(0xFF13565E) : const Color(0xFFB2EBF2);
+
+    final textColor = isDark
+        ? AppColors.darkTextPrimary
+        : AppColors.lightTextPrimary;
+
+    final subtitleColor = isDark
+        ? AppColors.darkTextSecondary
+        : AppColors.lightTextSecondary;
+
+    final infoCardBg = isDark
+        ? AppColors.darkSurfaceSubtle
+        : AppColors.lightSurfaceSubtle;
+
+    final infoIconBg = isDark
+        ? AppColors.darkSurface
+        : AppColors.lightSurface;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -29,11 +43,13 @@ class SecurePaymentInfoCard extends StatelessWidget {
             ),
             child: const Icon(
               Icons.credit_card,
-              color: Color(0xFF00838F),
+              color: AppColors.primary,
               size: 20,
             ),
           ),
+
           const SizedBox(width: 12),
+
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -46,7 +62,9 @@ class SecurePaymentInfoCard extends StatelessWidget {
                     color: textColor,
                   ),
                 ),
+
                 const SizedBox(height: 4),
+
                 Text(
                   'Tus datos de pago están protegidos con encriptación de nivel bancario. Nunca almacenamos información sensible.',
                   style: TextStyle(

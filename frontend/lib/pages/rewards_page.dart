@@ -1,76 +1,175 @@
 import 'package:flutter/material.dart';
+
+import '../core/constants/app_colors.dart';
 import '../widgets/rewards/reward_card.dart';
 import '../widgets/rewards/reward_header.dart';
 
 class RewardsPage extends StatelessWidget {
   const RewardsPage({super.key});
 
-  static const activeBrown = Color(0xFFA2784F);
-  static const darkBrown = Color(0xFF5D4037);
-
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final textColor = isDark
+        ? AppColors.darkTextPrimary
+        : AppColors.lightTextPrimary;
+
+    final subtitleColor = isDark
+        ? AppColors.darkTextSecondary
+        : AppColors.lightTextSecondary;
+
+    final surfaceColor = isDark
+        ? AppColors.darkSurface
+        : AppColors.lightSurface;
+
+    final subtleSurfaceColor = isDark
+        ? AppColors.darkSurfaceSubtle
+        : AppColors.lightSurfaceSubtle;
+
+    final pointsSectionBackground = isDark
+        ? AppColors.darkSurfaceSubtle
+        : const Color(0xFFFFFDE7);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF7F2),
-      body: SafeArea(
+      backgroundColor: theme.scaffoldBackgroundColor,
+      body: SingleChildScrollView(
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const RewardHeader(points: 450, nextRewardPoints: 100, progress: 0.75),
+              const RewardHeader(
+                points: 450,
+                nextRewardPoints: 100,
+                progress: 0.75,
+              ),
+
               Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildSectionHeader(Icons.auto_awesome, 'Disponibles para Ti'),
+                    _buildSectionHeader(
+                      context,
+                      Icons.auto_awesome,
+                      'Disponibles para Ti',
+                    ),
+
                     const SizedBox(height: 12),
+
                     RewardCard(
                       icon: Icons.percent,
-                      iconBg: Colors.green.shade50,
-                      iconColor: Colors.green,
+                      iconBg: isDark
+                          ? AppColors.darkSurfaceSubtle
+                          : const Color(0xFFE8F5E9),
+                      iconColor: isDark
+                          ? AppColors.primary
+                          : Colors.green,
                       title: '30% de Descuento',
                       subtitle: 'En tu próxima compra',
                       points: 200,
                       expiry: '3 días',
                       onRedeem: () {},
                     ),
+
                     const SizedBox(height: 12),
+
                     RewardCard(
                       icon: Icons.card_giftcard,
-                      iconBg: Colors.pink.shade50,
-                      iconColor: Colors.pink,
+                      iconBg: isDark
+                          ? AppColors.darkSurfaceSubtle
+                          : const Color(0xFFFCE4EC),
+                      iconColor: isDark
+                          ? AppColors.primary
+                          : Colors.pink,
                       title: '2x1 en Postres',
                       subtitle: 'Compra uno y lleva otro gratis',
                       points: 350,
                       expiry: '7 días',
                       onRedeem: () {},
                     ),
+
                     const SizedBox(height: 20),
-                    _buildSectionHeader(Icons.bookmark_outline, 'Sigue Acumulando'),
+
+                    _buildSectionHeader(
+                      context,
+                      Icons.bookmark_outline,
+                      'Sigue Acumulando',
+                    ),
+
                     const SizedBox(height: 12),
+
                     Card(
                       elevation: 0,
-                      color: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      child: const ListTile(
-                        leading: CircleAvatar(backgroundColor: Color(0xFFFFF8E1), child: Icon(Icons.local_cafe_outlined, color: activeBrown)),
-                        title: Text('Café Gratis', style: TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: Text('Cualquier café de tamaño medio\n⭐ 50 puntos más'),
+                      color: surfaceColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: subtleSurfaceColor,
+                          child: Icon(
+                            Icons.local_cafe_outlined,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                        title: Text(
+                          'Café Gratis',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: textColor,
+                          ),
+                        ),
+                        subtitle: Text(
+                          'Cualquier café de tamaño medio\n⭐ 50 puntos más',
+                          style: TextStyle(
+                            color: subtitleColor,
+                          ),
+                        ),
                       ),
                     ),
+
                     const SizedBox(height: 20),
+
                     Container(
                       padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(color: const Color(0xFFFFFDE7), borderRadius: BorderRadius.circular(20)),
+                      decoration: BoxDecoration(
+                        color: pointsSectionBackground,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildSectionHeader(Icons.auto_awesome, 'Cómo Ganar Puntos', color: Colors.orange),
+                          _buildSectionHeader(
+                            context,
+                            Icons.auto_awesome,
+                            'Cómo Ganar Puntos',
+                            color: AppColors.primary,
+                          ),
+
                           const SizedBox(height: 12),
-                          _buildInstruction(Icons.local_cafe, '10 puntos', 'por cada compra'),
-                          _buildInstruction(Icons.star_outline, '50 puntos', 'por cada reseña'),
-                          _buildInstruction(Icons.card_giftcard, '100 puntos', 'por referir amigos'),
+
+                          _buildInstruction(
+                            context,
+                            Icons.local_cafe,
+                            '10 puntos',
+                            'por cada compra',
+                          ),
+
+                          _buildInstruction(
+                            context,
+                            Icons.star_outline,
+                            '50 puntos',
+                            'por cada reseña',
+                          ),
+
+                          _buildInstruction(
+                            context,
+                            Icons.card_giftcard,
+                            '100 puntos',
+                            'por referir amigos',
+                          ),
                         ],
                       ),
                     ),
@@ -84,25 +183,92 @@ class RewardsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionHeader(IconData icon, String title, {Color color = activeBrown}) {
+  Widget _buildSectionHeader(
+    BuildContext context,
+    IconData icon,
+    String title, {
+    Color? color,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final textColor = isDark
+        ? AppColors.darkTextPrimary
+        : AppColors.lightTextPrimary;
+
     return Row(
       children: [
-        Icon(icon, color: color, size: 18),
+        Icon(
+          icon,
+          color: color ?? AppColors.primary,
+          size: 18,
+        ),
         const SizedBox(width: 6),
-        Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: darkBrown)),
+        Expanded(
+          child: Text(
+            title,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: textColor,
+            ),
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildInstruction(IconData icon, String boldText, String normalText) {
+  Widget _buildInstruction(
+    BuildContext context,
+    IconData icon,
+    String boldText,
+    String normalText,
+  ) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final textColor = isDark
+        ? AppColors.darkTextPrimary
+        : AppColors.lightTextPrimary;
+
+    final subtitleColor = isDark
+        ? AppColors.darkTextSecondary
+        : AppColors.lightTextSecondary;
+
+    final iconBackground = isDark
+        ? AppColors.darkSurface
+        : AppColors.lightSurface;
+
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6.0),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
-          CircleAvatar(radius: 16, backgroundColor: Colors.orange.shade100, child: Icon(icon, size: 16, color: activeBrown)),
+          CircleAvatar(
+            radius: 16,
+            backgroundColor: iconBackground,
+            child: Icon(
+              icon,
+              size: 16,
+              color: AppColors.primary,
+            ),
+          ),
           const SizedBox(width: 12),
-          Text(boldText, style: const TextStyle(fontWeight: FontWeight.bold, color: darkBrown)),
-          Text(' $normalText', style: const TextStyle(color: Colors.black87)),
+          Text(
+            boldText,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: textColor,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Text(
+              normalText,
+              style: TextStyle(
+                color: subtitleColor,
+              ),
+            ),
+          ),
         ],
       ),
     );

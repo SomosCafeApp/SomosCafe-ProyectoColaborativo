@@ -28,18 +28,26 @@ class ProfileOptionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
-        color: cardColor,
+        color: isDestructive ? Colors.transparent : cardColor,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(8),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        border: isDestructive
+            ? Border.all(color: Colors.redAccent.withAlpha(100), width: 1.2)
+            : (isDark ? Border.all(color: Colors.white.withAlpha(10), width: 1) : null),
+        boxShadow: (!isDestructive && !isDark)
+            ? [
+                BoxShadow(
+                  color: Colors.black.withAlpha(8),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ]
+            : null,
       ),
       child: Material(
         color: Colors.transparent,
@@ -48,34 +56,40 @@ class ProfileOptionCard extends StatelessWidget {
           onTap: onTap,
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          leading: Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: iconBgColor,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(icon, color: iconColor, size: 22),
-          ),
+          leading: isDestructive
+              ? const Icon(Icons.logout_rounded, color: Colors.redAccent, size: 22)
+              : Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: iconBgColor,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(icon, color: iconColor, size: 22),
+                ),
           title: Text(
             title,
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
-              color: isDestructive ? const Color(0xFFD32F2F) : textColor,
+              color: isDestructive ? Colors.redAccent : textColor,
             ),
           ),
-          subtitle: Text(
-            subtitle,
-            style: TextStyle(
-              fontSize: 12,
-              color: subtitleColor,
-            ),
-          ),
-          trailing: Icon(
-            Icons.chevron_right_rounded,
-            color: subtitleColor,
-            size: 20,
-          ),
+          subtitle: isDestructive
+              ? null
+              : Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: subtitleColor,
+                  ),
+                ),
+          trailing: isDestructive
+              ? null
+              : Icon(
+                  Icons.chevron_right_rounded,
+                  color: subtitleColor,
+                  size: 20,
+                ),
         ),
       ),
     );

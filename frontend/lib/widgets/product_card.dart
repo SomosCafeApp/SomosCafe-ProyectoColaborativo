@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../models/product.dart';
-import '../../pages/product_detail_page.dart';
-import '../../providers/favorites_provider.dart';
+import '../core/constants/app_colors.dart';
+import '../models/product.dart';
+import '../pages/product_detail_page.dart';
+import '../providers/favorites_provider.dart';
 
 class ProductCard extends StatelessWidget {
   final Product product;
@@ -18,20 +19,24 @@ class ProductCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final primaryBrown = theme.colorScheme.primary;
-    final cardColor = theme.cardColor;
-    final textColor = theme.colorScheme.onSurface;
-    final subtitleColor = textColor.withOpacity(0.5);
-    final mutedColor = textColor.withOpacity(0.4);
-    final imagePlaceholderBg = isDark ? const Color(0xFF3D2E26) : const Color(0xFFF3EBE1);
-    final pillBg = isDark ? Colors.black.withOpacity(0.55) : Colors.white.withOpacity(0.9);
-    final viewsBadgeBg = isDark ? const Color(0xFF2D211B).withOpacity(0.92) : const Color(0xFFFAF7F2).withOpacity(0.92);
-    final viewsIconColor = isDark ? const Color(0xFFC9A98B) : const Color(0xFF8C6E54);
-    final viewsTextColor = isDark ? const Color(0xFFE4D2C1) : const Color(0xFF5D4037);
+    
+    // Paleta de colores ajustada a AppColors y Figma
+    final cardColor = isDark ? AppColors.darkSurface : AppColors.lightSurface;
+    final textColor = isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
+    final subtitleColor = isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
+    final mutedColor = subtitleColor.withOpacity(0.7);
+    
+    final imagePlaceholderBg = isDark ? AppColors.darkSurfaceSubtle : AppColors.lightSurfaceSubtle;
+    final pillBg = isDark ? AppColors.darkSurfaceSubtle.withOpacity(0.85) : Colors.white.withOpacity(0.9);
+    final viewsBadgeBg = isDark ? AppColors.darkSurfaceSubtle.withOpacity(0.92) : AppColors.lightSurfaceSubtle.withOpacity(0.92);
+    final viewsIconColor = isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
+    final viewsTextColor = isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
+
+    final actionBtnBg =  AppColors.primary;
+    final actionBtnTextColor = Colors.white;
 
     final bool hasImage = product.imageUrl.isNotEmpty;
 
-    // Escuchamos a FavoritesProvider para saber si este producto está marcado
     final favoritesProvider = Provider.of<FavoritesProvider>(context);
     final isFav = favoritesProvider.isFavorite(product);
 
@@ -41,7 +46,7 @@ class ProductCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -83,19 +88,17 @@ class ProductCard extends StatelessWidget {
                                   ? Image.network(
                                       product.imageUrl,
                                       fit: BoxFit.cover,
-                                      errorBuilder:
-                                          (context, error, stackTrace) =>
-                                              _buildFallbackIcon(primaryBrown),
+                                      errorBuilder: (context, error, stackTrace) =>
+                                          _buildFallbackIcon(AppColors.primary),
                                     )
                                   : Image.asset(
                                       product.imageUrl,
                                       fit: BoxFit.cover,
-                                      errorBuilder:
-                                          (context, error, stackTrace) =>
-                                              _buildFallbackIcon(primaryBrown),
+                                      errorBuilder: (context, error, stackTrace) =>
+                                          _buildFallbackIcon(AppColors.primary),
                                     ),
                             )
-                          : _buildFallbackIcon(primaryBrown),
+                          : _buildFallbackIcon(AppColors.primary),
                     ),
 
                     // 1. RATING STAR (Arriba a la izquierda)
@@ -125,7 +128,7 @@ class ProductCard extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
-                                color: isDark ? Colors.white : Colors.black87,
+                                color: textColor,
                               ),
                             ),
                           ],
@@ -139,7 +142,6 @@ class ProductCard extends StatelessWidget {
                       right: 8,
                       child: GestureDetector(
                         onTap: () {
-                          // Conmuta el estado en el Provider
                           favoritesProvider.toggleFavorite(product);
                         },
                         child: Container(
@@ -162,7 +164,7 @@ class ProductCard extends StatelessWidget {
                                 : Icons.favorite_border_rounded,
                             color: isFav
                                 ? const Color(0xFFE53935)
-                                : (isDark ? Colors.white70 : const Color(0xFF6C757D)),
+                                : subtitleColor,
                             size: 18,
                           ),
                         ),
@@ -274,21 +276,21 @@ class ProductCard extends StatelessWidget {
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: primaryBrown,
+                              color: actionBtnBg,
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: const Row(
+                            child: Row(
                               children: [
                                 Icon(
                                   Icons.add_rounded,
-                                  color: Colors.white,
+                                  color: actionBtnTextColor,
                                   size: 14,
                                 ),
-                                SizedBox(width: 2),
+                                const SizedBox(width: 2),
                                 Text(
                                   'Añadir',
                                   style: TextStyle(
-                                    color: Colors.white,
+                                    color: actionBtnTextColor,
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
                                   ),

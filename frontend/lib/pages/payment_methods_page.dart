@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import '../widgets//payment/payment_methods_header.dart';
-import '../widgets/payment/saved_payment_methods_section.dart';
-import '../widgets/payment/other_payment_options_section.dart';
-import '../widgets/payment/secure_payment_info_card.dart';
+
+import '../widgets/profile/profile_sub_page_header.dart';
+import '../widgets/payment_methods/saved_payment_methods_section.dart';
+import '../widgets/payment_methods/other_payment_options_section.dart';
+import '../widgets/payment_methods/secure_payment_info_card.dart';
 
 class PaymentMethodsPage extends StatefulWidget {
   const PaymentMethodsPage({super.key});
@@ -17,17 +18,19 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final primaryBrown = theme.colorScheme.primary;
-    final bgCanvas = theme.scaffoldBackgroundColor;
 
     return Scaffold(
-      backgroundColor: bgCanvas,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Column(
         children: [
-          PaymentMethodsHeader(primaryBrown: primaryBrown),
+          ProfileSubPageHeader(
+            title: 'Métodos de Pago',
+            subtitle: 'Gestiona tus formas de pago preferidas',
+          ),
+
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(16),
               physics: const BouncingScrollPhysics(),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -39,12 +42,16 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
                         _defaultMethod = method;
                       });
                     },
-                    primaryBrown: primaryBrown,
                   ),
+
                   const SizedBox(height: 24),
+
                   const OtherPaymentOptionsSection(),
+
                   const SizedBox(height: 16),
+
                   const SecurePaymentInfoCard(),
+
                   const SizedBox(height: 24),
                 ],
               ),

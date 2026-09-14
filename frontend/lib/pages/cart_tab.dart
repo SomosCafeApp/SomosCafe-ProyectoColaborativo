@@ -1,50 +1,59 @@
-  import 'package:flutter/material.dart';
-  import 'package:provider/provider.dart';
-  import '../providers/auth_provider.dart';
-  import 'cart_page.dart';
-  import 'login_page.dart';
-  import 'register_page.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-  enum AuthView { login, register }
+import '../providers/auth_provider.dart';
+import 'cart_page.dart';
+import 'login_page.dart';
+import 'register_page.dart';
 
-  class CartTab extends StatefulWidget {
-    final VoidCallback? onExploreMenu;
+enum AuthView {
+  login,
+  register,
+}
 
-    const CartTab({super.key, this.onExploreMenu});
+class CartTab extends StatefulWidget {
+  final VoidCallback? onExploreMenu;
 
-    @override
-    State<CartTab> createState() => _CartTabState();
-  }
+  const CartTab({
+    super.key,
+    this.onExploreMenu,
+  });
 
-  class _CartTabState extends State<CartTab> {
-    AuthView _currentView = AuthView.login;
+  @override
+  State<CartTab> createState() => _CartTabState();
+}
 
-    @override
-    Widget build(BuildContext context) {
-      final authProvider = context.watch<AuthProvider>();
+class _CartTabState extends State<CartTab> {
+  AuthView _currentView = AuthView.login;
 
-      // 1. Si el usuario ya inició sesión, muestra la vista del Carrito
-      if (authProvider.isLoggedIn) {
-        return CartPage(onExploreMenu: widget.onExploreMenu);
-      }
+  @override
+  Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
 
-      // 2. Si no ha iniciado sesión, alterna entre Login y Registro
-      if (_currentView == AuthView.register) {
-        return RegisterPage(
-          onLoginTap: () {
-            setState(() {
-              _currentView = AuthView.login;
-            });
-          },
-        );
-      }
+    // Usuario autenticado → mostrar carrito
+    if (authProvider.isLoggedIn) {
+      return CartPage(
+        onExploreMenu: widget.onExploreMenu,
+      );
+    }
 
-      return LoginPage(
-        onRegisterTap: () {
+    // Usuario no autenticado → mostrar Login o Registro
+    if (_currentView == AuthView.register) {
+      return RegisterPage(
+        onLoginTap: () {
           setState(() {
-            _currentView = AuthView.register;
+            _currentView = AuthView.login;
           });
         },
       );
     }
+
+    return LoginPage(
+      onRegisterTap: () {
+        setState(() {
+          _currentView = AuthView.register;
+        });
+      },
+    );
   }
+}

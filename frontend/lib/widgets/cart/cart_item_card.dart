@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/constants/app_colors.dart';
 import '../../models/product.dart';
 
 class CartItemCard extends StatelessWidget {
@@ -23,6 +24,18 @@ class CartItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final textColor = theme.colorScheme.onSurface;
+    final subtitleColor = isDark
+        ? AppColors.darkTextSecondary
+        : AppColors.lightTextSecondary;
+
+    final counterBgColor = isDark
+        ? AppColors.darkSurfaceSubtle
+        : AppColors.lightSurfaceSubtle;
+
     return Container(
       key: ValueKey(product.id),
       margin: const EdgeInsets.only(bottom: 12),
@@ -32,7 +45,7 @@ class CartItemCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withOpacity(isDark ? 0.2 : 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -69,10 +82,10 @@ class CartItemCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         product.name,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
-                          color: Colors.black87,
+                          color: textColor,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -90,7 +103,7 @@ class CartItemCard extends StatelessWidget {
                   product.description,
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey.shade600,
+                    color: subtitleColor,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -101,15 +114,15 @@ class CartItemCard extends StatelessWidget {
                   children: [
                     Text(
                       '\$${(product.price * quantity).toStringAsFixed(0)} COP',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
-                        color: Colors.black87,
+                        color: textColor,
                       ),
                     ),
                     Container(
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF5F5F5),
+                        color: counterBgColor,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
@@ -123,7 +136,7 @@ class CartItemCard extends StatelessWidget {
                                 '-',
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: quantity > 1 ? Colors.black87 : Colors.grey.shade400,
+                                  color: quantity > 1 ? textColor : subtitleColor.withOpacity(0.5),
                                 ),
                               ),
                             ),
@@ -132,17 +145,17 @@ class CartItemCard extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(horizontal: 6),
                             child: Text(
                               '$quantity',
-                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: textColor),
                             ),
                           ),
                           InkWell(
                             onTap: onAdd,
                             borderRadius: BorderRadius.circular(20),
-                            child: const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               child: Text(
                                 '+',
-                                style: TextStyle(fontWeight: FontWeight.bold),
+                                style: TextStyle(fontWeight: FontWeight.bold, color: textColor),
                               ),
                             ),
                           ),

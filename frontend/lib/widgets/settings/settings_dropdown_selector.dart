@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import '../../core/constants/app_colors.dart';
 
-class SettingsDropdownSelector<T> extends StatelessWidget {
-  final T value;
-  final List<T> items;
-  final ValueChanged<T?> onChanged;
+class SettingsDropdownSelector extends StatelessWidget {
+  final String value;
+  final List items;
+  final ValueChanged onChanged;
 
   const SettingsDropdownSelector({
     super.key,
@@ -16,9 +17,10 @@ class SettingsDropdownSelector<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final scaffoldBgColor = isDark ? const Color(0xFF1E1410) : const Color(0xFFFAF7F2);
-    final cardBgColor = isDark ? const Color(0xFF2D211B) : Colors.white;
-    final textColor = isDark ? Colors.white : Colors.black87;
+    
+    final scaffoldBgColor = theme.scaffoldBackgroundColor;
+    final cardBgColor = theme.cardTheme.color ?? (isDark ? AppColors.darkSurface : AppColors.lightSurface);
+    final textColor = theme.colorScheme.onSurface;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -28,13 +30,13 @@ class SettingsDropdownSelector<T> extends StatelessWidget {
         border: Border.all(color: isDark ? Colors.white24 : Colors.black12),
       ),
       child: DropdownButtonHideUnderline(
-        child: DropdownButton<T>(
+        child: DropdownButton(
           value: value,
           dropdownColor: cardBgColor,
           isDense: true,
           style: TextStyle(color: textColor, fontSize: 13, fontWeight: FontWeight.w500),
           items: items
-              .map((val) => DropdownMenuItem<T>(value: val, child: Text(val.toString())))
+              .map((val) => DropdownMenuItem(value: val, child: Text(val)))
               .toList(),
           onChanged: onChanged,
         ),
