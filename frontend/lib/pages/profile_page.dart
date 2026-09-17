@@ -154,8 +154,9 @@ class ProfilePage extends StatelessWidget {
           children: [
             // HEADER
             ProfileHeader(
-              userName: auth.userName ?? 'Ftorresgaviria',
-              userEmail: 'ftorresgaviria@gmail.com',
+              userName: auth.userName ?? 'Usuario',
+              userLastName: auth.user?.lastName ?? '',
+              userEmail: auth.user?.email ?? '',
             ),
 
             Padding(

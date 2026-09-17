@@ -1,29 +1,44 @@
-import '../models/product.dart';
+import 'package:flutter/material.dart';
 
-class ProductData {
-  static List<Product> getProducts() {
-    return [
-      Product(
-        id: '1',
-        name: 'Espresso Tradicional',
-        description: 'Un shot intenso y concentrado con notas tostadas y crema consistente, preparado con granos de origen local.',
-        price: 4500.0,
-        imageUrl: '',
-      ),
-      Product(
-        id: '2',
-        name: 'Cappuccino de la Casa',
-        description: 'Equilibrio perfecto entre espresso, leche vaporizada y una capa cremosa de espuma, decorado con cacao.',
-        price: 7000.0,
-        imageUrl: '',
-      ),
-      Product(
-        id: '3',
-        name: 'Latte Moca',
-        description: 'Combinación suave de espresso, leche condensada, jarabe de chocolate dulce y toque de canela.',
-        price: 8500.0,
-        imageUrl: '',
-      ),
-    ];
+import '../services/api_client.dart';
+import '../services/api_exception.dart';
+import '../models/product_model.dart';
+
+/// Maneja la lista de productos conectada al backend (GET /api/products).
+class ProductProvider extends ChangeNotifier {
+  List<Product> _products = [];
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  List<Product> get products => _products;
+  bool get isLoading => _isLoading;
+  String? get errorMessage => _errorMessage;
+
+  Future<void> fetchProducts() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final data = await ApiClient.get('/products');
+      final rawList = data['products'] as List? ?? [];
+      _products = rawList
+          .map((e) => Product.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<Product?> fetchProductById(String id) async {
+    try {
+      final data = await ApiClient.get('/products/$id');
+      return Product.fromJson(data['product'] as Map<String, dynamic>);
+    } on ApiException {
+      return null;
+    }
   }
 }

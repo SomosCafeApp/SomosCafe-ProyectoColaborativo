@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
-import '../models/product.dart';
+import '../models/product_model.dart';
 import '../providers/cart_provider.dart';
 import '../providers/product_provider.dart';
 import '../widgets/product_card.dart';
@@ -17,22 +17,29 @@ class SearchPage extends StatefulWidget {
 
 class _SearchPageState extends State<SearchPage> {
   final TextEditingController _searchController = TextEditingController();
-  List<Product> _allProducts = [];
   List<Product> _filteredProducts = [];
 
   @override
   void initState() {
     super.initState();
-    _allProducts = ProductData.getProducts();
-    _filteredProducts = [];
+    // Si el menú aún no cargó los productos (p. ej. se entró directo
+    // a Buscar), los pedimos aquí también. ProductProvider evita
+    // llamadas duplicadas innecesarias gracias al estado compartido.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = context.read<ProductProvider>();
+      if (provider.products.isEmpty) {
+        provider.fetchProducts();
+      }
+    });
   }
 
   void _filterProducts(String query) {
+    final allProducts = context.read<ProductProvider>().products;
     setState(() {
       if (query.isEmpty) {
         _filteredProducts = [];
       } else {
-        _filteredProducts = _allProducts.where((product) {
+        _filteredProducts = allProducts.where((product) {
           final nameLower = product.name.toLowerCase();
           final descLower = product.description.toLowerCase();
           final searchLower = query.toLowerCase();

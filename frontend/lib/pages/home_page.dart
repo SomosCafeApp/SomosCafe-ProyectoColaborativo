@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
-import '../models/product.dart';
-import '../models/welcome_data.dart';
+import '../models/product_model.dart';
+import '../models/product_data.dart';
 import '../providers/cart_provider.dart';
 import '../widgets/home/category_selector.dart';
 import '../widgets/home/filtered_menu_section.dart';
@@ -40,8 +40,8 @@ class _HomePageState extends State<HomePage> {
     final isDark = theme.brightness == Brightness.dark;
     final primaryBrown = theme.colorScheme.primary;
 
-    final selectedCatId = WelcomeData.categories[_selectedCategoryIndex]['id'];
-    final filtered = WelcomeData.fullMenuProducts
+    final selectedCatId = ProductData.categories[_selectedCategoryIndex]['id'];
+    final filtered = ProductData.fullMenuProducts
         .where((p) => p.categoryId == selectedCatId)
         .toList();
 
@@ -79,7 +79,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                   const SizedBox(height: 16),
                   CategorySelector(
-                    categories: WelcomeData.categories,
+                    categories: ProductData.categories,
                     selectedIndex: _selectedCategoryIndex,
                     onCategorySelected: (idx) =>
                         setState(() => _selectedCategoryIndex = idx),
@@ -89,7 +89,7 @@ class _HomePageState extends State<HomePage> {
             ),
             const SizedBox(height: 28),
             PopularProductsSection(
-              products: WelcomeData.popularProducts,
+              products: ProductData.popularProducts,
               onOrderNow: widget.onOrderNow,
               onAddToCart: (p) => _addToCart(context, p),
             ),

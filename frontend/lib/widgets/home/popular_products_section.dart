@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
-import '../../models/product.dart';
+import '../../models/product_model.dart';
 import '../product_card.dart';
 
 class PopularProductsSection extends StatelessWidget {
