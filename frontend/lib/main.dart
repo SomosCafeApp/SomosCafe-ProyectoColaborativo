@@ -12,6 +12,7 @@ import 'providers/order_provider.dart';
 import 'providers/favorites_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/font_size_provider.dart';
+import 'providers/product_provider.dart';
 
 void main() {
   runApp(
@@ -29,6 +30,9 @@ void main() {
         ChangeNotifierProvider(
           create: (_) => FavoritesProvider(),
         ),
+        ChangeNotifierProvider(
+          create: (_) => ProductProvider(),
+        ),
 
         // Tema
         ChangeNotifierProvider(
@@ -43,6 +47,43 @@ void main() {
       child: const MyApp(),
     ),
   );
+}
+
+/// Restaura la sesión guardada (si existe) antes de mostrar la app,
+/// para que un usuario que ya inició sesión no tenga que volver a
+/// hacerlo cada vez que abre la app.
+class _SessionBootstrap extends StatefulWidget {
+  final Widget child;
+  const _SessionBootstrap({required this.child});
+
+  @override
+  State<_SessionBootstrap> createState() => _SessionBootstrapState();
+}
+
+class _SessionBootstrapState extends State<_SessionBootstrap> {
+  bool _ready = false;
+
+  @override
+  void initState() {
+    super.initState();
+    context.read<AuthProvider>().tryAutoLogin().whenComplete(() {
+      if (mounted) setState(() => _ready = true);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_ready) {
+      return const Directionality(
+        textDirection: TextDirection.ltr,
+        child: ColoredBox(
+          color: Colors.white,
+          child: Center(child: CircularProgressIndicator()),
+        ),
+      );
+    }
+    return widget.child;
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -88,7 +129,7 @@ class MyApp extends StatelessWidget {
         );
       },
 
-      home: const MainNavigationScreen(),
+      home: const _SessionBootstrap(child: MainNavigationScreen()),
     );
   }
 }

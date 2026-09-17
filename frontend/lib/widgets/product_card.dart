@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
-import '../models/product.dart';
+import '../models/product_model.dart';
 import '../pages/product_detail_page.dart';
 import '../providers/favorites_provider.dart';
 
@@ -32,7 +32,7 @@ class ProductCard extends StatelessWidget {
     final viewsIconColor = isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
     final viewsTextColor = isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
 
-    final actionBtnBg =  AppColors.primary;
+    final actionBtnBg = AppColors.primary;
     final actionBtnTextColor = Colors.white;
 
     final bool hasImage = product.imageUrl.isNotEmpty;
@@ -71,34 +71,35 @@ class ProductCard extends StatelessWidget {
               Expanded(
                 child: Stack(
                   children: [
-                    Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: imagePlaceholderBg,
+                    // Imagen sin bordes ni padding
+                    Positioned.fill(
+                      child: ClipRRect(
                         borderRadius: const BorderRadius.vertical(
                           top: Radius.circular(20),
                         ),
-                      ),
-                      child: hasImage
-                          ? ClipRRect(
-                              borderRadius: const BorderRadius.vertical(
-                                top: Radius.circular(20),
-                              ),
-                              child: product.imageUrl.startsWith('http')
+                        child: Container(
+                          color: imagePlaceholderBg,
+                          child: hasImage
+                              ? (product.imageUrl.startsWith('http')
                                   ? Image.network(
                                       product.imageUrl,
+                                      width: double.infinity,
+                                      height: double.infinity,
                                       fit: BoxFit.cover,
                                       errorBuilder: (context, error, stackTrace) =>
                                           _buildFallbackIcon(AppColors.primary),
                                     )
                                   : Image.asset(
                                       product.imageUrl,
+                                      width: double.infinity,
+                                      height: double.infinity,
                                       fit: BoxFit.cover,
                                       errorBuilder: (context, error, stackTrace) =>
                                           _buildFallbackIcon(AppColors.primary),
-                                    ),
-                            )
-                          : _buildFallbackIcon(AppColors.primary),
+                                    ))
+                              : _buildFallbackIcon(AppColors.primary),
+                        ),
+                      ),
                     ),
 
                     // 1. RATING STAR (Arriba a la izquierda)

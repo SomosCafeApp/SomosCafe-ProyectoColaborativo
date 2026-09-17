@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
+import '../../services/google_auth_service.dart';
 import '../../providers/auth_provider.dart';
+import '../../pages/email_verification_page.dart';
 
 class LoginFormCard extends StatefulWidget {
   final TextEditingController emailController;
@@ -20,11 +22,80 @@ class LoginFormCard extends StatefulWidget {
 class _LoginFormCardState extends State<LoginFormCard> {
   bool _rememberMe = false;
   bool _obscurePassword = true;
+  bool _isGoogleLoading = false;
+
+  Future<void> _handleLogin() async {
+    final auth = context.read<AuthProvider>();
+    final email = widget.emailController.text.trim();
+    final password = widget.passwordController.text.trim();
+
+    if (email.isEmpty || password.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Ingresa un correo y contraseña (min 6 caracteres)'),
+        ),
+      );
+      return;
+    }
+
+    final success = await auth.login(email, password);
+    if (!mounted) return;
+
+    if (!success) {
+      final pendingEmail = auth.pendingVerificationEmail;
+      if (pendingEmail != null) {
+        // El backend indicó que el correo no está verificado.
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => EmailVerificationPage(
+              email: pendingEmail,
+              onVerified: () => Navigator.pop(context),
+            ),
+          ),
+        );
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(auth.errorMessage ?? 'No se pudo iniciar sesión')),
+      );
+    }
+    // Si tiene éxito, AuthProvider.isLoggedIn pasa a true y
+    // MainNavigationScreen/CartTab cambian de pantalla automáticamente.
+  }
+
+  Future<void> _handleGoogleLogin() async {
+    setState(() => _isGoogleLoading = true);
+    try {
+      final idToken = await GoogleAuthService.signInAndGetIdToken();
+      if (idToken == null) return; // el usuario canceló el diálogo
+
+      if (!mounted) return;
+      final auth = context.read<AuthProvider>();
+      final success = await auth.loginWithGoogle(idToken);
+
+      if (!mounted) return;
+      if (!success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(auth.errorMessage ?? 'No se pudo iniciar sesión con Google')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error al conectar con Google')),
+      );
+    } finally {
+      if (mounted) setState(() => _isGoogleLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final auth = context.watch<AuthProvider>();
 
     final cardColor = isDark ? AppColors.darkSurface : AppColors.lightSurface;
     final inputBgColor = isDark ? AppColors.darkSurfaceSubtle : AppColors.lightSurfaceSubtle;
@@ -159,20 +230,7 @@ class _LoginFormCardState extends State<LoginFormCard> {
             width: double.infinity,
             height: 50,
             child: ElevatedButton(
-              onPressed: () {
-                final email = widget.emailController.text.trim();
-                final password = widget.passwordController.text.trim();
-
-                if (email.isNotEmpty && password.length >= 6) {
-                  context.read<AuthProvider>().login(email, password);
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Ingresa un correo y contraseña (min 6 caracteres)'),
-                    ),
-                  );
-                }
-              },
+              onPressed: auth.isLoading ? null : _handleLogin,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 elevation: 0,
@@ -180,21 +238,27 @@ class _LoginFormCardState extends State<LoginFormCard> {
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.login, color: Colors.white, size: 18),
-                  SizedBox(width: 8),
-                  Text(
-                    'Iniciar Sesión',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+              child: auth.isLoading
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                    )
+                  : const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.login, color: Colors.white, size: 18),
+                        SizedBox(width: 8),
+                        Text(
+                          'Iniciar Sesión',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
-              ),
             ),
           ),
           const SizedBox(height: 20),
@@ -213,7 +277,7 @@ class _LoginFormCardState extends State<LoginFormCard> {
           ),
           const SizedBox(height: 20),
           OutlinedButton(
-            onPressed: () {},
+            onPressed: _isGoogleLoading ? null : _handleGoogleLogin,
             style: OutlinedButton.styleFrom(
               backgroundColor: inputBgColor,
               side: BorderSide(color: subtitleColor.withOpacity(0.2)),
@@ -222,26 +286,32 @@ class _LoginFormCardState extends State<LoginFormCard> {
                 borderRadius: BorderRadius.circular(16),
               ),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Image.asset(
-                  'assets/icons/google.png',
-                  height: 18,
-                  errorBuilder: (context, error, stackTrace) =>
-                      const Icon(Icons.g_mobiledata, color: Colors.red, size: 24),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  'Google',
-                  style: TextStyle(
-                    color: textColor,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
+            child: _isGoogleLoading
+                ? SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: textColor),
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset(
+                        'assets/icons/google.png',
+                        height: 18,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Icon(Icons.g_mobiledata, color: Colors.red, size: 24),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Google',
+                        style: TextStyle(
+                          color: textColor,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
           ),
         ],
       ),

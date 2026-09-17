@@ -1,20 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
+import '../../services/google_auth_service.dart';
+import '../../providers/auth_provider.dart';
 import 'custom_text_field.dart';
 
-class RegisterFormCard extends StatelessWidget {
+class RegisterFormCard extends StatefulWidget {
   final TextEditingController nameController;
+  final TextEditingController lastNameController;
   final TextEditingController emailController;
   final TextEditingController passwordController;
   final TextEditingController confirmPasswordController;
   final bool obscurePassword;
   final bool obscureConfirmPassword;
+  final bool isLoading;
   final VoidCallback onTogglePassword;
   final VoidCallback onToggleConfirmPassword;
   final VoidCallback onRegister;
+
   const RegisterFormCard({
     super.key,
     required this.nameController,
+    required this.lastNameController,
     required this.emailController,
     required this.passwordController,
     required this.confirmPasswordController,
@@ -23,7 +30,16 @@ class RegisterFormCard extends StatelessWidget {
     required this.onTogglePassword,
     required this.onToggleConfirmPassword,
     required this.onRegister,
+    this.isLoading = false,
   });
+
+  @override
+  State<RegisterFormCard> createState() => _RegisterFormCardState();
+}
+
+class _RegisterFormCardState extends State<RegisterFormCard> {
+  bool _isGoogleLoading = false;
+
   Widget _buildEyeIcon(bool isObscured, VoidCallback onTap, Color iconColor) {
     return IconButton(
       icon: Icon(
@@ -33,6 +49,32 @@ class RegisterFormCard extends StatelessWidget {
       ),
       onPressed: onTap,
     );
+  }
+
+  Future<void> _handleGoogleSignUp() async {
+    setState(() => _isGoogleLoading = true);
+    try {
+      final idToken = await GoogleAuthService.signInAndGetIdToken();
+      if (idToken == null) return; // cancelado por el usuario
+
+      if (!mounted) return;
+      final auth = context.read<AuthProvider>();
+      final success = await auth.loginWithGoogle(idToken);
+
+      if (!mounted) return;
+      if (!success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(auth.errorMessage ?? 'No se pudo continuar con Google')),
+        );
+      }
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error al conectar con Google')),
+      );
+    } finally {
+      if (mounted) setState(() => _isGoogleLoading = false);
+    }
   }
 
   @override
@@ -65,16 +107,23 @@ class RegisterFormCard extends StatelessWidget {
       child: Column(
         children: [
           CustomTextField(
-            label: 'Nombre completo',
-            hintText: 'Juan Pérez',
-            controller: nameController,
+            label: 'Nombre',
+            hintText: 'Juan',
+            controller: widget.nameController,
+            prefixIcon: Icons.person_outline,
+          ),
+          const SizedBox(height: 16),
+          CustomTextField(
+            label: 'Apellido',
+            hintText: 'Pérez',
+            controller: widget.lastNameController,
             prefixIcon: Icons.person_outline,
           ),
           const SizedBox(height: 16),
           CustomTextField(
             label: 'Correo electrónico',
             hintText: 'user@example.com',
-            controller: emailController,
+            controller: widget.emailController,
             prefixIcon: Icons.email_outlined,
             keyboardType: TextInputType.emailAddress,
           ),
@@ -82,31 +131,39 @@ class RegisterFormCard extends StatelessWidget {
           CustomTextField(
             label: 'Contraseña',
             hintText: '••••••••',
-            controller: passwordController,
+            controller: widget.passwordController,
             prefixIcon: Icons.lock_outline,
-            obscureText: obscurePassword,
+            obscureText: widget.obscurePassword,
             suffixIcon: _buildEyeIcon(
-              obscurePassword,
-              onTogglePassword,
+              widget.obscurePassword,
+              widget.onTogglePassword,
               subtitleColor,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 4),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Mín. 6 caracteres, mayúscula, minúscula, número y carácter especial',
+              style: TextStyle(fontSize: 9.4, color: subtitleColor),
+            ),
+          ),
+          const SizedBox(height: 12),
           CustomTextField(
             label: 'Confirmar contraseña',
             hintText: '••••••••',
-            controller: confirmPasswordController,
+            controller: widget.confirmPasswordController,
             prefixIcon: Icons.lock_outline,
-            obscureText: obscureConfirmPassword,
+            obscureText: widget.obscureConfirmPassword,
             suffixIcon: _buildEyeIcon(
-              obscureConfirmPassword,
-              onToggleConfirmPassword,
+              widget.obscureConfirmPassword,
+              widget.onToggleConfirmPassword,
               subtitleColor,
             ),
           ),
           const SizedBox(height: 24),
           ElevatedButton(
-            onPressed: onRegister,
+            onPressed: widget.isLoading ? null : widget.onRegister,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               elevation: 0,
@@ -115,20 +172,26 @@ class RegisterFormCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
               ),
             ),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.person_add_outlined, color: Colors.white, size: 18),
-                SizedBox(width: 8),
-                Text(
-                  'Crear cuenta',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
+            child: widget.isLoading
+                ? const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                  )
+                : const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.person_add_outlined, color: Colors.white, size: 18),
+                      SizedBox(width: 8),
+                      Text(
+                        'Crear cuenta',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
           ),
           const SizedBox(height: 20),
           Row(
@@ -146,7 +209,7 @@ class RegisterFormCard extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           OutlinedButton(
-            onPressed: () {},
+            onPressed: _isGoogleLoading ? null : _handleGoogleSignUp,
             style: OutlinedButton.styleFrom(
               backgroundColor: inputBgColor,
               side: BorderSide(color: subtitleColor.withOpacity(0.2)),
@@ -155,28 +218,34 @@ class RegisterFormCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
               ),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Image.asset(
-                  'assets/icons/google.png',
-                  height: 18,
-                  errorBuilder: (_, __, ___) => const Icon(
-                    Icons.g_mobiledata,
-                    color: Colors.red,
-                    size: 24,
+            child: _isGoogleLoading
+                ? SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: textColor),
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset(
+                        'assets/icons/google.png',
+                        height: 18,
+                        errorBuilder: (_, __, ___) => const Icon(
+                          Icons.g_mobiledata,
+                          color: Colors.red,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Google',
+                        style: TextStyle(
+                          color: textColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  'Google',
-                  style: TextStyle(
-                    color: textColor,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
           ),
         ],
       ),

@@ -3,29 +3,38 @@ import '../../core/constants/app_colors.dart';
 
 class ProfileHeader extends StatelessWidget {
   final String userName;
+  final String userLastName;
   final String userEmail;
-  final String userLevel;
+
 
   const ProfileHeader({
     super.key,
     required this.userName,
     required this.userEmail,
-    this.userLevel = 'Nivel Gold',
+    required this.userLastName,
   });
 
   @override
   Widget build(BuildContext context) {
-    final initial = userName.isNotEmpty ? userName[0].toUpperCase() : 'U';
+    // Iniciales compuestas de Nombre + Apellido
+    final firstInitial = userName.isNotEmpty ? userName[0].toUpperCase() : '';
+    final lastInitial = userLastName.isNotEmpty ? userLastName[0].toUpperCase() : '';
+    final initials = '$firstInitial$lastInitial'.isNotEmpty 
+        ? '$firstInitial$lastInitial' 
+        : 'U';
+
+    // Nombre completo unificado
+    final fullName = '$userName $userLastName'.trim();
 
     // Gradiente adaptado dinámicamente según el tema moca activo
-    final gradientColors =[
-            AppColors.primary,
-            AppColors.primary.withAlpha(200),
-          ];
+    final gradientColors = [
+      AppColors.primary,
+      AppColors.primary.withAlpha(200),
+    ];
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.only(top: 60, bottom: 30, left: 24, right: 24),
+      padding: const EdgeInsets.only(top: 70, bottom: 30, left: 24, right: 24),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
@@ -35,7 +44,7 @@ class ProfileHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Avatar con las iniciales
+          // Avatar con las iniciales (Ej: "JD")
           Container(
             width: 72,
             height: 72,
@@ -49,10 +58,10 @@ class ProfileHeader extends StatelessWidget {
             ),
             child: Center(
               child: Text(
-                initial,
+                initials,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 26,
+                  fontSize: 24,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -64,10 +73,13 @@ class ProfileHeader extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Muestra Nombre + Apellido
                 Text(
-                  userName,
+                  fullName.isNotEmpty ? fullName : 'Usuario',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 22,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
@@ -81,43 +93,18 @@ class ProfileHeader extends StatelessWidget {
                       size: 14,
                     ),
                     const SizedBox(width: 4),
-                    Text(
-                      userEmail,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.white.withAlpha(230),
+                    Expanded(
+                      child: Text(
+                        userEmail,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.white.withAlpha(230),
+                        ),
                       ),
                     ),
                   ],
-                ),
-                const SizedBox(height: 8),
-                // Badge de Nivel
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withAlpha(40),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.white.withAlpha(80)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.workspace_premium_outlined,
-                        color: AppColors.accentYellow,
-                        size: 14,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        userLevel,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
               ],
             ),

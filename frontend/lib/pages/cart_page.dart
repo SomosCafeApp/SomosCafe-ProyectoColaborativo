@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
 import '../providers/cart_provider.dart';
-import '../models/product.dart';
+import '../models/product_model.dart';
 import '../widgets/cart/cart_item_card.dart';
 import '../widgets/cart/cart_summary_panel.dart';
 import '../widgets/cart/cart_empty_state.dart';

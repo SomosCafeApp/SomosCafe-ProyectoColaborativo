@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
-import '../models/product.dart';
+import '../models/product_model.dart';
 import '../widgets/product_card.dart';
 import '../providers/cart_provider.dart';
+import '../providers/product_provider.dart';
 
 class MenuPage extends StatefulWidget {
   const MenuPage({super.key});
@@ -22,41 +23,37 @@ class _MenuPageState extends State<MenuPage> {
     {'label': 'Postres', 'icon': Icons.cake_rounded},
   ];
 
-  final List<Product> _products = [
-    Product(
-      id: '1',
-      name: 'Espresso Tradicional',
-      description: 'Intenso y aromático, la esencia pura del café',
-      price: 4500,
-      imageUrl: '',
-    ),
-    Product(
-      id: '2',
-      name: 'Cappuccino de la Casa',
-      description: 'Espresso coronado con espuma de leche sedosa',
-      price: 7000,
-      imageUrl: '',
-    ),
-    Product(
-      id: '3',
-      name: 'Latte Moca',
-      description: 'Mezcla perfecta de café espresso, leche y chocolate',
-      price: 8500,
-      imageUrl: '',
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    // Se dispara después del primer frame para poder usar `context.read`
+    // de forma segura dentro de initState.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ProductProvider>().fetchProducts();
+    });
+  }
+
+  List<Product> _applyCategoryFilter(List<Product> products) {
+    final label = _categories[_selectedCategoryIndex]['label'] as String;
+    if (label == 'Todo') return products;
+    return products
+        .where((p) => (p.categoryName ?? '').toLowerCase() == label.toLowerCase())
+        .toList();
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
+
     // El header mantiene el tono café de marca en ambos modos según Figma
     final headerBgColor = AppColors.primary;
     final scaffoldBgColor = theme.scaffoldBackgroundColor;
     final subtitleColor = isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
 
     final cartProvider = Provider.of<CartProvider>(context, listen: false);
+    final productProvider = context.watch<ProductProvider>();
+    final products = _applyCategoryFilter(productProvider.products);
 
     return Scaffold(
       backgroundColor: scaffoldBgColor,
@@ -97,7 +94,7 @@ class _MenuPageState extends State<MenuPage> {
                             ),
                           ),
                           Text(
-                            'Más de 12 productos artesanales',
+                            'Directo desde nuestra cocina',
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.white.withOpacity(0.85),
@@ -170,7 +167,7 @@ class _MenuPageState extends State<MenuPage> {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    '${_products.length} productos disponibles',
+                    '${products.length} productos disponibles',
                     style: TextStyle(
                       fontSize: 13,
                       color: subtitleColor,
@@ -181,40 +178,86 @@ class _MenuPageState extends State<MenuPage> {
               ),
             ),
 
-            // --- GRID DE PRODUCTOS ---
+            // --- CONTENIDO: LOADING / ERROR / GRID ---
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: GridView.builder(
-                  padding: const EdgeInsets.only(bottom: 20),
-                  physics: const BouncingScrollPhysics(),
-                  itemCount: _products.length,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 16,
-                    crossAxisSpacing: 16,
-                    childAspectRatio: 0.68,
-                  ),
-                  itemBuilder: (context, index) {
-                    final product = _products[index];
-                    return ProductCard(
-                      product: product,
-                      onAddToCart: () {
-                        cartProvider.addToCart(product);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('${product.name} añadido al carrito'),
-                            backgroundColor: AppColors.primary,
-                            duration: const Duration(seconds: 2),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                ),
-              ),
+              child: _buildContent(context, productProvider, products, cartProvider),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContent(
+    BuildContext context,
+    ProductProvider productProvider,
+    List<Product> products,
+    CartProvider cartProvider,
+  ) {
+    if (productProvider.isLoading && productProvider.products.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (productProvider.errorMessage != null && productProvider.products.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.wifi_off_rounded, size: 42, color: AppColors.primary.withOpacity(0.6)),
+              const SizedBox(height: 12),
+              Text(
+                productProvider.errorMessage!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 13),
+              ),
+              const SizedBox(height: 12),
+              ElevatedButton(
+                onPressed: () => productProvider.fetchProducts(),
+                style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+                child: const Text('Reintentar', style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (products.isEmpty) {
+      return const Center(child: Text('No hay productos en esta categoría'));
+    }
+
+    return RefreshIndicator(
+      onRefresh: () => productProvider.fetchProducts(),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: GridView.builder(
+          padding: const EdgeInsets.only(bottom: 20),
+          physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+          itemCount: products.length,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: 16,
+            crossAxisSpacing: 16,
+            childAspectRatio: 0.68,
+          ),
+          itemBuilder: (context, index) {
+            final product = products[index];
+            return ProductCard(
+              product: product,
+              onAddToCart: () {
+                cartProvider.addToCart(product);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('${product.name} añadido al carrito'),
+                    backgroundColor: AppColors.primary,
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              },
+            );
+          },
         ),
       ),
     );
