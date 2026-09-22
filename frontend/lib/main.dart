@@ -18,17 +18,22 @@ void main() {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(
-          create: (_) => CartProvider(),
-        ),
+        // AuthProvider va primero: CartProvider y FavoritesProvider
+        // necesitan leer su token para sincronizar con el backend.
         ChangeNotifierProvider(
           create: (_) => AuthProvider(),
         ),
-        ChangeNotifierProvider(
-          create: (_) => OrderProvider(),
+        ChangeNotifierProxyProvider<AuthProvider, CartProvider>(
+          create: (_) => CartProvider(),
+          update: (_, auth, cart) => (cart ?? CartProvider())..updateAuth(auth.token),
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, FavoritesProvider>(
+          create: (_) => FavoritesProvider(),
+          update: (_, auth, favorites) =>
+              (favorites ?? FavoritesProvider())..updateAuth(auth.token),
         ),
         ChangeNotifierProvider(
-          create: (_) => FavoritesProvider(),
+          create: (_) => OrderProvider(),
         ),
         ChangeNotifierProvider(
           create: (_) => ProductProvider(),

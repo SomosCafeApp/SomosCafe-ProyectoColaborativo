@@ -5,8 +5,10 @@ class AddressFormCard extends StatelessWidget {
   final Color primaryBrown;
   final TextEditingController nameController;
   final TextEditingController addressController;
+  final bool hasLocation;
   final VoidCallback onClose;
   final VoidCallback onSave;
+  final VoidCallback onPickOnMap;
 
   const AddressFormCard({
     super.key,
@@ -15,6 +17,8 @@ class AddressFormCard extends StatelessWidget {
     required this.addressController,
     required this.onClose,
     required this.onSave,
+    required this.onPickOnMap,
+    this.hasLocation = false,
   });
 
   @override
@@ -125,6 +129,32 @@ class AddressFormCard extends StatelessWidget {
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(30),
                 borderSide: BorderSide.none,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          InkWell(
+            onTap: onPickOnMap,
+            borderRadius: BorderRadius.circular(20),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                children: [
+                  Icon(
+                    hasLocation ? Icons.check_circle : Icons.map_outlined,
+                    size: 16,
+                    color: hasLocation ? Colors.green : primaryBrown,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    hasLocation ? 'Ubicación marcada en el mapa' : 'Elegir en el mapa',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: hasLocation ? Colors.green : primaryBrown,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

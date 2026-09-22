@@ -4,6 +4,7 @@ import '../../core/constants/app_colors.dart';
 import '../../services/google_auth_service.dart';
 import '../../providers/auth_provider.dart';
 import '../../pages/email_verification_page.dart';
+import '../../pages/forgot_password_page.dart';
 
 class LoginFormCard extends StatefulWidget {
   final TextEditingController emailController;
@@ -44,7 +45,6 @@ class _LoginFormCardState extends State<LoginFormCard> {
     if (!success) {
       final pendingEmail = auth.pendingVerificationEmail;
       if (pendingEmail != null) {
-        // El backend indicó que el correo no está verificado.
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -61,16 +61,13 @@ class _LoginFormCardState extends State<LoginFormCard> {
         SnackBar(content: Text(auth.errorMessage ?? 'No se pudo iniciar sesión')),
       );
     }
-    // Si tiene éxito, AuthProvider.isLoggedIn pasa a true y
-    // MainNavigationScreen/CartTab cambian de pantalla automáticamente.
   }
 
   Future<void> _handleGoogleLogin() async {
     setState(() => _isGoogleLoading = true);
     try {
       final idToken = await GoogleAuthService.signInAndGetIdToken();
-      if (idToken == null) return; // el usuario canceló el diálogo
-
+      if (idToken == null) return;
       if (!mounted) return;
       final auth = context.read<AuthProvider>();
       final success = await auth.loginWithGoogle(idToken);
@@ -213,7 +210,12 @@ class _LoginFormCardState extends State<LoginFormCard> {
                 ],
               ),
               GestureDetector(
-                onTap: () {},
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ForgotPasswordPage()),
+                  );
+                },
                 child: const Text(
                   '¿Olvidaste tu contraseña?',
                   style: TextStyle(

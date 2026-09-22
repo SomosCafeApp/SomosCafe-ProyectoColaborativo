@@ -3,15 +3,21 @@ import 'package:flutter/material.dart';
 import '../services/api_client.dart';
 import '../services/api_exception.dart';
 import '../models/product_model.dart';
+import '../models/category_model.dart';
 
-/// Maneja la lista de productos conectada al backend (GET /api/products).
+/// Maneja productos y categorías conectados al backend
+/// (GET /api/products, GET /api/categories).
 class ProductProvider extends ChangeNotifier {
   List<Product> _products = [];
+  List<Category> _categories = [];
   bool _isLoading = false;
+  bool _isLoadingCategories = false;
   String? _errorMessage;
 
   List<Product> get products => _products;
+  List<Category> get categories => _categories;
   bool get isLoading => _isLoading;
+  bool get isLoadingCategories => _isLoadingCategories;
   String? get errorMessage => _errorMessage;
 
   Future<void> fetchProducts() async {
@@ -31,6 +37,30 @@ class ProductProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  Future<void> fetchCategories() async {
+    _isLoadingCategories = true;
+    notifyListeners();
+
+    try {
+      final data = await ApiClient.get('/categories');
+      final rawList = data['categories'] as List? ?? [];
+      _categories = rawList
+          .map((e) => Category.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on ApiException {
+      // Si falla, la home simplemente no muestra categorías dinámicas;
+      // no es un error crítico para poder ver productos.
+    } finally {
+      _isLoadingCategories = false;
+      notifyListeners();
+    }
+  }
+
+  /// Carga productos y categorías juntos (usado por HomePage).
+  Future<void> loadHomeData() async {
+    await Future.wait([fetchProducts(), fetchCategories()]);
   }
 
   Future<Product?> fetchProductById(String id) async {

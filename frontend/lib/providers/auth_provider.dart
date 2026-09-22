@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/api_client.dart';
 import '../services/api_exception.dart';
+import '../services/google_auth_service.dart';
 import '../models/user_model.dart';
 
 const _kTokenKey = 'auth_token';
@@ -176,6 +177,49 @@ class AuthProvider extends ChangeNotifier {
     return requestEmailVerification(email);
   }
 
+  /// Paso 1 de recuperación de contraseña: pide al backend que envíe
+  /// el código de 6 dígitos al correo indicado.
+  Future<bool> requestPasswordRecovery(String email) async {
+    _setLoading(true);
+    _errorMessage = null;
+    try {
+      await ApiClient.post('/recovery/request', body: {
+        'email': email.trim(),
+      });
+      _setLoading(false);
+      return true;
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
+      _setLoading(false);
+      return false;
+    }
+  }
+
+  /// Paso 2 de recuperación de contraseña: valida el código y
+  /// establece la nueva contraseña. No inicia sesión automáticamente;
+  /// el usuario debe volver a loguearse con la nueva contraseña.
+  Future<bool> resetPassword({
+    required String email,
+    required String code,
+    required String newPassword,
+  }) async {
+    _setLoading(true);
+    _errorMessage = null;
+    try {
+      await ApiClient.post('/recovery/change-password', body: {
+        'email': email.trim(),
+        'code': code.trim(),
+        'newPassword': newPassword,
+      });
+      _setLoading(false);
+      return true;
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
+      _setLoading(false);
+      return false;
+    }
+  }
+
   /// Login/registro con Google. [idToken] debe venir del flujo de
   /// google_sign_in en el frontend.
   Future<bool> loginWithGoogle(String idToken) async {
@@ -206,5 +250,7 @@ class AuthProvider extends ChangeNotifier {
     _pendingVerificationEmail = null;
     notifyListeners();
     await _clearSession();
+    // Best-effort: no bloquea el logout si esto falla.
+    GoogleAuthService.signOut().catchError((_) {});
   }
 }
