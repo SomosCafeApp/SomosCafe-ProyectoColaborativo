@@ -20,7 +20,14 @@ class GoogleAuthService {
 
   /// Abre el flujo de Google. Devuelve el idToken, o null si el
   /// usuario canceló el diálogo.
+  ///
+  /// Cierra la sesión de Google ANTES de abrir el selector: si no se
+  /// hace esto, el plugin recuerda la última cuenta usada y el
+  /// selector de cuentas ni siquiera aparece (te vuelve a loguear
+  /// con la misma cuenta de la vez anterior).
   static Future<String?> signInAndGetIdToken() async {
+    await _googleSignIn.signOut();
+
     final account = await _googleSignIn.signIn();
     if (account == null) return null;
 

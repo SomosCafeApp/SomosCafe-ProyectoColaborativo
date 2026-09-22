@@ -3,6 +3,7 @@ import '../core/constants/app_colors.dart';
 import '../widgets/address/address_card_item.dart';
 import '../widgets/address/address_form_card.dart';
 import '../widgets/profile/profile_sub_page_header.dart';
+import 'address_map_picker_page.dart';
 
 class AddressItem {
   final String id;
@@ -10,6 +11,8 @@ class AddressItem {
   final String address;
   final String details;
   final String mapLabel;
+  final double? latitude;
+  final double? longitude;
 
   AddressItem({
     required this.id,
@@ -17,6 +20,8 @@ class AddressItem {
     required this.address,
     required this.details,
     required this.mapLabel,
+    this.latitude,
+    this.longitude,
   });
 }
 
@@ -31,6 +36,8 @@ class _AddressesPageState extends State {
   bool _showForm = false;
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
+  double? _pickedLat;
+  double? _pickedLng;
 
   final List _addresses = [
     AddressItem(
@@ -49,6 +56,29 @@ class _AddressesPageState extends State {
     ),
   ];
 
+  Future<void> _openMapPicker() async {
+    final result = await Navigator.push<PickedLocation>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AddressMapPickerPage(
+          initialAddress: _addressController.text.trim().isEmpty
+              ? null
+              : _addressController.text.trim(),
+          initialLat: _pickedLat,
+          initialLng: _pickedLng,
+        ),
+      ),
+    );
+
+    if (result == null) return;
+
+    setState(() {
+      _addressController.text = result.address;
+      _pickedLat = result.latitude;
+      _pickedLng = result.longitude;
+    });
+  }
+
   void _addAddress() {
     if (_nameController.text.trim().isEmpty || _addressController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -63,9 +93,13 @@ class _AddressesPageState extends State {
         address: _addressController.text.trim(),
         details: 'Ubicación personalizada',
         mapLabel: _nameController.text.trim(),
+        latitude: _pickedLat,
+        longitude: _pickedLng,
       ));
       _nameController.clear();
       _addressController.clear();
+      _pickedLat = null;
+      _pickedLng = null;
       _showForm = false;
     });
   }
@@ -115,7 +149,13 @@ class _AddressesPageState extends State {
                       primaryBrown: primaryBrown,
                       nameController: _nameController,
                       addressController: _addressController,
-                      onClose: () => setState(() => _showForm = false),
+                      hasLocation: _pickedLat != null,
+                      onPickOnMap: _openMapPicker,
+                      onClose: () => setState(() {
+                        _showForm = false;
+                        _pickedLat = null;
+                        _pickedLng = null;
+                      }),
                       onSave: _addAddress,
                     ),
                     const SizedBox(height: 20),
