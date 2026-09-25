@@ -45,6 +45,7 @@ class _LoginFormCardState extends State<LoginFormCard> {
     if (!success) {
       final pendingEmail = auth.pendingVerificationEmail;
       if (pendingEmail != null) {
+        // El backend indicó que el correo no está verificado.
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -61,13 +62,16 @@ class _LoginFormCardState extends State<LoginFormCard> {
         SnackBar(content: Text(auth.errorMessage ?? 'No se pudo iniciar sesión')),
       );
     }
+    // Si tiene éxito, AuthProvider.isLoggedIn pasa a true y
+    // MainNavigationScreen/CartTab cambian de pantalla automáticamente.
   }
 
   Future<void> _handleGoogleLogin() async {
     setState(() => _isGoogleLoading = true);
     try {
       final idToken = await GoogleAuthService.signInAndGetIdToken();
-      if (idToken == null) return;
+      if (idToken == null) return; // el usuario canceló el diálogo
+
       if (!mounted) return;
       final auth = context.read<AuthProvider>();
       final success = await auth.loginWithGoogle(idToken);

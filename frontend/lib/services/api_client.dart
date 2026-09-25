@@ -66,6 +66,20 @@ class ApiClient {
         .timeout(_timeout));
   }
 
+  static Future<Map<String, dynamic>> patch(
+    String path, {
+    Map<String, dynamic>? body,
+    String? token,
+  }) async {
+    return _send(() => http
+        .patch(
+          Uri.parse('${ApiConfig.baseUrl}$path'),
+          headers: _headers(token: token),
+          body: jsonEncode(body ?? {}),
+        )
+        .timeout(_timeout));
+  }
+
   static Future<Map<String, dynamic>> _send(
     Future<http.Response> Function() request,
   ) async {

@@ -66,3 +66,41 @@ export const adminOnly = (req, res, next) => {
 
     next();
 };
+
+// ===================================
+// OPTIONAL AUTH (no bloquea invitados)
+// ===================================
+// Si viene un token válido, adjunta req.user normalmente.
+// Si no viene token (o es inválido/expiró), continúa igual
+// pero con req.user = null, para rutas que deben funcionar
+// tanto para usuarios logueados como anónimos (ej: el chat).
+
+export const optionalAuth = (req, res, next) => {
+    try {
+        const authHeader = req.headers.authorization;
+
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+            req.user = null;
+            return next();
+        }
+
+        const token = authHeader.split(" ")[1];
+
+        if (!token) {
+            req.user = null;
+            return next();
+        }
+
+        const decoded = jwt.verify(
+            token,
+            process.env.JWT_SECRET
+        );
+
+        req.user = decoded;
+        next();
+    } catch (error) {
+        // Token inválido/expirado: seguimos como invitado en vez de bloquear.
+        req.user = null;
+        next();
+    }
+};
