@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
+import '../core/utils/cart_guard.dart';
 import '../models/product_model.dart';
-import '../providers/cart_provider.dart';
 import '../providers/product_provider.dart';
 import '../widgets/home/category_selector.dart';
 import '../widgets/home/filtered_menu_section.dart';
@@ -79,13 +79,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _addToCart(BuildContext context, Product product) {
-    Provider.of<CartProvider>(context, listen: false).addToCart(product);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${product.name} añadido al carrito'),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    CartGuard.addToCart(context, product);
   }
 
   @override

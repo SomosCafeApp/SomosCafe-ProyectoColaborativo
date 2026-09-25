@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
+import '../core/utils/cart_guard.dart';
 import '../models/product_model.dart';
-import '../providers/cart_provider.dart';
+import '../providers/auth_provider.dart';
 import '../providers/favorites_provider.dart';
 
 import '../widgets/product_detail/product_customization_section.dart';
@@ -54,9 +55,11 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   }
 
   void _addToCart() {
-    final cart = context.read<CartProvider>();
-    cart.addToCart(widget.product, quantity: _quantity);
-    Navigator.pop(context);
+    final isLoggedIn = context.read<AuthProvider>().isLoggedIn;
+    CartGuard.addToCart(context, widget.product, quantity: _quantity);
+    // Solo cerramos esta pantalla si sí se pudo agregar (si no había
+    // sesión, CartGuard ya mostró el diálogo pidiendo iniciar sesión).
+    if (isLoggedIn) Navigator.pop(context);
   }
 
   @override

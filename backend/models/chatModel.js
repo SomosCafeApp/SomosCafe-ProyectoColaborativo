@@ -25,8 +25,14 @@ const chatSchema = new mongoose.Schema(
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      required: false,
       index: true
+    },
+
+    // true cuando el chat fue iniciado por alguien sin sesión iniciada.
+    isAnonymous: {
+      type: Boolean,
+      default: false
     },
 
     title: {

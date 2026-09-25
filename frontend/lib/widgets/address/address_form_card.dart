@@ -5,6 +5,9 @@ class AddressFormCard extends StatelessWidget {
   final Color primaryBrown;
   final TextEditingController nameController;
   final TextEditingController addressController;
+  final TextEditingController recipientController;
+  final TextEditingController phoneController;
+  final TextEditingController cityController;
   final bool hasLocation;
   final VoidCallback onClose;
   final VoidCallback onSave;
@@ -15,6 +18,9 @@ class AddressFormCard extends StatelessWidget {
     required this.primaryBrown,
     required this.nameController,
     required this.addressController,
+    required this.recipientController,
+    required this.phoneController,
+    required this.cityController,
     required this.onClose,
     required this.onSave,
     required this.onPickOnMap,
@@ -105,6 +111,42 @@ class AddressFormCard extends StatelessWidget {
                 borderSide: BorderSide.none,
               ),
             ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _LabeledField(
+                  label: 'Quién recibe',
+                  controller: recipientController,
+                  hint: 'Nombre completo',
+                  textColor: textColor,
+                  subtitleColor: subtitleColor,
+                  inputFillColor: inputFillColor,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _LabeledField(
+                  label: 'Teléfono',
+                  controller: phoneController,
+                  hint: '300 123 4567',
+                  textColor: textColor,
+                  subtitleColor: subtitleColor,
+                  inputFillColor: inputFillColor,
+                  keyboardType: TextInputType.phone,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _LabeledField(
+            label: 'Ciudad',
+            controller: cityController,
+            hint: 'Ej: Garzón, Huila',
+            textColor: textColor,
+            subtitleColor: subtitleColor,
+            inputFillColor: inputFillColor,
           ),
           const SizedBox(height: 16),
           Text(
@@ -209,6 +251,56 @@ class AddressFormCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _LabeledField extends StatelessWidget {
+  final String label;
+  final TextEditingController controller;
+  final String hint;
+  final Color textColor;
+  final Color subtitleColor;
+  final Color inputFillColor;
+  final TextInputType? keyboardType;
+
+  const _LabeledField({
+    required this.label,
+    required this.controller,
+    required this.hint,
+    required this.textColor,
+    required this.subtitleColor,
+    required this.inputFillColor,
+    this.keyboardType,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: textColor),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          keyboardType: keyboardType,
+          style: TextStyle(color: textColor),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(color: subtitleColor.withAlpha(180), fontSize: 14),
+            filled: true,
+            fillColor: inputFillColor,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(30),
+              borderSide: BorderSide.none,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

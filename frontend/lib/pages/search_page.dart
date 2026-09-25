@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
 import '../models/product_model.dart';
+import '../core/utils/cart_guard.dart';
 import '../providers/cart_provider.dart';
 import '../providers/product_provider.dart';
 import '../widgets/product_card.dart';
@@ -144,16 +145,7 @@ class _SearchPageState extends State<SearchPage> {
                 final product = _filteredProducts[index];
                 return ProductCard(
                   product: product,
-                  onAddToCart: () {
-                    cartProvider.addToCart(product);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('${product.name} añadido al carrito'),
-                        backgroundColor: AppColors.primary,
-                        duration: const Duration(seconds: 2),
-                      ),
-                    );
-                  },
+                  onAddToCart: () => CartGuard.addToCart(context, product),
                 );
               },
             ),

@@ -71,24 +71,26 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
     if (query.isEmpty) return;
 
     setState(() => _isSearching = true);
-    final result = await GeocodingService.fromAddress(query);
-    if (!mounted) return;
-    setState(() => _isSearching = false);
 
-    if (result == null) {
+    try {
+      final result = await GeocodingService.fromAddress(query);
+      if (!mounted) return;
+
+      final position = LatLng(result.latitude, result.longitude);
+      setState(() {
+        _selectedPosition = position;
+        _selectedAddress = result.formattedAddress;
+        _searchController.text = result.formattedAddress;
+      });
+      _mapController?.animateCamera(CameraUpdate.newLatLngZoom(position, 16));
+    } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No pudimos encontrar esa dirección')),
+        SnackBar(content: Text(e.toString())),
       );
-      return;
+    } finally {
+      if (mounted) setState(() => _isSearching = false);
     }
-
-    final position = LatLng(result.latitude, result.longitude);
-    setState(() {
-      _selectedPosition = position;
-      _selectedAddress = result.formattedAddress;
-      _searchController.text = result.formattedAddress;
-    });
-    _mapController?.animateCamera(CameraUpdate.newLatLngZoom(position, 16));
   }
 
   Future<void> _handleMapTap(LatLng position) async {
@@ -97,17 +99,19 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
       _selectedAddress = '';
     });
 
-    final result = await GeocodingService.fromCoordinates(
-      position.latitude,
-      position.longitude,
-    );
-    if (!mounted) return;
-
-    if (result != null) {
+    try {
+      final result = await GeocodingService.fromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+      if (!mounted) return;
       setState(() {
         _selectedAddress = result.formattedAddress;
         _searchController.text = result.formattedAddress;
       });
+    } catch (_) {
+      // La geocodificación inversa es "nice to have": si falla, el
+      // usuario igual puede escribir la dirección manualmente.
     }
   }
 

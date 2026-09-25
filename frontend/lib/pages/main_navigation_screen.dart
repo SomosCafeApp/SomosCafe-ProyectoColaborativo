@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/chat/chat_fab.dart';
 import 'cart_tab.dart';
 import 'menu_page.dart';
 import 'login_page.dart';
@@ -63,6 +64,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         index: _currentIndex,
         children: pages,
       ),
+      floatingActionButton: const ChatFab(),
       bottomNavigationBar: SafeArea(
         top: false,
         child: Container(
