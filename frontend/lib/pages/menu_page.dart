@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
+import '../core/utils/cart_guard.dart';
 import '../models/product_model.dart';
 import '../widgets/product_card.dart';
 import '../providers/cart_provider.dart';
@@ -16,11 +17,26 @@ class MenuPage extends StatefulWidget {
 class _MenuPageState extends State<MenuPage> {
   int _selectedCategoryIndex = 0;
 
+  // Mismas palabras clave que usa la Home, para que "Calientes",
+  // "Frías" y "Postres" filtren de verdad contra el nombre real de
+  // categoría que trae cada producto desde el backend.
   final List<Map<String, dynamic>> _categories = const [
-    {'label': 'Todo', 'icon': Icons.auto_awesome},
-    {'label': 'Calientes', 'icon': Icons.coffee_rounded},
-    {'label': 'Frías', 'icon': Icons.ac_unit_rounded},
-    {'label': 'Postres', 'icon': Icons.cake_rounded},
+    {'label': 'Todo', 'icon': Icons.auto_awesome, 'keywords': <String>[]},
+    {
+      'label': 'Calientes',
+      'icon': Icons.coffee_rounded,
+      'keywords': ['caliente', 'hot', 'café', 'cafe', 'coffee'],
+    },
+    {
+      'label': 'Frías',
+      'icon': Icons.ac_unit_rounded,
+      'keywords': ['fría', 'fria', 'cold', 'helad', 'frappe', 'frappé'],
+    },
+    {
+      'label': 'Postres',
+      'icon': Icons.cake_rounded,
+      'keywords': ['postre', 'dessert', 'torta', 'pastel', 'cheesecake'],
+    },
   ];
 
   @override
@@ -34,11 +50,13 @@ class _MenuPageState extends State<MenuPage> {
   }
 
   List<Product> _applyCategoryFilter(List<Product> products) {
-    final label = _categories[_selectedCategoryIndex]['label'] as String;
-    if (label == 'Todo') return products;
-    return products
-        .where((p) => (p.categoryName ?? '').toLowerCase() == label.toLowerCase())
-        .toList();
+    final keywords = (_categories[_selectedCategoryIndex]['keywords'] as List).cast<String>();
+    if (keywords.isEmpty) return products; // "Todo"
+    return products.where((p) {
+      final name = (p.categoryName ?? '').toLowerCase();
+      if (name.isEmpty) return false;
+      return keywords.any((k) => name.contains(k));
+    }).toList();
   }
 
   @override
@@ -246,16 +264,7 @@ class _MenuPageState extends State<MenuPage> {
             final product = products[index];
             return ProductCard(
               product: product,
-              onAddToCart: () {
-                cartProvider.addToCart(product);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('${product.name} añadido al carrito'),
-                    backgroundColor: AppColors.primary,
-                    duration: const Duration(seconds: 2),
-                  ),
-                );
-              },
+              onAddToCart: () => CartGuard.addToCart(context, product),
             );
           },
         ),

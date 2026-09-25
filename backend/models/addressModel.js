@@ -90,6 +90,18 @@ const addressSchema = new mongoose.Schema(
         isDefault: {
             type: Boolean,
             default: false
+        },
+
+        // ===================================
+        // COORDENADAS (OPCIONAL)
+        // ===================================
+
+        latitude: {
+            type: Number
+        },
+
+        longitude: {
+            type: Number
         }
 
     },

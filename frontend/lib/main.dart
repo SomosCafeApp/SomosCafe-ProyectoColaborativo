@@ -13,6 +13,8 @@ import 'providers/favorites_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/font_size_provider.dart';
 import 'providers/product_provider.dart';
+import 'providers/address_provider.dart';
+import 'providers/chat_provider.dart';
 
 void main() {
   runApp(
@@ -32,11 +34,19 @@ void main() {
           update: (_, auth, favorites) =>
               (favorites ?? FavoritesProvider())..updateAuth(auth.token),
         ),
+        ChangeNotifierProxyProvider<AuthProvider, AddressProvider>(
+          create: (_) => AddressProvider(),
+          update: (_, auth, addresses) =>
+              (addresses ?? AddressProvider())..updateAuth(auth.token),
+        ),
         ChangeNotifierProvider(
           create: (_) => OrderProvider(),
         ),
         ChangeNotifierProvider(
           create: (_) => ProductProvider(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => ChatProvider(),
         ),
 
         // Tema

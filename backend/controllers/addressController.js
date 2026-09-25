@@ -16,7 +16,9 @@ export const createAddress = async (req, res) => {
             city,
             neighborhood,
             additionalInfo,
-            isDefault
+            isDefault,
+            latitude,
+            longitude
         } = req.body;
 
         // ===================================
@@ -121,7 +123,17 @@ export const createAddress = async (req, res) => {
                     : "",
 
             isDefault:
-                shouldBeDefault
+                shouldBeDefault,
+
+            latitude:
+                typeof latitude === "number"
+                    ? latitude
+                    : undefined,
+
+            longitude:
+                typeof longitude === "number"
+                    ? longitude
+                    : undefined
 
         });
 
@@ -294,7 +306,9 @@ export const updateAddress = async (req, res) => {
             city,
             neighborhood,
             additionalInfo,
-            isDefault
+            isDefault,
+            latitude,
+            longitude
         } = req.body;
 
         // ===================================
@@ -478,6 +492,20 @@ export const updateAddress = async (req, res) => {
 
             existingAddress.isDefault =
                 isDefault;
+
+        }
+
+        if (typeof latitude === "number") {
+
+            existingAddress.latitude =
+                latitude;
+
+        }
+
+        if (typeof longitude === "number") {
+
+            existingAddress.longitude =
+                longitude;
 
         }
 

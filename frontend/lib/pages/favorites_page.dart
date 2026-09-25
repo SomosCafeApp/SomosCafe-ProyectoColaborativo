@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
+import '../core/utils/cart_guard.dart';
 import '../widgets/product_card.dart';
 import '../widgets/profile/profile_sub_page_header.dart';
-import '../providers/cart_provider.dart';
 import '../providers/favorites_provider.dart';
 
 class FavoritesPage extends StatelessWidget {
@@ -34,7 +34,6 @@ class FavoritesPage extends StatelessWidget {
     final favoritesProvider = context.watch<FavoritesProvider>();
     final favorites = favoritesProvider.favorites;
 
-    final cartProvider = context.read<CartProvider>();
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -144,18 +143,7 @@ class FavoritesPage extends StatelessWidget {
 
                       return ProductCard(
                         product: product,
-                        onAddToCart: () {
-                          cartProvider.addToCart(product);
-
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                '${product.name} añadido al carrito',
-                              ),
-                              duration: const Duration(seconds: 2),
-                            ),
-                          );
-                        },
+                        onAddToCart: () => CartGuard.addToCart(context, product),
                       );
                     },
                   ),
