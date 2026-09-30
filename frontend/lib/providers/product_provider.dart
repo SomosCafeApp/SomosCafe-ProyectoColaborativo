@@ -71,4 +71,31 @@ class ProductProvider extends ChangeNotifier {
       return null;
     }
   }
+
+  /// Ajusta en memoria el contador de favoritos de un producto
+  /// (optimista: se llama justo al togglear un favorito, sin esperar
+  /// a recargar toda la lista de productos). [delta] es +1 o -1.
+  void adjustFavoritesCount(String productId, int delta) {
+    final index = _products.indexWhere((p) => p.id == productId);
+    if (index == -1) return;
+
+    final current = _products[index];
+    final updatedCount = (current.favoritesCount + delta).clamp(0, 1 << 31);
+
+    _products[index] = current.copyWith(favoritesCount: updatedCount);
+    notifyListeners();
+  }
+
+  /// Actualiza en memoria el rating/reviewCount de un producto tras
+  /// crear, editar o eliminar una reseña, sin recargar todo el catálogo.
+  void updateProductRating(String productId, {required double rating, required int reviewCount}) {
+    final index = _products.indexWhere((p) => p.id == productId);
+    if (index == -1) return;
+
+    _products[index] = _products[index].copyWith(
+      rating: rating,
+      reviewCount: reviewCount,
+    );
+    notifyListeners();
+  }
 }

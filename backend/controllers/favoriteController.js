@@ -140,6 +140,19 @@ export const addFavorite = async (req, res) => {
         await favorite.save();
 
         // ===================================
+        // UPDATE PRODUCT FAVORITES COUNT
+        // ===================================
+
+        await Product.findByIdAndUpdate(
+            productId,
+            {
+                $inc: {
+                    favoritesCount: 1
+                }
+            }
+        );
+
+        // ===================================
         // POPULATE PRODUCT
         // ===================================
 
@@ -209,6 +222,23 @@ export const removeFavorite = async (req, res) => {
                     "Favorite not found"
 
             });
+
+        }
+
+        // ===================================
+        // UPDATE PRODUCT FAVORITES COUNT
+        // ===================================
+        // Nunca debe quedar en negativo (por si hay datos
+        // desincronizados de antes de este cambio).
+
+        const product =
+            await Product.findById(productId);
+
+        if (product && product.favoritesCount > 0) {
+
+            product.favoritesCount -= 1;
+
+            await product.save();
 
         }
 

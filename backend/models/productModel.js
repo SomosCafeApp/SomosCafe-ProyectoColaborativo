@@ -37,6 +37,23 @@ const productSchema = new mongoose.Schema(
             max: 5
         },
 
+        // Cantidad de reseñas visibles usadas para calcular "rating".
+        // Se recalcula automáticamente cada vez que una reseña de este
+        // producto se crea, edita, elimina o cambia de visibilidad.
+        reviewCount: {
+            type: Number,
+            default: 0,
+            min: 0
+        },
+
+        // Cantidad de usuarios que tienen este producto en favoritos.
+        // Se mantiene en sincronía desde favoriteController.js.
+        favoritesCount: {
+            type: Number,
+            default: 0,
+            min: 0
+        },
+
         categoryId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Category",

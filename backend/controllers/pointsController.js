@@ -10,6 +10,26 @@ export const getUserPoints = async (req, res) => {
 
         const { userId } = req.params;
 
+        // ===================================
+        // VERIFY OWNER
+        // ===================================
+        // Solo el dueño de la cuenta (o un admin) puede consultar
+        // este balance de puntos.
+
+        if (
+            userId !== req.user.id.toString() &&
+            req.user.role !== "ADMIN"
+        ) {
+
+            return res.status(403).json({
+
+                message:
+                    "You are not authorized to view these points"
+
+            });
+
+        }
+
         // FIND USER
         const user = await User.findById(
             userId
@@ -64,6 +84,24 @@ export const getPointHistory = async (req, res) => {
     try {
 
         const { userId } = req.params;
+
+        // ===================================
+        // VERIFY OWNER
+        // ===================================
+
+        if (
+            userId !== req.user.id.toString() &&
+            req.user.role !== "ADMIN"
+        ) {
+
+            return res.status(403).json({
+
+                message:
+                    "You are not authorized to view this history"
+
+            });
+
+        }
 
         // CHECK USER
         const user = await User.findById(
@@ -269,22 +307,24 @@ export const redeemPoints = async (req, res) => {
 
     try {
 
+        // El usuario que canjea siempre es el autenticado (del token),
+        // nunca un valor que mande el cliente en el body.
+        const userId = req.user.id;
+
         const {
-            userId,
             amount,
             description
         } = req.body;
 
         // VALIDATE REQUIRED DATA
         if (
-            !userId ||
             amount === undefined
         ) {
 
             return res.status(400).json({
 
                 message:
-                    "userId and amount are required"
+                    "amount is required"
 
             });
 

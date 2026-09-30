@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-import '../models/notification_item.dart';
+import '../core/utils/notification_ui_mapper.dart';
+import '../providers/notification_provider.dart';
 import '../widgets/profile/profile_sub_page_header.dart'; 
 import '../widgets/notifications/notifications_recent_section.dart';
 import '../widgets/notifications/notifications_channels_section.dart';
@@ -22,50 +24,20 @@ class _NotificationsPageState extends State<NotificationsPage> {
   TimeOfDay _startTime = const TimeOfDay(hour: 8, minute: 0);
   TimeOfDay _endTime = const TimeOfDay(hour: 22, minute: 0);
 
-  final List<NotificationItem> _recentActivity = [
-    NotificationItem(
-      id: '1',
-      title: 'Pedido en Camino',
-      subtitle: 'Tu pedido #1234 llegará en 15 minutos',
-      time: 'Hace 5 min',
-      icon: Icons.inventory_2_outlined,
-      iconBgColor: const Color(0xFFF4EFEA),
-      iconColor: const Color(0xFF8C6239),
-      isUnread: true,
-    ),
-    NotificationItem(
-      id: '2',
-      title: '30% de Descuento',
-      subtitle: '¡Oferta especial en todos los Frappés!',
-      time: 'Hace 1 hora',
-      icon: Icons.card_giftcard,
-      iconBgColor: const Color(0xFFE8F5E9),
-      iconColor: const Color(0xFF2E7D32),
-      isUnread: true,
-    ),
-    NotificationItem(
-      id: '3',
-      title: 'Nuevo Premio Desbloqueado',
-      subtitle: 'Has ganado 100 puntos. ¡Canjéalos ahora!',
-      time: 'Hace 2 horas',
-      icon: Icons.military_tech_outlined,
-      iconBgColor: const Color(0xFFFFF8E1),
-      iconColor: const Color(0xFFF57F17),
-    ),
-    NotificationItem(
-      id: '4',
-      title: 'Pedido Entregado',
-      subtitle: 'Tu pedido #1233 fue entregado exitosamente',
-      time: 'Hace 1 día',
-      icon: Icons.inventory_2_outlined,
-      iconBgColor: const Color(0xFFF4EFEA),
-      iconColor: const Color(0xFF8C6239),
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final notifications = context.read<NotificationProvider>();
+      if (notifications.notifications.isEmpty) notifications.fetchNotifications();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final notificationProvider = context.watch<NotificationProvider>();
+    final recentActivity = notificationProvider.notifications.map(NotificationUiMapper.toItem).toList();
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -76,17 +48,28 @@ class _NotificationsPageState extends State<NotificationsPage> {
             subtitle: 'Gestiona tus preferencias de notificación',
           ),
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              physics: const BouncingScrollPhysics(),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  NotificationsRecentSection(
-                    recentActivity: _recentActivity,
-                  ),
+            child: RefreshIndicator(
+              onRefresh: notificationProvider.fetchNotifications,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (notificationProvider.isLoading && recentActivity.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 32),
+                        child: Center(child: CircularProgressIndicator()),
+                      )
+                    else
+                      NotificationsRecentSection(
+                        recentActivity: recentActivity,
+                        onItemTap: (id) => context.read<NotificationProvider>().markAsRead(id),
+                        onItemDismissed: (id) => context.read<NotificationProvider>().deleteNotification(id),
+                        onMarkAllRead: () => context.read<NotificationProvider>().markAllAsRead(),
+                      ),
 
-                  const SizedBox(height: 24),
+                    const SizedBox(height: 24),
 
                   NotificationsChannelsSection(
                     pushNotifications: _pushNotifications,
@@ -125,6 +108,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
               ),
             ),
           ),
+        ),
         ],
       ),
     );

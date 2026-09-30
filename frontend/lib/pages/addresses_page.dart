@@ -213,6 +213,21 @@ class _AddressesPageState extends State<AddressesPage> {
                         itemBuilder: (context, index) => AddressCardItem(
                           item: addresses[index],
                           onDelete: () => context.read<AddressProvider>().deleteAddress(addresses[index].id),
+                          onSetDefault: () async {
+                            final success =
+                                await context.read<AddressProvider>().setDefaultAddress(addresses[index].id);
+                            if (!context.mounted) return;
+                            if (success) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Dirección predeterminada actualizada')),
+                              );
+                            } else {
+                              final error = context.read<AddressProvider>().errorMessage;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(error ?? 'No se pudo actualizar la dirección predeterminada')),
+                              );
+                            }
+                          },
                         ),
                       ),
                   ],

@@ -7,10 +7,16 @@ import 'notification_schedule_card.dart';
 
 class NotificationsRecentSection extends StatelessWidget {
   final List<NotificationItem> recentActivity;
+  final void Function(String id)? onItemTap;
+  final void Function(String id)? onItemDismissed;
+  final VoidCallback? onMarkAllRead;
 
   const NotificationsRecentSection({
     super.key,
     required this.recentActivity,
+    this.onItemTap,
+    this.onItemDismissed,
+    this.onMarkAllRead,
   });
 
   @override
@@ -73,6 +79,12 @@ class NotificationsRecentSection extends StatelessWidget {
               ),
             ),
 
+            if (unreadCount > 0 && onMarkAllRead != null)
+              TextButton(
+                onPressed: onMarkAllRead,
+                child: const Text('Marcar todas', style: TextStyle(fontSize: 12)),
+              ),
+
             if (unreadCount > 0) ...[
               const SizedBox(width: 12),
 
@@ -100,17 +112,28 @@ class NotificationsRecentSection extends StatelessWidget {
 
         const SizedBox(height: 12),
 
-        ...recentActivity.map(
-          (item) => NotificationCard(
-            item: item,
-            unreadDotColor: unreadDotColor,
-            cardColor: cardColor,
-            textColor: textColor,
-            subtitleColor: subtitleColor,
-            mutedColor: mutedColor,
-            unreadBorderColor: unreadBorderColor,
+        if (recentActivity.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Text(
+              'No tienes notificaciones por ahora.',
+              style: TextStyle(fontSize: 13, color: subtitleColor),
+            ),
+          )
+        else
+          ...recentActivity.map(
+            (item) => NotificationCard(
+              item: item,
+              unreadDotColor: unreadDotColor,
+              cardColor: cardColor,
+              textColor: textColor,
+              subtitleColor: subtitleColor,
+              mutedColor: mutedColor,
+              unreadBorderColor: unreadBorderColor,
+              onTap: onItemTap == null ? null : () => onItemTap!(item.id),
+              onDismissed: onItemDismissed == null ? null : () => onItemDismissed!(item.id),
+            ),
           ),
-        ),
 
         const SizedBox(height: 12),
 

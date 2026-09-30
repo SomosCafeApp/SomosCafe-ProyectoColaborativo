@@ -185,6 +185,48 @@ Tu identidad para el cliente es: "El barista virtual de SomosCafeApp".
 };
 
 // --------------------------------------------------
+// Historial de chat del usuario logueado
+// --------------------------------------------------
+// Devuelve la conversación más reciente de esta cuenta (nunca de
+// chats anónimos) para poder restaurarla al iniciar sesión.
+
+export const getChatHistory = async (req, res) => {
+  try {
+    const userId = getUserId(req);
+
+    const chat = await Chat.findOne({
+      userId,
+      isAnonymous: false,
+    })
+      .sort({ updatedAt: -1 })
+      .lean();
+
+    if (!chat) {
+      return res.status(200).json({
+        message: "No previous conversation found",
+        conversationId: null,
+        messages: [],
+      });
+    }
+
+    return res.status(200).json({
+      message: "Chat history retrieved successfully",
+      conversationId: chat._id,
+      messages: chat.messages.map((m) => ({
+        role: m.role,
+        content: m.content,
+      })),
+    });
+  } catch (error) {
+    console.error("Get chat history error:", error);
+    return res.status(500).json({
+      message: "Error retrieving chat history",
+      error: error.message,
+    });
+  }
+};
+
+// --------------------------------------------------
 // Controlador principal
 // --------------------------------------------------
 

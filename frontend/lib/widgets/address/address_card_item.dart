@@ -8,11 +8,13 @@ import '../../pages/address_map_picker_page.dart';
 class AddressCardItem extends StatelessWidget {
   final AddressItem item;
   final VoidCallback onDelete;
+  final VoidCallback onSetDefault;
 
   const AddressCardItem({
     super.key,
     required this.item,
     required this.onDelete,
+    required this.onSetDefault,
   });
 
   void _openOnMap(BuildContext context) {
@@ -204,6 +206,20 @@ class AddressCardItem extends StatelessWidget {
                     ),
                   ],
                 ),
+                if (!item.isDefault) ...[
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: _buildActionButton(
+                      icon: Icons.check_circle_outline,
+                      label: 'Establecer como predeterminada',
+                      bgColor: buttonBgColor,
+                      textColor: AppColors.primary,
+                      borderColor: AppColors.primary.withAlpha(100),
+                      onTap: onSetDefault,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

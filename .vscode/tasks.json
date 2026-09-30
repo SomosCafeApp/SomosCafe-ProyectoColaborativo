@@ -2,7 +2,7 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "🚀 Iniciar Backend",
+      "label": "Iniciar Backend",
       "type": "npm",
       "script": "dev",
       "options": {
@@ -14,11 +14,11 @@
       "problemMatcher": []
     },
     {
-      "label": "📱 Iniciar Frontend Flutter",
+      "label": "Iniciar Frontend Flutter",
       "type": "shell",
       "command": "flutter run",
       "options": {
-        "cwd": "${workspaceFolder}/frontend"
+        "cwd": "${workspaceFolder}/frontend/ecommer_app"
       },
       "runOptions": {
         "runOn": "folderOpen"

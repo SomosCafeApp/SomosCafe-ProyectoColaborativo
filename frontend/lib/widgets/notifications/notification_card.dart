@@ -9,6 +9,8 @@ class NotificationCard extends StatelessWidget {
   final Color subtitleColor;
   final Color mutedColor;
   final Color unreadBorderColor;
+  final VoidCallback? onTap;
+  final VoidCallback? onDismissed;
 
   const NotificationCard({
     super.key,
@@ -19,11 +21,16 @@ class NotificationCard extends StatelessWidget {
     required this.subtitleColor,
     required this.mutedColor,
     required this.unreadBorderColor,
+    this.onTap,
+    this.onDismissed,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final card = InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -93,6 +100,25 @@ class NotificationCard extends StatelessWidget {
           ),
         ],
       ),
+    ));
+
+    if (onDismissed == null) return card;
+
+    return Dismissible(
+      key: ValueKey('notification_${item.id}'),
+      direction: DismissDirection.endToStart,
+      onDismissed: (_) => onDismissed!(),
+      background: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        alignment: Alignment.centerRight,
+        decoration: BoxDecoration(
+          color: const Color(0xFFE53935),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: const Icon(Icons.delete_outline, color: Colors.white),
+      ),
+      child: card,
     );
   }
 }

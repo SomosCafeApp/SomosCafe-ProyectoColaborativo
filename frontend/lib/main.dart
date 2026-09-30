@@ -15,6 +15,10 @@ import 'providers/font_size_provider.dart';
 import 'providers/product_provider.dart';
 import 'providers/address_provider.dart';
 import 'providers/chat_provider.dart';
+import 'providers/reviews_provider.dart';
+import 'providers/notification_provider.dart';
+import 'providers/payment_method_provider.dart';
+import 'providers/points_provider.dart';
 
 void main() {
   runApp(
@@ -39,14 +43,34 @@ void main() {
           update: (_, auth, addresses) =>
               (addresses ?? AddressProvider())..updateAuth(auth.token),
         ),
-        ChangeNotifierProvider(
+        ChangeNotifierProxyProvider<AuthProvider, ReviewsProvider>(
+          create: (_) => ReviewsProvider(),
+          update: (_, auth, reviews) =>
+              (reviews ?? ReviewsProvider())..updateAuth(auth.token, auth.user?.id),
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, NotificationProvider>(
+          create: (_) => NotificationProvider(),
+          update: (_, auth, notifications) =>
+              (notifications ?? NotificationProvider())..updateAuth(auth.token),
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, PaymentMethodProvider>(
+          create: (_) => PaymentMethodProvider(),
+          update: (_, auth, methods) => (methods ?? PaymentMethodProvider())..updateAuth(auth.token),
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, PointsProvider>(
+          create: (_) => PointsProvider(),
+          update: (_, auth, points) => (points ?? PointsProvider())..updateAuth(auth.token, auth.user?.id),
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, OrderProvider>(
           create: (_) => OrderProvider(),
+          update: (_, auth, orders) => (orders ?? OrderProvider())..updateAuth(auth.token),
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, ChatProvider>(
+          create: (_) => ChatProvider(),
+          update: (_, auth, chat) => (chat ?? ChatProvider())..updateAuth(auth.token),
         ),
         ChangeNotifierProvider(
           create: (_) => ProductProvider(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => ChatProvider(),
         ),
 
         // Tema

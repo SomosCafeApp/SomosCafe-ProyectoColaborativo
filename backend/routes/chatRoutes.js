@@ -1,11 +1,13 @@
 import { Router } from "express";
 
 import {
-  chatWithBarista
+  chatWithBarista,
+  getChatHistory
 } from "../controllers/chatController.js";
 
 import {
-  optionalAuth
+  optionalAuth,
+  verifyToken
 } from "../middlewares/auth.middleware.js";
 
 const router = Router();
@@ -17,6 +19,14 @@ router.post(
   "/",
   optionalAuth,
   chatWithBarista
+);
+
+// verifyToken: el historial solo existe para cuentas reales, nunca
+// para chats anónimos (se descartan al cerrar/perder la sesión).
+router.get(
+  "/history",
+  verifyToken,
+  getChatHistory
 );
 
 export default router;

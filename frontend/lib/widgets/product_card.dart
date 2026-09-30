@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
+import '../core/utils/favorites_guard.dart';
 import '../models/product_model.dart';
 import '../pages/product_detail_page.dart';
 import '../providers/favorites_provider.dart';
@@ -125,7 +126,9 @@ class ProductCard extends StatelessWidget {
                             ),
                             const SizedBox(width: 2),
                             Text(
-                              '4.8',
+                              product.reviewCount > 0
+                                  ? product.rating.toStringAsFixed(1)
+                                  : 'Nuevo',
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
@@ -142,9 +145,7 @@ class ProductCard extends StatelessWidget {
                       top: 8,
                       right: 8,
                       child: GestureDetector(
-                        onTap: () {
-                          favoritesProvider.toggleFavorite(product);
-                        },
+                        onTap: () => FavoritesGuard.toggleFavorite(context, product),
                         child: Container(
                           width: 32,
                           height: 32,
@@ -196,13 +197,13 @@ class ProductCard extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              Icons.remove_red_eye_outlined,
+                              Icons.favorite,
                               size: 14,
                               color: viewsIconColor,
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              '205',
+                              '${product.favoritesCount}',
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,

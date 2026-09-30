@@ -144,6 +144,35 @@ class CartProvider extends ChangeNotifier {
     }
   }
 
+  /// Quita todo el producto del carrito (toda la línea, sin importar
+  /// la cantidad) — para el botón de eliminar. El botón "-" de
+  /// cantidad sigue usando [removeSingleItem].
+  Future<void> removeLine(Product product) async {
+    final idx = _lines.indexWhere((l) => l.product.id == product.id);
+    if (idx < 0) return;
+
+    if (_token == null) {
+      _lines.removeAt(idx);
+      notifyListeners();
+      return;
+    }
+
+    // Actualización optimista.
+    final backup = List<CartLine>.from(_lines);
+    _lines.removeAt(idx);
+    notifyListeners();
+
+    try {
+      final data = await ApiClient.delete('/cart/items/${product.id}', token: _token);
+      _lines = _parseCart(data['cart'] as Map<String, dynamic>);
+      notifyListeners();
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
+      _lines = backup;
+      notifyListeners();
+    }
+  }
+
   // Se mantiene por compatibilidad con código que aún llame a esto.
   void removeFromCart(Product product) {
     removeSingleItem(product);

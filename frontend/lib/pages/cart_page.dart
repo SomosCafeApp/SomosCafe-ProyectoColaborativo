@@ -113,11 +113,7 @@ class CartPage extends StatelessWidget {
                                   cardBgColor: cardBgColor,
                                   onAdd: () => cart.addToCart(group.product),
                                   onRemoveSingle: () => cart.removeSingleItem(group.product),
-                                  onDeleteAll: () {
-                                    for (int i = 0; i < group.quantity; i++) {
-                                      cart.removeSingleItem(group.product);
-                                    }
-                                  },
+                                  onDeleteAll: () => cart.removeLine(group.product),
                                 );
                               },
                             ),

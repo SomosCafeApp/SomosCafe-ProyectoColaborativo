@@ -6,6 +6,10 @@ class Product {
   final List<String> images;
   final List<String> ingredients;
   final double rating;
+  // Cantidad de reseñas visibles usadas para calcular `rating`.
+  final int reviewCount;
+  // Cantidad de usuarios que tienen este producto en favoritos.
+  final int favoritesCount;
   final bool isAvailable;
   final bool isFavorite;
   final String? categoryId;
@@ -21,6 +25,8 @@ class Product {
     String imageUrl = '',
     this.ingredients = const [],
     this.rating = 0,
+    this.reviewCount = 0,
+    this.favoritesCount = 0,
     this.isAvailable = true,
     this.isFavorite = false,
     this.categoryId,
@@ -54,6 +60,8 @@ class Product {
       images: (json['images'] as List?)?.map((e) => e.toString()).toList() ?? const [],
       ingredients: (json['ingredients'] as List?)?.map((e) => e.toString()).toList() ?? const [],
       rating: (json['rating'] as num?)?.toDouble() ?? 0,
+      reviewCount: (json['reviewCount'] as num?)?.toInt() ?? 0,
+      favoritesCount: (json['favoritesCount'] as num?)?.toInt() ?? 0,
       isAvailable: json['isAvailable'] as bool? ?? true,
       categoryId: categoryId,
       categoryName: categoryName,
@@ -68,6 +76,8 @@ class Product {
     List<String>? images,
     List<String>? ingredients,
     double? rating,
+    int? reviewCount,
+    int? favoritesCount,
     bool? isAvailable,
     bool? isFavorite,
     String? categoryId,
@@ -81,6 +91,8 @@ class Product {
       images: images ?? this.images,
       ingredients: ingredients ?? this.ingredients,
       rating: rating ?? this.rating,
+      reviewCount: reviewCount ?? this.reviewCount,
+      favoritesCount: favoritesCount ?? this.favoritesCount,
       isAvailable: isAvailable ?? this.isAvailable,
       isFavorite: isFavorite ?? this.isFavorite,
       categoryId: categoryId ?? this.categoryId,

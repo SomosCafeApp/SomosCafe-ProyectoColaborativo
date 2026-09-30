@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
 import '../core/constants/app_colors.dart';
+import '../models/order.dart';
 import 'main_navigation_screen.dart';
 
 class OrderSuccessPage extends StatelessWidget {
-  const OrderSuccessPage({super.key});
+  final Order order;
+
+  const OrderSuccessPage({super.key, required this.order});
+
+  String get _orderNumber {
+    final id = order.id;
+    final shortId = id.length >= 6 ? id.substring(id.length - 6) : id;
+    return '#${shortId.toUpperCase()}';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,6 +53,15 @@ class OrderSuccessPage extends StatelessWidget {
                   fontSize: 26,
                   fontWeight: FontWeight.bold,
                   color: textColor,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Pedido $_orderNumber · \$${order.total.toStringAsFixed(0)} COP',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: primaryBrown,
                 ),
               ),
               const SizedBox(height: 12),

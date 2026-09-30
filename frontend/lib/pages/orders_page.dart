@@ -1,110 +1,219 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../models/order.dart';
+import '../models/product_model.dart';
+import '../providers/cart_provider.dart';
+import '../providers/order_provider.dart';
 import '../widgets/profile/profile_sub_page_header.dart';
 import '../widgets/orders/order_card_item.dart';
-
-class OrderItemDetail {
-  final int quantity;
-  final String name;
-  final String price;
-
-  const OrderItemDetail({required this.quantity, required this.name, required this.price});
-}
-
-class OrderItemModel {
-  final String id;
-  final String orderNumber;
-  final String date;
-  final String total;
-  final String status;
-  final List items;
-  final String address;
-  final String paymentMethod;
-
-  const OrderItemModel({
-    required this.id,
-    required this.orderNumber,
-    required this.date,
-    required this.total,
-    required this.status,
-    required this.items,
-    required this.address,
-    required this.paymentMethod,
-  });
-}
+import '../widgets/orders/empty_orders_view.dart';
 
 class OrdersPage extends StatefulWidget {
-  const OrdersPage({super.key});
+  final VoidCallback? onExploreMenu;
+
+  const OrdersPage({
+    super.key,
+    this.onExploreMenu,
+  });
 
   @override
-  State createState() => _OrdersPageState();
+  State<OrdersPage> createState() => _OrdersPageState();
 }
 
-class _OrdersPageState extends State {
+class _OrdersPageState extends State<OrdersPage> {
   String? _expandedOrderId;
+  String? _cancellingOrderId;
 
-  final List _orders = const [
-    OrderItemModel(
-      id: '1',
-      orderNumber: '#10042',
-      date: '28 ago 2026, 10:15',
-      total: '\$33.500 COP',
-      status: 'Entregado',
-      items: [
-        OrderItemDetail(quantity: 2, name: 'Cappuccino (Medium)', price: '\$24.000 COP'),
-        OrderItemDetail(quantity: 1, name: 'Croissant de Almendra', price: '\$9.500 COP'),
-      ],
-      address: 'Cra 7 #15-23, Garzón',
-      paymentMethod: 'Tarjeta',
-    ),
-    OrderItemModel(
-      id: '2',
-      orderNumber: '#10039',
-      date: '24 ago 2026, 16:42',
-      total: '\$31.000 COP',
-      status: 'Entregado',
-      items: [
-        OrderItemDetail(quantity: 1, name: 'Latte Mochila', price: '\$15.000 COP'),
-        OrderItemDetail(quantity: 2, name: 'Pan de Bono', price: '\$16.000 COP'),
-      ],
-      address: 'Cra 7 #15-23, Garzón',
-      paymentMethod: 'Efectivo',
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final orderProvider = context.read<OrderProvider>();
+
+      if (orderProvider.orders.isEmpty) {
+        orderProvider.fetchOrders();
+      }
+    });
+  }
+
+  Future<void> _handleCancel(Order order) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Cancelar pedido'),
+        content: const Text(
+          '¿Seguro que quieres cancelar este pedido?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('No'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Sí, cancelar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() {
+      _cancellingOrderId = order.id;
+    });
+
+    final success = await context
+        .read<OrderProvider>()
+        .cancelOrder(order.id);
+
+    if (!mounted) return;
+
+    setState(() {
+      _cancellingOrderId = null;
+    });
+
+    if (!success) {
+      final error = context.read<OrderProvider>().errorMessage;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            error ?? 'No se pudo cancelar el pedido',
+          ),
+        ),
+      );
+    }
+  }
+
+  void _handleReorder(Order order) {
+    final cartProvider = context.read<CartProvider>();
+
+    for (final item in order.items) {
+      final product = Product(
+        id: item.productId,
+        name: item.name,
+        description: '',
+        price: item.price,
+        imageUrl: item.image,
+      );
+
+      cartProvider.addToCart(
+        product,
+        quantity: item.quantity,
+      );
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Productos del pedido agregados al carrito',
+        ),
+      ),
+    );
+  }
+
+  void _handleExploreMenu() {
+    if (widget.onExploreMenu != null) {
+      widget.onExploreMenu!();
+      return;
+    }
+
+    // Si no se proporciona un callback, simplemente
+    // regresamos a la pantalla anterior para conservar
+    // el MainNavigationScreen y su navbar.
+    Navigator.pop(context);
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final orderProvider = context.watch<OrderProvider>();
+    final orders = orderProvider.orders;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: Column(
         children: [
           const ProfileSubPageHeader(
-            title: 'Historial de Pedidos',
+            title: 'Mis Pedidos',
             subtitle: 'Consulta tus compras anteriores',
           ),
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16.0),
-              physics: const BouncingScrollPhysics(),
-              itemCount: _orders.length,
-              itemBuilder: (context, index) {
-                final order = _orders[index];
-                return OrderCardItem(
-                  order: order,
-                  isExpanded: _expandedOrderId == order.id,
-                  onTap: () {
-                    setState(() {
-                      // Solo permite desplegar un pedido a la vez
-                      _expandedOrderId = _expandedOrderId == order.id ? null : order.id;
-                    });
-                  },
-                );
-              },
+            child: RefreshIndicator(
+              onRefresh: orderProvider.fetchOrders,
+              child: _buildBody(
+                orderProvider,
+                orders,
+              ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildBody(
+    OrderProvider orderProvider,
+    List<Order> orders,
+  ) {
+    if (orderProvider.isLoading && orders.isEmpty) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
+    if (orderProvider.errorMessage != null && orders.isEmpty) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          const SizedBox(height: 80),
+          Center(
+            child: Text(
+              orderProvider.errorMessage!,
+              style: const TextStyle(
+                color: Colors.red,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+      );
+    }
+
+    if (orders.isEmpty) {
+      return EmptyOrdersView(
+        onExploreMenu: _handleExploreMenu,
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      physics: const BouncingScrollPhysics(),
+      itemCount: orders.length,
+      itemBuilder: (context, index) {
+        final order = orders[index];
+
+        return OrderCardItem(
+          order: order,
+          isExpanded: _expandedOrderId == order.id,
+          isCancelling: _cancellingOrderId == order.id,
+          onTap: () {
+            setState(() {
+              _expandedOrderId =
+                  _expandedOrderId == order.id
+                      ? null
+                      : order.id;
+            });
+          },
+          onReorder: () => _handleReorder(order),
+          onCancel: order.status.isCancellable
+              ? () => _handleCancel(order)
+              : null,
+        );
+      },
     );
   }
 }

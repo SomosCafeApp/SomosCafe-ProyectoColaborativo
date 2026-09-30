@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/utils/cart_guard.dart';
+import '../core/utils/favorites_guard.dart';
 import '../models/product_model.dart';
 import '../providers/auth_provider.dart';
 import '../providers/favorites_provider.dart';
@@ -11,6 +12,7 @@ import '../widgets/product_detail/product_customization_section.dart';
 import '../widgets/product_detail/product_hero_image.dart';
 import '../widgets/product_detail/quantity_counter.dart';
 import '../widgets/product_detail/custom_section_card.dart';
+import '../widgets/product_detail/reviews_section.dart';
 
 class ProductDetailPage extends StatefulWidget {
   final Product product;
@@ -58,7 +60,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     final isLoggedIn = context.read<AuthProvider>().isLoggedIn;
     CartGuard.addToCart(context, widget.product, quantity: _quantity);
     // Solo cerramos esta pantalla si sí se pudo agregar (si no había
-    // sesión, CartGuard ya mostró el diálogo pidiendo iniciar sesión).
+    // sesión, CartGuard ya mostró el aviso pidiendo iniciar sesión).
     if (isLoggedIn) Navigator.pop(context);
   }
 
@@ -161,6 +163,12 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         }
                       }),
                     ),
+                    ReviewsSection(
+                      productId: widget.product.id,
+                      cardColor: cardColor,
+                      textColor: textColor,
+                      mutedColor: subtitleColor,
+                    ),
                   ],
                 ),
               ),
@@ -193,7 +201,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
               color: isFav ? Colors.red : subtitleColor,
             ),
-            onPressed: () => context.read<FavoritesProvider>().toggleFavorite(widget.product),
+            onPressed: () => FavoritesGuard.toggleFavorite(context, widget.product),
           ),
         ],
       ),

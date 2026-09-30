@@ -18,7 +18,7 @@ class CartGuard {
     final auth = context.read<AuthProvider>();
 
     if (!auth.isLoggedIn) {
-      _showLoginRequiredDialog(context);
+      _showLoginRequiredSnackBar(context);
       return;
     }
 
@@ -34,26 +34,10 @@ class CartGuard {
     );
   }
 
-  static void _showLoginRequiredDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Inicia sesión'),
-        content: const Text(
-          'Debes iniciar sesión para agregar productos al carrito.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Entendido', style: TextStyle(color: Colors.white)),
-          ),
-        ],
+  static void _showLoginRequiredSnackBar(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Debes iniciar sesión para agregar productos al carrito'),
       ),
     );
   }

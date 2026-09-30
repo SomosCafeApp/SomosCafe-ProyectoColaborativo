@@ -6,18 +6,73 @@ import '../services/api_exception.dart';
 
 /// Chat con el "barista virtual". Funciona con o sin sesión iniciada:
 /// si hay token lo mandamos (el backend asocia la charla al usuario),
-/// si no, el backend la guarda como anónima. No usamos
-/// ChangeNotifierProxyProvider aquí porque no necesita reaccionar al
-/// login/logout: el token simplemente se lee al momento de enviar.
+/// si no, el backend la guarda como anónima.
+///
+/// Sigue el mismo patrón que CartProvider/AddressProvider: [updateAuth]
+/// se llama vía ChangeNotifierProxyProvider cada vez que cambia la
+/// sesión, para poder:
+/// - Al iniciar sesión (anónimo -> logueado): limpiar el chat que se
+///   traía como invitado y cargar el historial real de esa cuenta.
+/// - Al cerrar sesión (logueado -> anónimo): limpiar el chat, para
+///   que el siguiente "anónimo" empiece de cero.
 class ChatProvider extends ChangeNotifier {
   final List<ChatMessage> _messages = [];
   String? _conversationId;
+  String? _token;
   bool _isSending = false;
+  bool _isLoadingHistory = false;
   String? _errorMessage;
 
   List<ChatMessage> get messages => _messages;
   bool get isSending => _isSending;
+  bool get isLoadingHistory => _isLoadingHistory;
   String? get errorMessage => _errorMessage;
+
+  /// Llamado por el ChangeNotifierProxyProvider cada vez que cambia
+  /// la sesión (login, logout o restauración automática al abrir la app).
+  void updateAuth(String? token) {
+    final wasLoggedIn = _token != null;
+    final isLoggedIn = token != null;
+    _token = token;
+
+    if (isLoggedIn && !wasLoggedIn) {
+      // Anónimo -> logueado: empezamos un chat nuevo y vacío, y
+      // enseguida cargamos el historial real de esta cuenta.
+      _messages.clear();
+      _conversationId = null;
+      _errorMessage = null;
+      notifyListeners();
+      _loadHistory(token);
+    } else if (!isLoggedIn && wasLoggedIn) {
+      // Logueado -> anónimo (logout): limpiamos todo para que el
+      // siguiente "anónimo" no vea la charla de la cuenta anterior.
+      reset();
+    }
+  }
+
+  Future<void> _loadHistory(String token) async {
+    _isLoadingHistory = true;
+    notifyListeners();
+
+    try {
+      final data = await ApiClient.get('/chat/history', token: token);
+      final rawMessages = data['messages'] as List? ?? [];
+
+      _messages
+        ..clear()
+        ..addAll(rawMessages.map((m) => ChatMessage(
+              role: m['role'] as String? ?? 'assistant',
+              content: m['content'] as String? ?? '',
+            )));
+      _conversationId = data['conversationId'] as String?;
+    } on ApiException {
+      // Si falla la carga del historial no es crítico: el usuario
+      // simplemente empieza una conversación nueva con esa cuenta.
+    } finally {
+      _isLoadingHistory = false;
+      notifyListeners();
+    }
+  }
 
   Future<void> sendMessage(String text, {String? token}) async {
     final message = text.trim();

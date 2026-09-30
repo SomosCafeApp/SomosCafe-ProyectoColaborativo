@@ -58,65 +58,78 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           : const _AuthFlowWrapper(),
     ];
 
-    return Scaffold(
-      resizeToAvoidBottomInset: false,
-      body: IndexedStack(
-        index: _currentIndex,
-        children: pages,
-      ),
-      floatingActionButton: const ChatFab(),
-      bottomNavigationBar: SafeArea(
-        top: false,
-        child: Container(
-          height: 65,
-          decoration: BoxDecoration(
-            color: navBackgroundColor,
-            border: Border(
-              top: BorderSide(color: borderColor, width: 1),
+    return Stack(
+      children: [
+        Scaffold(
+          resizeToAvoidBottomInset: false,
+          body: IndexedStack(
+            index: _currentIndex,
+            children: pages,
+          ),
+          bottomNavigationBar: SafeArea(
+            top: false,
+            child: Container(
+              height: 65,
+              decoration: BoxDecoration(
+                color: navBackgroundColor,
+                border: Border(
+                  top: BorderSide(color: borderColor, width: 1),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: List.generate(_navItems.length, (index) {
+                  final isSelected = _currentIndex == index;
+                  final item = _navItems[index];
+
+                  return GestureDetector(
+                    onTap: () => _changeTab(index),
+                    behavior: HitTestBehavior.opaque,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          width: 56,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: isSelected ? activePillColor : Colors.transparent,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Icon(
+                            isSelected ? item['activeIcon'] : item['icon'],
+                            color: isSelected ? Colors.white : inactiveColor,
+                            size: 22,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          item['label'],
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: isSelected ? FontWeight.w700 : FontWeight.normal,
+                            color: isSelected ? activeTextColor : inactiveColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ),
             ),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: List.generate(_navItems.length, (index) {
-              final isSelected = _currentIndex == index;
-              final item = _navItems[index];
-
-              return GestureDetector(
-                onTap: () => _changeTab(index),
-                behavior: HitTestBehavior.opaque,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      width: 56,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: isSelected ? activePillColor : Colors.transparent,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Icon(
-                        isSelected ? item['activeIcon'] : item['icon'],
-                        color: isSelected ? Colors.white : inactiveColor,
-                        size: 22,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      item['label'],
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.normal,
-                        color: isSelected ? activeTextColor : inactiveColor,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }),
-          ),
         ),
-      ),
+        // El FAB vive FUERA del Scaffold (en este Stack exterior), no en
+        // su slot `floatingActionButton`. Así Scaffold nunca detecta que
+        // hay un FAB y no le reserva espacio extra al SnackBar (que es
+        // lo que lo empujaba hacia arriba); al ser el último hijo del
+        // Stack, además siempre se pinta encima de cualquier SnackBar.
+        Positioned(
+          right: 16,
+          bottom: 65 + MediaQuery.of(context).padding.bottom + 16,
+          child: const ChatFab(),
+        ),
+      ],
     );
   }
 }

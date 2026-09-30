@@ -91,12 +91,14 @@ class _ChatPageState extends State<ChatPage> {
 
 
           Expanded(
-            child: chat.messages.isEmpty
-                ? ChatEmptyState(
-                    textColor: textColor,
-                    subtitleColor: subtitleColor,
-                  )
-                : ListView.builder(
+            child: chat.isLoadingHistory
+                ? const Center(child: CircularProgressIndicator())
+                : chat.messages.isEmpty
+                    ? ChatEmptyState(
+                        textColor: textColor,
+                        subtitleColor: subtitleColor,
+                      )
+                    : ListView.builder(
                     controller: _scrollController,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,

@@ -22,35 +22,75 @@ class ReviewItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final initial = name.isNotEmpty ? name[0].toUpperCase() : 'U';
+
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: cardBg,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(name, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: textColor)),
-              Row(
-                children: List.generate(
-                  5,
-                  (index) => Icon(
-                    Icons.star_rounded,
-                    size: 12,
-                    color: index < stars ? Colors.amber : mutedColor,
+              // Avatar circular con la inicial
+              CircleAvatar(
+                radius: 18,
+                backgroundColor: const Color(0xFF9E774E),
+                child: Text(
+                  initial,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
                   ),
                 ),
               ),
+              const SizedBox(width: 12),
+              // Nombre de usuario
+              Expanded(
+                child: Text(
+                  name,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: textColor,
+                  ),
+                ),
+              ),
+              // Estrellas
+              Row(
+                children: List.generate(5, (index) {
+                  return Icon(
+                    index < stars ? Icons.star_rounded : Icons.star_outline_rounded,
+                    color: index < stars ? const Color(0xFFFFC107) : mutedColor.withOpacity(0.4),
+                    size: 16,
+                  );
+                }),
+              ),
             ],
           ),
-          const SizedBox(height: 4),
-          Text(comment, style: TextStyle(fontSize: 11, color: textColor.withOpacity(0.85))),
-          const SizedBox(height: 4),
-          Text(date, style: TextStyle(fontSize: 9, color: mutedColor)),
+          const SizedBox(height: 12),
+          // Comentario
+          Text(
+            comment,
+            style: TextStyle(
+              fontSize: 13,
+              color: textColor.withOpacity(0.9),
+              height: 1.3,
+            ),
+          ),
+          const SizedBox(height: 10),
+          // Fecha
+          Text(
+            date,
+            style: TextStyle(
+              fontSize: 11,
+              color: mutedColor,
+            ),
+          ),
         ],
       ),
     );
