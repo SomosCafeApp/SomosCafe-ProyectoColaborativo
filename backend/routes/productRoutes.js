@@ -7,6 +7,7 @@ import {
 
 import {
     getProducts,
+    getAllProductsAdmin,
     getProductById,
     createProduct,
     updateProduct,
@@ -28,6 +29,15 @@ const router = Router();
 router.get(
     "/",
     getProducts
+);
+
+// GET ALL PRODUCTS INCLUDING HIDDEN (ADMIN)
+// Debe ir ANTES de "/:id", si no Express lo tomaría como un id.
+router.get(
+    "/admin/all",
+    verifyToken,
+    adminOnly,
+    getAllProductsAdmin
 );
 
 // GET PRODUCT BY ID

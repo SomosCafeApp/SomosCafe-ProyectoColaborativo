@@ -1,5 +1,6 @@
 import Favorite from "../models/favoriteModel.js";
 import Product from "../models/productModel.js";
+import { getDiscountResolver, decorateProduct } from "../utils/promotions.js";
 
 // ===================================
 // GET USER FAVORITES
@@ -12,19 +13,33 @@ export const getFavorites = async (req, res) => {
             await Favorite.find({
                 userId: req.user.id
             })
-            .populate(
-                "productId"
-            )
+            .populate({
+                path: "productId",
+                populate: {
+                    path: "categoryId",
+                    select: "name"
+                }
+            })
             .sort({
                 createdAt: -1
             });
+
+        const resolver =
+            await getDiscountResolver(req.user.id);
+
+        const decorated = favorites.map(favorite => {
+            const plain = favorite.toObject();
+            plain.productId =
+                decorateProduct(favorite.productId, resolver);
+            return plain;
+        });
 
         return res.status(200).json({
 
             message:
                 "Favorites retrieved successfully",
 
-            favorites
+            favorites: decorated
 
         });
 
@@ -156,9 +171,13 @@ export const addFavorite = async (req, res) => {
         // POPULATE PRODUCT
         // ===================================
 
-        await favorite.populate(
-            "productId"
-        );
+        await favorite.populate({
+            path: "productId",
+            populate: {
+                path: "categoryId",
+                select: "name"
+            }
+        });
 
         return res.status(201).json({
 

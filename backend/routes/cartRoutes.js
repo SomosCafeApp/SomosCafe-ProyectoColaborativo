@@ -34,18 +34,18 @@ router.post(
     addToCart
 );
 
-// UPDATE PRODUCT QUANTITY
+// UPDATE LINE QUANTITY (itemId = _id de la línea)
 
 router.put(
-    "/items/:productId",
+    "/items/:itemId",
     verifyToken,
     updateCartItem
 );
 
-// REMOVE PRODUCT
+// REMOVE LINE (itemId = _id de la línea)
 
 router.delete(
-    "/items/:productId",
+    "/items/:itemId",
     verifyToken,
     removeFromCart
 );

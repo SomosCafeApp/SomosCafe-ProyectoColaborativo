@@ -1,10 +1,29 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
+import '../../models/promotion.dart';
 
+/// Tarjeta "Oferta Especial del Día". Muestra la promo marcada como
+/// promo del día en el panel admin (datos reales de la base de datos).
 class OfferCard extends StatelessWidget {
+  final PromoOfTheDay promo;
   final VoidCallback? onOrderNow;
 
-  const OfferCard({super.key, this.onOrderNow});
+  const OfferCard({super.key, required this.promo, this.onOrderNow});
+
+  /// "Aplica en: Latte, Capuchino y 2 más" (máx. 2 nombres).
+  String get _productsText {
+    final names = promo.products.map((p) => p.name).where((n) => n.isNotEmpty).toList();
+    if (names.isEmpty) return '';
+    if (names.length <= 2) return 'Aplica en: ${names.join(', ')}';
+    return 'Aplica en: ${names.take(2).join(', ')} y ${names.length - 2} más';
+  }
+
+  String get _deadlineText {
+    final end = promo.endDate;
+    if (end == null) return '';
+    String two(int n) => n.toString().padLeft(2, '0');
+    return 'Hasta el ${two(end.day)}/${two(end.month)}';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,7 +93,7 @@ class OfferCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 14),
                 Text(
-                  '¡30% de Descuento!',
+                  promo.headline,
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
@@ -83,7 +102,12 @@ class OfferCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'En tu segunda compra del día.\nSolo por tiempo limitado.',
+                  [
+                    promo.name,
+                    if (promo.description.isNotEmpty) promo.description,
+                    if (_productsText.isNotEmpty) _productsText,
+                    if (_deadlineText.isNotEmpty) _deadlineText,
+                  ].join('\n'),
                   style: TextStyle(
                     fontSize: 12,
                     color: isDark
@@ -141,12 +165,12 @@ class OfferCard extends StatelessWidget {
                   ),
                 ],
               ),
-              child: const Column(
+              child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    '30%',
-                    style: TextStyle(
+                    promo.badgeValue,
+                    style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w900,
                       color: Colors.black87,

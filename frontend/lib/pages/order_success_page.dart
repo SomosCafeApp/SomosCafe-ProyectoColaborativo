@@ -66,7 +66,7 @@ class OrderSuccessPage extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                'Tu café ya se está preparando con los mejores granos. Te notificaremos cuando vaya en camino.',
+                'Recibimos tu pedido. Puedes cancelarlo desde Mis Pedidos durante los próximos 10 minutos y te avisaremos cuando cambie de estado.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 15,

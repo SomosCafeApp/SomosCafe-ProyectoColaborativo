@@ -2,17 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
 import '../providers/cart_provider.dart';
-import '../models/product_model.dart';
+import 'order_confirmation_page.dart';
 import '../widgets/cart/cart_item_card.dart';
 import '../widgets/cart/cart_summary_panel.dart';
 import '../widgets/cart/cart_empty_state.dart';
-
-class _CartGroup {
-  final Product product;
-  int quantity;
-
-  _CartGroup({required this.product, required this.quantity});
-}
 
 class CartPage extends StatelessWidget {
   final VoidCallback? onExploreMenu;
@@ -33,21 +26,9 @@ class CartPage extends StatelessWidget {
       backgroundColor: scaffoldBgColor,
       body: Consumer(
         builder: (BuildContext context, CartProvider cart, Widget? child) {
-          final int totalItems = cart.items.length;
-
-          final Map groupedItems = {};
-          for (var product in cart.items) {
-            if (groupedItems.containsKey(product.id)) {
-              groupedItems[product.id]!.quantity++;
-            } else {
-              groupedItems[product.id] = _CartGroup(product: product, quantity: 1);
-            }
-          }
-
-          final itemList = groupedItems.values.toList()
-            ..sort((a, b) => a.product.id.compareTo(b.product.id));
-
-          final double totalPrice = cart.items.fold(0.0, (sum, item) => sum + item.price);
+          final lines = cart.lines;
+          final int totalItems = cart.itemCount;
+          final double totalPrice = cart.total;
 
           return Column(
             children: [
@@ -103,17 +84,16 @@ class CartPage extends StatelessWidget {
                           Expanded(
                             child: ListView.builder(
                               padding: const EdgeInsets.all(16),
-                              itemCount: itemList.length,
+                              itemCount: lines.length,
                               itemBuilder: (context, index) {
-                                final group = itemList[index];
+                                final line = lines[index];
                                 return CartItemCard(
-                                  product: group.product,
-                                  quantity: group.quantity,
+                                  line: line,
                                   primaryBrown: primaryBrown,
                                   cardBgColor: cardBgColor,
-                                  onAdd: () => cart.addToCart(group.product),
-                                  onRemoveSingle: () => cart.removeSingleItem(group.product),
-                                  onDeleteAll: () => cart.removeLine(group.product),
+                                  onAdd: () => cart.incrementLine(line),
+                                  onRemoveSingle: () => cart.removeSingleItem(line),
+                                  onDeleteAll: () => cart.removeLine(line),
                                 );
                               },
                             ),
@@ -121,15 +101,12 @@ class CartPage extends StatelessWidget {
                           CartSummaryPanel(
                             totalPrice: totalPrice,
                             primaryBrown: primaryBrown,
-                            onCheckout: () {
-                              cart.clearCart();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: const Text('¡Pedido realizado con éxito!'),
-                                  backgroundColor: primaryBrown,
-                                ),
-                              );
-                            },
+                            // No se crea la orden aquí: primero se abre la
+                            // confirmación (entrega, receptor, dirección, pago).
+                            onCheckout: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const OrderConfirmationPage()),
+                            ),
                           ),
                         ],
                       ),

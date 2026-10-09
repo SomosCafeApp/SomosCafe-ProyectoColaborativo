@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -25,6 +27,13 @@ class _OrdersPageState extends State<OrdersPage> {
   String? _expandedOrderId;
   String? _cancellingOrderId;
 
+  Timer? _ticker;
+  int _secondsSinceRefresh = 0;
+
+  // Cada cuánto se vuelve a pedir la lista al backend para reflejar
+  // los cambios de estado que hace el administrador.
+  static const _refreshEverySeconds = 15;
+
   @override
   void initState() {
     super.initState();
@@ -32,10 +41,38 @@ class _OrdersPageState extends State<OrdersPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final orderProvider = context.read<OrderProvider>();
 
-      if (orderProvider.orders.isEmpty) {
-        orderProvider.fetchOrders();
-      }
+      // Siempre refrescamos al abrir: el admin pudo cambiar estados.
+      orderProvider.fetchOrders(silent: orderProvider.orders.isNotEmpty);
     });
+
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+
+      final orderProvider = context.read<OrderProvider>();
+      _secondsSinceRefresh++;
+
+      if (_secondsSinceRefresh >= _refreshEverySeconds) {
+        _secondsSinceRefresh = 0;
+        orderProvider.fetchOrders(silent: true);
+        return;
+      }
+
+      // Redibuja para mover la cuenta regresiva de cancelación y
+      // ocultar el botón apenas se acaba el tiempo.
+      // (incluye 2 s de margen para que el botón desaparezca justo al
+      // llegar a 00:00 y no se quede congelado).
+      final threshold = DateTime.now().subtract(const Duration(seconds: 2));
+      final hasActiveWindow = orderProvider.orders.any(
+        (o) => o.status.isCancellable && o.cancelDeadline != null && o.cancelDeadline!.isAfter(threshold),
+      );
+      if (hasActiveWindow) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _ticker?.cancel();
+    super.dispose();
   }
 
   Future<void> _handleCancel(Order order) async {
@@ -103,6 +140,7 @@ class _OrdersPageState extends State<OrdersPage> {
       cartProvider.addToCart(
         product,
         quantity: item.quantity,
+        customization: item.customization,
       );
     }
 
@@ -139,11 +177,11 @@ class _OrdersPageState extends State<OrdersPage> {
         children: [
           const ProfileSubPageHeader(
             title: 'Mis Pedidos',
-            subtitle: 'Consulta tus compras anteriores',
+            subtitle: 'Sigue el estado de tus compras',
           ),
           Expanded(
             child: RefreshIndicator(
-              onRefresh: orderProvider.fetchOrders,
+              onRefresh: () => orderProvider.fetchOrders(),
               child: _buildBody(
                 orderProvider,
                 orders,
@@ -209,7 +247,7 @@ class _OrdersPageState extends State<OrdersPage> {
             });
           },
           onReorder: () => _handleReorder(order),
-          onCancel: order.status.isCancellable
+          onCancel: order.canCancel
               ? () => _handleCancel(order)
               : null,
         );

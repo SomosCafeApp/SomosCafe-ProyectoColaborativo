@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
-import '../../models/product_model.dart';
+import '../../providers/cart_provider.dart';
+import '../product_detail/customization_summary.dart';
 
 class CartItemCard extends StatelessWidget {
-  final Product product;
-  final int quantity;
+  final CartLine line;
   final Color primaryBrown;
   final Color cardBgColor;
   final VoidCallback onAdd;
@@ -13,8 +13,7 @@ class CartItemCard extends StatelessWidget {
 
   const CartItemCard({
     super.key,
-    required this.product,
-    required this.quantity,
+    required this.line,
     required this.primaryBrown,
     required this.cardBgColor,
     required this.onAdd,
@@ -24,6 +23,8 @@ class CartItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final product = line.product;
+    final quantity = line.quantity;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -37,7 +38,7 @@ class CartItemCard extends StatelessWidget {
         : AppColors.lightSurfaceSubtle;
 
     return Container(
-      key: ValueKey(product.id),
+      key: ValueKey(line.id),
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -99,26 +100,62 @@ class CartItemCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                Text(
-                  product.description,
-                  style: TextStyle(
-                    fontSize: 12,
+                // Con personalización se muestran sus opciones; si va
+                // con las de por defecto, la descripción del producto.
+                if (line.customization.isDefault)
+                  Text(
+                    product.description,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: subtitleColor,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  )
+                else
+                  CustomizationSummary(
+                    customization: line.customization,
                     color: subtitleColor,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
                 const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      '\$${(product.price * quantity).toStringAsFixed(0)} COP',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        color: textColor,
-                      ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (line.hasDiscount)
+                          Text(
+                            '\$${line.lineSubtotal.toStringAsFixed(0)} COP',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: subtitleColor,
+                              decoration: TextDecoration.lineThrough,
+                            ),
+                          ),
+                        Text(
+                          '\$${line.lineTotal.toStringAsFixed(0)} COP',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: line.hasDiscount ? AppColors.primary : textColor,
+                          ),
+                        ),
+                        if (!line.isAvailable)
+                          const Text(
+                            'No disponible',
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFE53935)),
+                          ),
+                        if (line.hasDiscount && (line.promotionName ?? '').isNotEmpty)
+                          Text(
+                            line.promotionName!,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF4CAF50),
+                            ),
+                          ),
+                      ],
                     ),
                     Container(
                       decoration: BoxDecoration(

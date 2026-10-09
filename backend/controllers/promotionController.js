@@ -1,6 +1,7 @@
 import Promotion from "../models/promotionModel.js";
 import Product from "../models/productModel.js";
 import User from "../models/userModel.js";
+import { decorateProduct, buildDiscountResolver } from "../utils/promotions.js";
 
 // ===================================
 // GET ALL PROMOTIONS
@@ -13,7 +14,7 @@ export const getPromotions = async (req, res) => {
             await Promotion.find()
                 .populate(
                     "productIds",
-                    "name price"
+                    "name price images"
                 )
                 .populate(
                     "userIds",
@@ -65,7 +66,7 @@ export const getPromotionById = async (req, res) => {
             )
                 .populate(
                     "productIds",
-                    "name price"
+                    "name price images"
                 )
                 .populate(
                     "userIds",
@@ -575,6 +576,27 @@ export const updatePromotion = async (req, res) => {
         }
 
         // ===================================
+        // VALIDATE PRODUCTS
+        // ===================================
+
+        if (
+            productIds !== undefined &&
+            productIds.length > 0
+        ) {
+            const found =
+                await Product.countDocuments({
+                    _id: { $in: productIds }
+                });
+
+            if (found !== productIds.length) {
+                return res.status(400).json({
+                    message:
+                        "One or more products were not found"
+                });
+            }
+        }
+
+        // ===================================
         // UPDATE CODE
         // ===================================
 
@@ -661,6 +683,10 @@ export const updatePromotion = async (req, res) => {
         if (isActive !== undefined)
             promotion.isActive =
                 isActive;
+
+        // Una promoción deshabilitada no puede seguir siendo la del día.
+        if (promotion.isActive === false)
+            promotion.isPromoOfTheDay = false;
 
         await promotion.save();
 
@@ -1006,6 +1032,153 @@ export const validatePromotion = async (req, res) => {
 
             error: error.message
 
+        });
+
+    }
+
+};
+
+// ===================================
+// GET PROMO OF THE DAY (PUBLIC)
+// ===================================
+// La usa el home. Devuelve null si no hay promo marcada o si la
+// marcada está deshabilitada / fuera de fechas / es solo para
+// usuarios específicos.
+export const getPromoOfTheDay = async (req, res) => {
+
+    try {
+
+        const now = new Date();
+
+        const promotion = await Promotion.findOne({
+            isPromoOfTheDay: true,
+            isActive: true,
+            startDate: { $lte: now },
+            endDate: { $gte: now },
+            userIds: { $size: 0 }
+        }).populate(
+            "productIds",
+            "name price images isAvailable"
+        );
+
+        if (!promotion) {
+            return res.status(200).json({
+                message: "No promo of the day",
+                promotion: null
+            });
+        }
+
+        const resolver = buildDiscountResolver([promotion]);
+
+        const products = promotion.productIds
+            .filter(product => product.isAvailable)
+            .map(product => {
+                const decorated =
+                    decorateProduct(product, resolver);
+
+                return {
+                    _id: decorated._id,
+                    name: decorated.name,
+                    price: decorated.price,
+                    image: decorated.images?.[0] || "",
+                    discountedPrice:
+                        decorated.discountedPrice ??
+                        decorated.price
+                };
+            });
+
+        return res.status(200).json({
+            message: "Promo of the day retrieved successfully",
+            promotion: {
+                _id: promotion._id,
+                code: promotion.code,
+                name: promotion.name,
+                description: promotion.description,
+                discountType: promotion.discountType,
+                discountValue: promotion.discountValue,
+                maximumDiscount: promotion.maximumDiscount,
+                endDate: promotion.endDate,
+                products
+            }
+        });
+
+    } catch (error) {
+
+        console.error("Get promo of the day error:", error);
+
+        return res.status(500).json({
+            message: "Error retrieving promo of the day",
+            error: error.message
+        });
+
+    }
+
+};
+
+// ===================================
+// SET / UNSET PROMO OF THE DAY (ADMIN)
+// ===================================
+// Body: { isPromoOfTheDay: true | false }
+// Al marcar una, se desmarca la anterior (solo hay una).
+export const setPromoOfTheDay = async (req, res) => {
+
+    try {
+
+        const { isPromoOfTheDay } = req.body;
+
+        if (typeof isPromoOfTheDay !== "boolean") {
+            return res.status(400).json({
+                message: "isPromoOfTheDay must be true or false"
+            });
+        }
+
+        const promotion =
+            await Promotion.findById(req.params.id);
+
+        if (!promotion) {
+            return res.status(404).json({
+                message: "Promotion not found"
+            });
+        }
+
+        if (isPromoOfTheDay) {
+
+            if (!promotion.isActive) {
+                return res.status(400).json({
+                    message:
+                        "Enable the promotion before making it the promo of the day"
+                });
+            }
+
+            // Primero se libera la anterior: el índice parcial único
+            // no permite dos marcadas al mismo tiempo.
+            await Promotion.updateMany(
+                {
+                    _id: { $ne: promotion._id },
+                    isPromoOfTheDay: true
+                },
+                { $set: { isPromoOfTheDay: false } }
+            );
+        }
+
+        promotion.isPromoOfTheDay = isPromoOfTheDay;
+
+        await promotion.save();
+
+        return res.status(200).json({
+            message: isPromoOfTheDay
+                ? "Promotion set as promo of the day"
+                : "Promotion is no longer the promo of the day",
+            promotion
+        });
+
+    } catch (error) {
+
+        console.error("Set promo of the day error:", error);
+
+        return res.status(500).json({
+            message: "Error updating promo of the day",
+            error: error.message
         });
 
     }

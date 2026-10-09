@@ -5,6 +5,7 @@ import '../core/constants/app_colors.dart';
 import '../core/utils/cart_guard.dart';
 import '../models/product_model.dart';
 import '../providers/product_provider.dart';
+import '../providers/promo_of_the_day_provider.dart';
 import '../widgets/home/category_selector.dart';
 import '../widgets/home/filtered_menu_section.dart';
 import '../widgets/home/hero_header.dart';
@@ -75,8 +76,17 @@ class _HomePageState extends State<HomePage> {
       if (provider.products.isEmpty) {
         provider.fetchProducts();
       }
+      // La promo del día se pide siempre al entrar: el admin pudo
+      // cambiarla desde la última vez.
+      context.read<PromoOfTheDayProvider>().fetchPromo();
     });
   }
+
+  /// Recarga productos (precios con descuento) y promo del día.
+  Future<void> _refresh() => Future.wait([
+        context.read<ProductProvider>().fetchProducts(),
+        context.read<PromoOfTheDayProvider>().fetchPromo(),
+      ]);
 
   void _addToCart(BuildContext context, Product product) {
     CartGuard.addToCart(context, product);
@@ -91,6 +101,7 @@ class _HomePageState extends State<HomePage> {
 
     final productProvider = context.watch<ProductProvider>();
     final allProducts = productProvider.products;
+    final promo = context.watch<PromoOfTheDayProvider>().promo;
 
     final filtered = _productsForCategory(allProducts, _selectedCategoryIndex).take(4).toList();
 
@@ -133,14 +144,18 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: RefreshIndicator(
-        onRefresh: () => productProvider.fetchProducts(),
+        onRefresh: _refresh,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const HeroHeader(),
-              OfferCard(onOrderNow: widget.onOrderNow),
+              // Sin promo del día vigente no se dibuja la tarjeta.
+              if (promo != null)
+                OfferCard(promo: promo, onOrderNow: widget.onOrderNow)
+              else
+                const SizedBox(height: 20),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(

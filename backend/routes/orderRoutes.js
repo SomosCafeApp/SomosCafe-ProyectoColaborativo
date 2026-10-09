@@ -12,7 +12,8 @@ import {
     getAllOrders,
     updateOrderStatus,
     updatePaymentStatus,
-    cancelOrder
+    cancelOrder,
+    deleteOrder
 } from "../controllers/orderController.js";
 
 const router = express.Router();
@@ -75,6 +76,14 @@ router.patch(
     verifyToken,
     adminOnly,
     updatePaymentStatus
+);
+
+// DELETE ORDER (solo pedidos CANCELLED)
+router.delete(
+    "/:id",
+    verifyToken,
+    adminOnly,
+    deleteOrder
 );
 
 export default router;

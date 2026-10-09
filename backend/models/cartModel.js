@@ -1,5 +1,18 @@
 import mongoose from "mongoose";
 
+const customizationSchema = new mongoose.Schema(
+    {
+        size: { type: String, required: true },
+        type: { type: String, required: true },
+        milk: { type: String, required: true },
+        extraShots: { type: Number, default: 0, min: 0 },
+        toppings: { type: [String], default: [] }
+    },
+    {
+        _id: false
+    }
+);
+
 const cartItemSchema = new mongoose.Schema(
     {
 
@@ -21,11 +34,24 @@ const cartItemSchema = new mongoose.Schema(
             type: Number,
             required: true,
             min: 1
+        },
+
+        // ===================================
+        // CUSTOMIZATION
+        // ===================================
+        // Cada línea del carrito es producto + personalización.
+        // Su _id (lineId) es lo que usan PUT/DELETE /cart/items/:itemId.
+
+        customization: {
+            type: customizationSchema,
+            default: undefined
+        },
+
+        customizationKey: {
+            type: String,
+            default: ""
         }
 
-    },
-    {
-        _id: false
     }
 );
 

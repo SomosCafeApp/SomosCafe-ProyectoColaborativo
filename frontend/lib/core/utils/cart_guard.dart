@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../models/product_customization.dart';
 import '../../models/product_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cart_provider.dart';
@@ -14,6 +15,7 @@ class CartGuard {
     BuildContext context,
     Product product, {
     int quantity = 1,
+    ProductCustomization? customization,
   }) async {
     final auth = context.read<AuthProvider>();
 
@@ -22,7 +24,11 @@ class CartGuard {
       return;
     }
 
-    await context.read<CartProvider>().addToCart(product, quantity: quantity);
+    await context.read<CartProvider>().addToCart(
+          product,
+          quantity: quantity,
+          customization: customization,
+        );
 
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(

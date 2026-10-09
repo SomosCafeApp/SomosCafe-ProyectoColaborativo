@@ -11,7 +11,9 @@ import {
     createPromotion,
     updatePromotion,
     deletePromotion,
-    validatePromotion
+    validatePromotion,
+    getPromoOfTheDay,
+    setPromoOfTheDay
 } from "../controllers/promotionController.js";
 
 const router = express.Router();
@@ -25,6 +27,13 @@ router.post(
     "/validate",
     verifyToken,
     validatePromotion
+);
+
+// PROMO OF THE DAY (home, sin login)
+// Debe ir ANTES de "/:id", si no Express lo tomaría como un id.
+router.get(
+    "/promo-of-the-day",
+    getPromoOfTheDay
 );
 
 // ===================================
@@ -61,6 +70,14 @@ router.put(
     verifyToken,
     adminOnly,
     updatePromotion
+);
+
+// MARK / UNMARK AS PROMO OF THE DAY
+router.patch(
+    "/:id/promo-of-the-day",
+    verifyToken,
+    adminOnly,
+    setPromoOfTheDay
 );
 
 // DELETE PROMOTION

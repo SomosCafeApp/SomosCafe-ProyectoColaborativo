@@ -1,51 +1,180 @@
 import Product from "../models/productModel.js";
 import Category from "../models/categoryModel.js";
+import Cart from "../models/cartModel.js";
+import Favorite from "../models/favoriteModel.js";
+import Review from "../models/reviewModel.js";
+import Inventory from "../models/inventoryModel.js";
+import Promotion from "../models/promotionModel.js";
+import Order from "../models/orderModel.js";
 import { deleteCloudinaryImage } from "../utils/cloudinary.js";
+import { getDiscountResolver, decorateProduct } from "../utils/promotions.js";
+
+const CATEGORY_FIELDS = "name description image isActive";
+
+const MAX_INGREDIENTS = 30;
 
 // ===================================
-// GET ALL PRODUCTS
+// HELPERS
 // ===================================
 
+// Ingredientes: el admin los escribe como texto libre separado por
+// comas ("Café, Leche, Canela"). También se aceptan una lista o un
+// JSON ("[...]") por compatibilidad con clientes anteriores.
+// Se recortan espacios, se quitan vacíos y duplicados.
+const parseIngredients = (raw) => {
+
+    let list = [];
+
+    if (Array.isArray(raw)) {
+        list = raw;
+    } else if (typeof raw === "string") {
+
+        const text = raw.trim();
+
+        if (text.startsWith("[")) {
+            try {
+                const parsed = JSON.parse(text);
+                list = Array.isArray(parsed) ? parsed : [text];
+            } catch {
+                list = text.split(",");
+            }
+        } else {
+            list = text.split(",");
+        }
+    }
+
+    const clean = [];
+    const seen = new Set();
+
+    for (const item of list) {
+
+        const value = String(item).trim();
+
+        if (!value) continue;
+
+        const key = value.toLowerCase();
+
+        if (seen.has(key)) continue;
+
+        seen.add(key);
+        clean.push(value);
+    }
+
+    return clean.slice(0, MAX_INGREDIENTS);
+};
+
+const parseBoolean = (value) =>
+    value === true || value === "true";
+
+// Si Multer ya subió la imagen a Cloudinary pero la operación
+// falla, se borra para no dejar archivos huérfanos.
+const discardUploadedImage = async (req) => {
+    if (req.file?.path) {
+        await deleteCloudinaryImage(req.file.path);
+    }
+};
+
+// Valida una categoría opcional. Devuelve { status, message } si no
+// sirve, o null si está bien (o no se envió).
+const checkCategory = async (categoryId) => {
+
+    if (!categoryId) return null;
+
+    const category = await Category.findById(categoryId);
+
+    if (!category) {
+        return { status: 404, message: "Category not found" };
+    }
+
+    if (!category.isActive) {
+        return {
+            status: 400,
+            message: "Selected category is inactive"
+        };
+    }
+
+    return null;
+};
+
+// ===================================
+// GET ALL PRODUCTS (PUBLIC)
+// ===================================
+// Solo productos disponibles: los ocultos por el admin
+// (isAvailable: false) no aparecen en el menú.
 export const getProducts = async (req, res) => {
+
     try {
-        const products = await Product.find()
-            .populate(
-                "categoryId",
-                "name description image isActive"
-            )
-            .sort({
-                createdAt: -1
-            });
+
+        const products = await Product.find({ isAvailable: true })
+            .populate("categoryId", CATEGORY_FIELDS)
+            .sort({ createdAt: -1 });
+
+        // Listado público: aplica solo promociones para todos los
+        // usuarios (las restringidas a usuarios específicos se
+        // reflejan en el carrito y el pedido).
+        const resolver = await getDiscountResolver();
 
         return res.status(200).json({
             message: "Products retrieved successfully",
-            products
+            products: products.map(
+                product => decorateProduct(product, resolver)
+            )
         });
+
     } catch (error) {
-        console.error(
-            "Get products error:",
-            error
-        );
+
+        console.error("Get products error:", error);
 
         return res.status(500).json({
             message: "Error retrieving products",
             error: error.message
         });
+
     }
+
+};
+
+// ===================================
+// GET ALL PRODUCTS - ADMIN
+// ===================================
+// Incluye los ocultos, para poder volver a mostrarlos.
+export const getAllProductsAdmin = async (req, res) => {
+
+    try {
+
+        const products = await Product.find()
+            .populate("categoryId", CATEGORY_FIELDS)
+            .sort({ createdAt: -1 });
+
+        return res.status(200).json({
+            message: "Products retrieved successfully",
+            products
+        });
+
+    } catch (error) {
+
+        console.error("Get admin products error:", error);
+
+        return res.status(500).json({
+            message: "Error retrieving products",
+            error: error.message
+        });
+
+    }
+
 };
 
 // ===================================
 // GET PRODUCT BY ID
 // ===================================
-
+// Se devuelve aunque esté oculto (el cliente puede llegar desde un
+// favorito); en ese caso viene con isAvailable: false.
 export const getProductById = async (req, res) => {
+
     try {
-        const product = await Product.findById(
-            req.params.id
-        ).populate(
-            "categoryId",
-            "name description image isActive"
-        );
+
+        const product = await Product.findById(req.params.id)
+            .populate("categoryId", CATEGORY_FIELDS);
 
         if (!product) {
             return res.status(404).json({
@@ -53,57 +182,61 @@ export const getProductById = async (req, res) => {
             });
         }
 
+        const resolver = await getDiscountResolver();
+
         return res.status(200).json({
             message: "Product retrieved successfully",
-            product
+            product: decorateProduct(product, resolver)
         });
+
     } catch (error) {
-        console.error(
-            "Get product error:",
-            error
-        );
+
+        console.error("Get product error:", error);
 
         return res.status(500).json({
             message: "Error retrieving product",
             error: error.message
         });
+
     }
+
 };
 
 // ===================================
 // CREATE PRODUCT
 // ===================================
-
+// multipart/form-data: name, price, description, ingredients,
+// categoryId, isAvailable + archivo "imagen" (a Cloudinary).
+// La calificación NO se recibe: la calculan las reseñas.
 export const createProduct = async (req, res) => {
+
     try {
+
         const {
             name,
             description,
             price,
-            images,
             ingredients,
-            rating,
             categoryId,
             isAvailable
         } = req.body;
 
-        // ===================================
-        // VALIDATE REQUIRED DATA
-        // ===================================
+        const cleanName = (name || "").toString().trim();
+        const numericPrice = Number(price);
 
         if (
-            !name ||
+            !cleanName ||
             price === undefined ||
-            price === ""
+            price === "" ||
+            !Number.isFinite(numericPrice) ||
+            numericPrice < 0
         ) {
+            await discardUploadedImage(req);
+
             return res.status(400).json({
-                message: "Name and price are required"
+                message: "A name and a valid price are required"
             });
         }
-
-        // ===================================
-        // VALIDATE IMAGE
-        // ===================================
 
         if (!req.file) {
             return res.status(400).json({
@@ -111,170 +244,68 @@ export const createProduct = async (req, res) => {
             });
         }
 
-        // ===================================
-        // VALIDATE CATEGORY
-        // ===================================
+        const categoryError = await checkCategory(categoryId);
 
-        if (categoryId) {
-            const category = await Category.findById(
-                categoryId
-            );
+        if (categoryError) {
+            await discardUploadedImage(req);
 
-            if (!category) {
-                return res.status(404).json({
-                    message: "Category not found"
-                });
-            }
-
-            if (!category.isActive) {
-                return res.status(400).json({
-                    message: "Selected category is inactive"
-                });
-            }
+            return res.status(categoryError.status).json({
+                message: categoryError.message
+            });
         }
-
-        // ===================================
-        // PROCESS INGREDIENTS
-        // ===================================
-
-        let processedIngredients = [];
-
-        if (ingredients) {
-            if (Array.isArray(ingredients)) {
-                processedIngredients = ingredients;
-            } else {
-                try {
-                    processedIngredients = JSON.parse(
-                        ingredients
-                    );
-                } catch {
-                    processedIngredients = [ingredients];
-                }
-            }
-        }
-
-        // ===================================
-        // PROCESS RATING
-        // ===================================
-
-        const processedRating =
-            rating !== undefined && rating !== ""
-                ? Number(rating)
-                : 0;
-
-        // ===================================
-        // PROCESS AVAILABILITY
-        // ===================================
-
-        let processedAvailability = true;
-
-        if (isAvailable !== undefined) {
-            processedAvailability =
-                isAvailable === true ||
-                isAvailable === "true";
-        }
-
-        // ===================================
-        // CLOUDINARY IMAGE URL
-        // ===================================
-
-        const imageUrl = req.file.path;
-
-        // ===================================
-        // CREATE PRODUCT
-        // ===================================
 
         const newProduct = new Product({
-            name: name.trim(),
-
+            name: cleanName,
             description: description
-                ? description.trim()
+                ? description.toString().trim()
                 : "",
-
-            price: Number(price),
-
-            images: [
-                imageUrl
-            ],
-
-            ingredients: processedIngredients,
-
-            rating: processedRating,
-
+            price: numericPrice,
+            images: [req.file.path],
+            ingredients: parseIngredients(ingredients),
             categoryId: categoryId || null,
-
-            isAvailable: processedAvailability
+            isAvailable:
+                isAvailable === undefined
+                    ? true
+                    : parseBoolean(isAvailable)
         });
-
-        // ===================================
-        // SAVE PRODUCT
-        // ===================================
 
         await newProduct.save();
 
-        // ===================================
-        // POPULATE CATEGORY
-        // ===================================
-
-        await newProduct.populate(
-            "categoryId",
-            "name description image isActive"
-        );
-
-        // ===================================
-        // RESPONSE
-        // ===================================
+        await newProduct.populate("categoryId", CATEGORY_FIELDS);
 
         return res.status(201).json({
             message: "Product created successfully",
             product: newProduct
         });
+
     } catch (error) {
-        console.error(
-            "Create product error:",
-            error
-        );
 
-        // ===================================
-        // CLEAN CLOUDINARY IMAGE IF DB FAILS
-        // ===================================
+        console.error("Create product error:", error);
 
-        if (req.file?.path) {
-            await deleteCloudinaryImage(
-                req.file.path
-            );
-        }
+        await discardUploadedImage(req);
 
         return res.status(500).json({
             message: "Error creating product",
             error: error.message
         });
+
     }
+
 };
 
 // ===================================
 // UPDATE PRODUCT
 // ===================================
-
+// Acepta multipart (con imagen nueva opcional) o JSON (por ejemplo
+// { isAvailable: false } para ocultarlo del menú).
 export const updateProduct = async (req, res) => {
-    try {
-        // ===================================
-        // FIND PRODUCT
-        // ===================================
 
-        const product = await Product.findById(
-            req.params.id
-        );
+    try {
+
+        const product = await Product.findById(req.params.id);
 
         if (!product) {
-            // If Multer uploaded an image
-            // but product doesn't exist,
-            // remove the orphan image.
-            if (req.file?.path) {
-                await deleteCloudinaryImage(
-                    req.file.path
-                );
-            }
+            await discardUploadedImage(req);
 
             return res.status(404).json({
                 message: "Product not found"
@@ -286,178 +317,122 @@ export const updateProduct = async (req, res) => {
             description,
             price,
             ingredients,
-            rating,
             categoryId,
             isAvailable
         } = req.body;
 
-        // ===================================
-        // VALIDATE CATEGORY
-        // ===================================
+        const categoryError = await checkCategory(categoryId);
 
-        if (categoryId) {
-            const category = await Category.findById(
-                categoryId
-            );
+        if (categoryError) {
+            await discardUploadedImage(req);
 
-            if (!category) {
-                if (req.file?.path) {
-                    await deleteCloudinaryImage(
-                        req.file.path
-                    );
-                }
-
-                return res.status(404).json({
-                    message: "Category not found"
-                });
-            }
-
-            if (!category.isActive) {
-                if (req.file?.path) {
-                    await deleteCloudinaryImage(
-                        req.file.path
-                    );
-                }
-
-                return res.status(400).json({
-                    message: "Selected category is inactive"
-                });
-            }
+            return res.status(categoryError.status).json({
+                message: categoryError.message
+            });
         }
 
-        // ===================================
-        // UPDATE BASIC DATA
-        // ===================================
-
         if (name !== undefined) {
-            product.name = name.trim();
+
+            const cleanName = name.toString().trim();
+
+            if (!cleanName) {
+                await discardUploadedImage(req);
+
+                return res.status(400).json({
+                    message: "Product name cannot be empty"
+                });
+            }
+
+            product.name = cleanName;
         }
 
         if (description !== undefined) {
-            product.description = description.trim();
+            product.description = description.toString().trim();
         }
 
-        if (
-            price !== undefined &&
-            price !== ""
-        ) {
-            product.price = Number(price);
-        }
+        if (price !== undefined && price !== "") {
 
-        if (rating !== undefined) {
-            product.rating = Number(rating);
+            const numericPrice = Number(price);
+
+            if (!Number.isFinite(numericPrice) || numericPrice < 0) {
+                await discardUploadedImage(req);
+
+                return res.status(400).json({
+                    message: "Invalid price"
+                });
+            }
+
+            product.price = numericPrice;
         }
 
         if (categoryId !== undefined) {
-            product.categoryId =
-                categoryId || null;
+            product.categoryId = categoryId || null;
         }
 
         if (isAvailable !== undefined) {
-            product.isAvailable =
-                isAvailable === true ||
-                isAvailable === "true";
+            product.isAvailable = parseBoolean(isAvailable);
         }
-
-        // ===================================
-        // UPDATE INGREDIENTS
-        // ===================================
 
         if (ingredients !== undefined) {
-            if (Array.isArray(ingredients)) {
-                product.ingredients = ingredients;
-            } else {
-                try {
-                    product.ingredients =
-                        JSON.parse(ingredients);
-                } catch {
-                    product.ingredients = [ingredients];
-                }
-            }
+            product.ingredients = parseIngredients(ingredients);
         }
-
-        // ===================================
-        // UPDATE IMAGE
-        // ===================================
 
         let oldImage = null;
 
         if (req.file) {
-            oldImage =
-                product.images?.[0] || null;
-
-            product.images = [
-                req.file.path
-            ];
+            oldImage = product.images?.[0] || null;
+            product.images = [req.file.path];
         }
-
-        // ===================================
-        // SAVE PRODUCT
-        // ===================================
 
         await product.save();
 
-        // ===================================
-        // DELETE OLD CLOUDINARY IMAGE
-        // ===================================
-
+        // La imagen anterior se borra de Cloudinary solo si ningún
+        // pedido la conserva en su historial.
         if (oldImage) {
-            await deleteCloudinaryImage(
-                oldImage
-            );
+            const usedInOrders = await Order.exists({
+                "items.image": oldImage
+            });
+
+            if (!usedInOrders) {
+                await deleteCloudinaryImage(oldImage);
+            }
         }
 
-        // ===================================
-        // POPULATE CATEGORY
-        // ===================================
-
-        await product.populate(
-            "categoryId",
-            "name description image isActive"
-        );
-
-        // ===================================
-        // RESPONSE
-        // ===================================
+        await product.populate("categoryId", CATEGORY_FIELDS);
 
         return res.status(200).json({
             message: "Product updated successfully",
             product
         });
-    } catch (error) {
-        console.error(
-            "Update product error:",
-            error
-        );
 
-        // If new image was uploaded
-        // but update failed, remove it.
-        if (req.file?.path) {
-            await deleteCloudinaryImage(
-                req.file.path
-            );
-        }
+    } catch (error) {
+
+        console.error("Update product error:", error);
+
+        await discardUploadedImage(req);
 
         return res.status(500).json({
             message: "Error updating product",
             error: error.message
         });
+
     }
+
 };
 
 // ===================================
-// DELETE PRODUCT
+// DELETE PRODUCT (hard delete)
 // ===================================
-
+// Borra el producto de la base de datos y lo saca de lo que
+// dependía de él: carritos, favoritos, reseñas, inventario y
+// promociones. Los PEDIDOS ya hechos se conservan: guardan su propia
+// copia de nombre, precio e imagen.
+// Para ocultarlo del menú sin borrarlo: PUT con { isAvailable: false }.
 export const deleteProduct = async (req, res) => {
-    try {
-        // ===================================
-        // FIND PRODUCT
-        // ===================================
 
-        const product = await Product.findById(
-            req.params.id
-        );
+    try {
+
+        const product = await Product.findById(req.params.id);
 
         if (!product) {
             return res.status(404).json({
@@ -465,47 +440,50 @@ export const deleteProduct = async (req, res) => {
             });
         }
 
-        // ===================================
-        // SAVE IMAGE URL
-        // ===================================
+        const productId = product._id;
+        const imageUrl = product.images?.[0] || null;
 
-        const imageUrl =
-            product.images?.[0] || null;
+        const [cartResult] = await Promise.all([
+            Cart.updateMany(
+                { "items.productId": productId },
+                { $pull: { items: { productId } } }
+            ),
+            Favorite.deleteMany({ productId }),
+            Review.deleteMany({ productId }),
+            Inventory.deleteMany({ productId }),
+            Promotion.updateMany(
+                { productIds: productId },
+                { $pull: { productIds: productId } }
+            )
+        ]);
 
-        // ===================================
-        // DELETE PRODUCT FROM DATABASE
-        // ===================================
+        await Product.findByIdAndDelete(productId);
 
-        await Product.findByIdAndDelete(
-            req.params.id
-        );
-
-        // ===================================
-        // DELETE IMAGE FROM CLOUDINARY
-        // ===================================
-
+        // La imagen se conserva si algún pedido la usa en su historial.
         if (imageUrl) {
-            await deleteCloudinaryImage(
-                imageUrl
-            );
+            const usedInOrders = await Order.exists({
+                "items.image": imageUrl
+            });
+
+            if (!usedInOrders) {
+                await deleteCloudinaryImage(imageUrl);
+            }
         }
 
-        // ===================================
-        // RESPONSE
-        // ===================================
-
         return res.status(200).json({
-            message: "Product deleted successfully"
+            message: "Product deleted successfully",
+            removedFromCarts: cartResult.modifiedCount
         });
+
     } catch (error) {
-        console.error(
-            "Delete product error:",
-            error
-        );
+
+        console.error("Delete product error:", error);
 
         return res.status(500).json({
             message: "Error deleting product",
             error: error.message
         });
+
     }
+
 };

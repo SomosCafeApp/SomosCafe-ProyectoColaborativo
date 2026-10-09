@@ -38,35 +38,45 @@ class OrderProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> fetchOrders() async {
+  /// [silent] = true no muestra el indicador de carga (se usa en el
+  /// refresco automático de OrdersPage para ver los cambios de estado
+  /// que hace el administrador).
+  Future<void> fetchOrders({bool silent = false}) async {
     if (_token == null) return;
-    _isLoading = true;
-    _errorMessage = null;
-    notifyListeners();
+
+    if (!silent) {
+      _isLoading = true;
+      _errorMessage = null;
+      notifyListeners();
+    }
 
     try {
       final data = await ApiClient.get('/orders/my-orders', token: _token);
       final raw = data['orders'] as List? ?? [];
       _orders = raw.map((e) => Order.fromJson(e as Map<String, dynamic>)).toList();
+      _errorMessage = null;
     } on ApiException catch (e) {
-      _errorMessage = e.message;
+      // En un refresco silencioso un fallo de red no debe tapar la lista.
+      if (!silent) _errorMessage = e.message;
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  /// Crea el pedido a partir del carrito actual. El backend recalcula
-  /// precios y subtotales desde la base de datos (solo le mandamos
-  /// productId + quantity), así que lo que el cliente envíe de más no
-  /// se usa para el cobro real.
+  /// Crea el pedido. Solo mandamos QUÉ se pidió (producto, cantidad y
+  /// personalización) y los datos de entrega/pago elegidos: el backend
+  /// calcula precios, personalizaciones, envío, descuento y total.
   ///
-  /// [notes] se usa aquí también para guardar el método de pago
-  /// elegido en texto libre, ya que todavía no hay métodos de pago
-  /// reales conectados (PaymentMethod) del lado del backend.
+  /// NO vacía el carrito: quien llama lo hace solo si esto devuelve
+  /// una orden (ver OrderConfirmationPage).
   Future<Order?> createOrder({
-    required String addressId,
     required List<CartLine> lines,
+    required DeliveryType deliveryType,
+    required String recipientName,
+    required String recipientPhone,
+    required String paymentMethodId,
+    String? addressId,
     String notes = '',
   }) async {
     if (_token == null) {
@@ -87,14 +97,19 @@ class OrderProvider extends ChangeNotifier {
 
     try {
       final data = await ApiClient.post('/orders', token: _token, body: {
-        'addressId': addressId,
+        'deliveryType': deliveryType.apiValue,
+        'recipientName': recipientName.trim(),
+        'recipientPhone': recipientPhone.trim(),
+        'paymentMethodId': paymentMethodId,
+        if (deliveryType == DeliveryType.delivery && addressId != null) 'addressId': addressId,
+        'notes': notes.trim(),
         'items': lines
             .map((l) => {
                   'productId': l.product.id,
                   'quantity': l.quantity,
+                  'customization': l.customization.toJson(),
                 })
             .toList(),
-        'notes': notes,
       });
 
       final order = Order.fromJson(data['order'] as Map<String, dynamic>);
@@ -104,13 +119,26 @@ class OrderProvider extends ChangeNotifier {
       notifyListeners();
       return order;
     } on ApiException catch (e) {
-      _errorMessage = e.message;
+      _errorMessage = _translateCreateError(e.message);
       _isCreating = false;
       notifyListeners();
       return null;
     }
   }
 
+  String _translateCreateError(String message) {
+    final lower = message.toLowerCase();
+    if (lower.contains('is not available')) {
+      return 'Algún producto de tu carrito ya no está disponible. Quítalo para continuar.';
+    }
+    if (lower.contains('products were not found')) {
+      return 'Algún producto de tu carrito ya no existe. Quítalo para continuar.';
+    }
+    return message;
+  }
+
+  /// Cancela un pedido. El backend comprueba que sea del usuario, que
+  /// el estado lo permita y que no hayan pasado los 10 minutos.
   Future<bool> cancelOrder(String orderId) async {
     if (_token == null) return false;
 
@@ -119,14 +147,26 @@ class OrderProvider extends ChangeNotifier {
 
     try {
       await ApiClient.patch('/orders/$orderId/cancel', token: _token);
-      // Recargamos ese pedido para reflejar el estado real (CANCELLED
-      // + cancelledAt) en vez de intentar reconstruirlo a mano.
-      await fetchOrders();
+      // Recargamos para reflejar el estado real (CANCELLED + cancelledAt).
+      await fetchOrders(silent: true);
       return true;
     } on ApiException catch (e) {
-      _errorMessage = e.message;
-      notifyListeners();
+      _errorMessage = _translateCancelError(e.message);
+      // El estado local pudo quedar desfasado (ej. el admin ya lo
+      // confirmó/preparó): lo actualizamos.
+      await fetchOrders(silent: true);
       return false;
     }
+  }
+
+  String _translateCancelError(String message) {
+    final lower = message.toLowerCase();
+    if (lower.contains('window has expired')) {
+      return 'Ya pasaron los 10 minutos para cancelar este pedido';
+    }
+    if (lower.contains('no longer be cancelled')) {
+      return 'Este pedido ya no se puede cancelar';
+    }
+    return message;
   }
 }

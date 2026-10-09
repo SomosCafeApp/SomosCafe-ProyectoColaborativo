@@ -173,6 +173,28 @@ class ProductCard extends StatelessWidget {
                       ),
                     ),
 
+                    // 2b. BADGE DE PROMOCIÓN (Abajo a la izquierda)
+                    if (product.hasDiscount && (product.promotionLabel ?? '').isNotEmpty)
+                      Positioned(
+                        bottom: 8,
+                        left: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.accentYellow,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            product.promotionLabel!,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ),
+                      ),
+
                     // 3. BADGE DE VISTAS (Abajo a la derecha)
                     Positioned(
                       bottom: 8,
@@ -260,12 +282,21 @@ class ProductCard extends StatelessWidget {
                                 color: mutedColor,
                               ),
                             ),
+                            if (product.hasDiscount)
+                              Text(
+                                '\$${product.price.toStringAsFixed(0)}',
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  color: mutedColor,
+                                  decoration: TextDecoration.lineThrough,
+                                ),
+                              ),
                             Text(
-                              '\$${product.price.toStringAsFixed(0)} COP',
+                              '\$${product.effectivePrice.toStringAsFixed(0)} COP',
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w900,
-                                color: textColor,
+                                color: product.hasDiscount ? AppColors.primary : textColor,
                               ),
                             ),
                           ],

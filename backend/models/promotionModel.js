@@ -130,11 +130,29 @@ const promotionSchema = new mongoose.Schema(
         isActive: {
             type: Boolean,
             default: true
+        },
+
+        // ===================================
+        // PROMO OF THE DAY
+        // ===================================
+        // La que muestra el home. Solo una a la vez (índice parcial
+        // único abajo); se cambia con PATCH /:id/promo-of-the-day.
+        isPromoOfTheDay: {
+            type: Boolean,
+            default: false
         }
     },
     {
         timestamps: true,
         collection: "promotions"
+    }
+);
+
+promotionSchema.index(
+    { isPromoOfTheDay: 1 },
+    {
+        unique: true,
+        partialFilterExpression: { isPromoOfTheDay: true }
     }
 );
 

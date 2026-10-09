@@ -5,10 +5,12 @@ import '../core/constants/app_colors.dart';
 import '../widgets/profile/profile_header.dart';
 import '../widgets/profile/profile_option_card.dart';
 import '../widgets/profile/logout_button_card.dart';
+import '../widgets/profile/logout_dialog.dart';
 
 import '../providers/auth_provider.dart';
 import '../providers/favorites_provider.dart';
 
+import 'admin/admin_home_page.dart';
 import 'addresses_page.dart';
 import 'favorites_page.dart';
 import 'notifications_page.dart';
@@ -19,112 +21,6 @@ import 'settings_page.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
-
-  void _showLogoutDialog(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final textColor = theme.colorScheme.onSurface;
-    final subtitleColor = isDark ? const Color(0xFFB0A49E) : const Color(0xFF757575);
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
-        backgroundColor: theme.cardTheme.color,
-        contentPadding: const EdgeInsets.all(24),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF381C1C) : const Color(0xFFFFEBEE),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.logout_rounded,
-                color: Color(0xFFE53935),
-                size: 32,
-              ),
-            ),
-            const SizedBox(height: 18),
-            Text(
-              '¿Cerrar Sesión?',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: textColor,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '¿Estás seguro de que deseas cerrar tu sesión?',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 13,
-                color: subtitleColor,
-                height: 1.4,
-              ),
-            ),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: TextButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        side: BorderSide(
-                          color: isDark ? Colors.white24 : Colors.grey.shade300,
-                        ),
-                      ),
-                    ),
-                    child: Text(
-                      'Cancelar',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: textColor,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      context.read<AuthProvider>().logout();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFE53935),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    child: const Text(
-                      'Cerrar Sesión',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -163,6 +59,27 @@ class ProfilePage extends StatelessWidget {
               padding: const EdgeInsets.all(20.0),
               child: Column(
                 children: [
+                  // PANEL DE ADMINISTRADOR (solo visible para cuentas ADMIN)
+                  if (auth.isAdmin) ...[
+                    ProfileOptionCard(
+                      cardColor: cardColor,
+                      textColor: textColor,
+                      subtitleColor: subtitleColor,
+                      icon: Icons.admin_panel_settings_outlined,
+                      iconBgColor: isDark
+                          ? const Color(0xFF2A2140)
+                          : const Color(0xFFEDE7F6),
+                      iconColor: const Color(0xFF673AB7),
+                      title: 'Panel de Administrador',
+                      subtitle: 'Gestiona pedidos, productos y más',
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const AdminHomePage(),
+                        ),
+                      ),
+                    ),
+                  ],
                   // DIRECCIONES
                   ProfileOptionCard(
                     cardColor: cardColor,
@@ -313,7 +230,7 @@ class ProfilePage extends StatelessWidget {
 
                   // CERRAR SESIÓN (Componente separado y centrado)
                   LogoutButtonCard(
-                    onTap: () => _showLogoutDialog(context),
+                    onTap: () => showLogoutDialog(context),
                   ),
 
                   const SizedBox(height: 16),

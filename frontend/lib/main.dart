@@ -4,11 +4,18 @@ import 'package:provider/provider.dart';
 // Módulos y páginas
 import 'core/theme/app_theme.dart';
 import 'pages/main_navigation_screen.dart';
+import 'widgets/events/event_popup_gate.dart';
 
 // Providers
 import 'providers/cart_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/order_provider.dart';
+import 'providers/active_event_provider.dart';
+import 'providers/admin_events_provider.dart';
+import 'providers/admin_orders_provider.dart';
+import 'providers/admin_products_provider.dart';
+import 'providers/admin_promotions_provider.dart';
+import 'providers/promo_of_the_day_provider.dart';
 import 'providers/favorites_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/font_size_provider.dart';
@@ -64,6 +71,36 @@ void main() {
         ChangeNotifierProxyProvider<AuthProvider, OrderProvider>(
           create: (_) => OrderProvider(),
           update: (_, auth, orders) => (orders ?? OrderProvider())..updateAuth(auth.token),
+        ),
+        // Pedidos de todos los usuarios (solo funciona con rol ADMIN;
+        // el backend lo exige además de este chequeo en la app).
+        ChangeNotifierProxyProvider<AuthProvider, AdminOrdersProvider>(
+          create: (_) => AdminOrdersProvider(),
+          update: (_, auth, adminOrders) =>
+              (adminOrders ?? AdminOrdersProvider())..updateAuth(auth.token, auth.isAdmin),
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, AdminProductsProvider>(
+          create: (_) => AdminProductsProvider(),
+          update: (_, auth, products) =>
+              (products ?? AdminProductsProvider())..updateAuth(auth.token, auth.isAdmin),
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, AdminEventsProvider>(
+          create: (_) => AdminEventsProvider(),
+          update: (_, auth, events) =>
+              (events ?? AdminEventsProvider())..updateAuth(auth.token, auth.isAdmin),
+        ),
+        // Evento activo para el pop-up de inicio (público).
+        ChangeNotifierProvider(
+          create: (_) => ActiveEventProvider(),
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, AdminPromotionsProvider>(
+          create: (_) => AdminPromotionsProvider(),
+          update: (_, auth, promotions) =>
+              (promotions ?? AdminPromotionsProvider())..updateAuth(auth.token, auth.isAdmin),
+        ),
+        // Promo del día del home (pública, no depende de la sesión).
+        ChangeNotifierProvider(
+          create: (_) => PromoOfTheDayProvider(),
         ),
         ChangeNotifierProxyProvider<AuthProvider, ChatProvider>(
           create: (_) => ChatProvider(),
@@ -168,7 +205,10 @@ class MyApp extends StatelessWidget {
         );
       },
 
-      home: const _SessionBootstrap(child: MainNavigationScreen()),
+      // El pop-up de evento sale después de restaurar/renovar la sesión.
+      home: const _SessionBootstrap(
+        child: EventPopupGate(child: MainNavigationScreen()),
+      ),
     );
   }
 }
