@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../models/order.dart';
+import '../models/order_payment.dart';
+import '../models/picked_image.dart';
 import '../services/api_client.dart';
 import '../services/api_exception.dart';
 import 'cart_provider.dart';
@@ -14,11 +16,13 @@ class OrderProvider extends ChangeNotifier {
 
   bool _isLoading = false;
   bool _isCreating = false;
+  bool _isUploadingProof = false;
   String? _errorMessage;
 
   List<Order> get orders => _orders;
   bool get isLoading => _isLoading;
   bool get isCreating => _isCreating;
+  bool get isUploadingProof => _isUploadingProof;
   String? get errorMessage => _errorMessage;
 
   void updateAuth(String? token) {
@@ -65,8 +69,9 @@ class OrderProvider extends ChangeNotifier {
   }
 
   /// Crea el pedido. Solo mandamos QUÉ se pidió (producto, cantidad y
-  /// personalización) y los datos de entrega/pago elegidos: el backend
-  /// calcula precios, personalizaciones, envío, descuento y total.
+  /// personalización) y los datos de entrega/pago elegidos (efectivo o
+  /// transferencia): el backend calcula precios, personalizaciones,
+  /// envío, descuento y total.
   ///
   /// NO vacía el carrito: quien llama lo hace solo si esto devuelve
   /// una orden (ver OrderConfirmationPage).
@@ -75,7 +80,7 @@ class OrderProvider extends ChangeNotifier {
     required DeliveryType deliveryType,
     required String recipientName,
     required String recipientPhone,
-    required String paymentMethodId,
+    required PaymentMethodType paymentMethod,
     String? addressId,
     String notes = '',
   }) async {
@@ -100,7 +105,7 @@ class OrderProvider extends ChangeNotifier {
         'deliveryType': deliveryType.apiValue,
         'recipientName': recipientName.trim(),
         'recipientPhone': recipientPhone.trim(),
-        'paymentMethodId': paymentMethodId,
+        'paymentMethod': paymentMethod.apiValue,
         if (deliveryType == DeliveryType.delivery && addressId != null) 'addressId': addressId,
         'notes': notes.trim(),
         'items': lines
@@ -137,6 +142,69 @@ class OrderProvider extends ChangeNotifier {
     return message;
   }
 
+  /// Sube la captura del pago por transferencia
+  /// (POST /orders/:id/payment-proof). Devuelve el pedido actualizado
+  /// (ya en "Comprobante en revisión") o null si falló; en ese caso
+  /// [errorMessage] trae el motivo. También sirve para reemplazar un
+  /// comprobante mientras el admin no lo haya validado.
+  Future<Order?> uploadPaymentProof(String orderId, PickedImage image) async {
+    if (_token == null) {
+      _errorMessage = 'Debes iniciar sesión para subir el comprobante';
+      notifyListeners();
+      return null;
+    }
+
+    _isUploadingProof = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final data = await ApiClient.sendMultipart(
+        'POST',
+        '/orders/$orderId/payment-proof',
+        fields: const {},
+        imageBytes: image.bytes,
+        imageName: image.name,
+        token: _token,
+      );
+
+      final order = Order.fromJson(data['order'] as Map<String, dynamic>);
+      final index = _orders.indexWhere((o) => o.id == orderId);
+      if (index == -1) {
+        _orders.insert(0, order);
+      } else {
+        _orders[index] = order;
+      }
+      return order;
+    } on ApiException catch (e) {
+      _errorMessage = _translateProofError(e.message);
+      return null;
+    } finally {
+      _isUploadingProof = false;
+      notifyListeners();
+    }
+  }
+
+  String _translateProofError(String message) {
+    final lower = message.toLowerCase();
+    if (lower.contains('cannot exceed')) {
+      return 'La imagen supera los 8 MB. Elige una más liviana.';
+    }
+    if (lower.contains('images are allowed')) {
+      return 'Solo se permiten imágenes JPG, PNG, WEBP o AVIF.';
+    }
+    if (lower.contains('can no longer be changed')) {
+      return 'Tu pago ya fue revisado, el comprobante no se puede cambiar.';
+    }
+    if (lower.contains('was cancelled')) {
+      return 'Este pedido fue cancelado.';
+    }
+    if (lower.contains('changed in the meantime')) {
+      return 'El pedido cambió mientras subías el comprobante. Revisa su estado en Mis Pedidos.';
+    }
+    return message;
+  }
+
   /// Cancela un pedido. El backend comprueba que sea del usuario, que
   /// el estado lo permita y que no hayan pasado los 10 minutos.
   Future<bool> cancelOrder(String orderId) async {
@@ -163,6 +231,9 @@ class OrderProvider extends ChangeNotifier {
     final lower = message.toLowerCase();
     if (lower.contains('window has expired')) {
       return 'Ya pasaron los 10 minutos para cancelar este pedido';
+    }
+    if (lower.contains('payment is already in review')) {
+      return 'Tu pago ya está en revisión, no puedes cancelar el pedido. Comunícate con la cafetería.';
     }
     if (lower.contains('no longer be cancelled')) {
       return 'Este pedido ya no se puede cancelar';

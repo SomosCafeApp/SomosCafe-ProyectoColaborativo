@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../models/order.dart';
 import '../product_detail/customization_summary.dart';
+import 'order_payment_section.dart';
 
 class OrderCardItem extends StatelessWidget {
   final Order order;
@@ -14,6 +15,10 @@ class OrderCardItem extends StatelessWidget {
   final VoidCallback onReorder;
   final bool isCancelling;
 
+  /// Abre la pantalla de pago por transferencia. Solo se pasa cuando el
+  /// pedido aún necesita su comprobante.
+  final VoidCallback? onPay;
+
   const OrderCardItem({
     super.key,
     required this.order,
@@ -22,6 +27,7 @@ class OrderCardItem extends StatelessWidget {
     required this.onReorder,
     this.onCancel,
     this.isCancelling = false,
+    this.onPay,
   });
 
   String get _orderNumber => '#${order.shortId}';
@@ -240,6 +246,12 @@ class OrderCardItem extends StatelessWidget {
                   ),
                 ],
 
+                // Falta el comprobante de la transferencia.
+                if (onPay != null) ...[
+                  const SizedBox(height: 12),
+                  PaymentProofBanner(onPay: onPay!),
+                ],
+
                 // Sección desplegable
                 if (isExpanded) ...[
                   const Padding(
@@ -296,11 +308,7 @@ class OrderCardItem extends StatelessWidget {
                       Icons.location_on_outlined,
                       order.addressLabel.isNotEmpty ? '${order.addressLabel}: ${order.addressText}' : order.addressText,
                     ),
-                  if (order.paymentTitle.isNotEmpty)
-                    infoRow(
-                      Icons.credit_card_rounded,
-                      'Pago: ${[order.paymentTitle, order.paymentDetail].where((s) => s.isNotEmpty).join(' · ')}',
-                    ),
+                  OrderPaymentSection(order: order),
                   if (order.notes.isNotEmpty) infoRow(Icons.sticky_note_2_outlined, 'Nota: ${order.notes}'),
                   const SizedBox(height: 16),
                   SizedBox(

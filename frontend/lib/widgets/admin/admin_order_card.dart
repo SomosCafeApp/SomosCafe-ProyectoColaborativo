@@ -3,16 +3,19 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../models/order.dart';
 import '../product_detail/customization_summary.dart';
+import 'admin_payment_section.dart';
 
 /// Tarjeta de un pedido en el panel admin: resumen arriba y, al
 /// expandir, cliente, productos con personalización, montos, entrega,
-/// pago y acciones de estado.
+/// pago (comprobante, validar/invalidar) y acciones de estado.
 class AdminOrderCard extends StatelessWidget {
   final Order order;
   final bool isExpanded;
   final bool isBusy;
   final VoidCallback onTap;
   final ValueChanged<OrderStatus> onChangeStatus;
+  final VoidCallback onValidatePayment;
+  final VoidCallback onInvalidatePayment;
   final VoidCallback onDelete;
 
   const AdminOrderCard({
@@ -22,6 +25,8 @@ class AdminOrderCard extends StatelessWidget {
     required this.isBusy,
     required this.onTap,
     required this.onChangeStatus,
+    required this.onValidatePayment,
+    required this.onInvalidatePayment,
     required this.onDelete,
   });
 
@@ -32,19 +37,6 @@ class AdminOrderCard extends StatelessWidget {
     if (d == null) return '';
     String two(int n) => n.toString().padLeft(2, '0');
     return '${two(d.day)}/${two(d.month)}/${d.year}, ${two(d.hour)}:${two(d.minute)}';
-  }
-
-  String get _paymentStatusLabel {
-    switch (order.paymentStatus) {
-      case 'PAID':
-        return 'Pagado';
-      case 'FAILED':
-        return 'Fallido';
-      case 'REFUNDED':
-        return 'Reembolsado';
-      default:
-        return 'Pendiente de pago';
-    }
   }
 
   Color _statusColor(OrderStatus status) {
@@ -96,7 +88,7 @@ class AdminOrderCard extends StatelessWidget {
         );
 
     final customerTitle = order.customerName.isNotEmpty ? order.customerName : 'Cliente';
-    final nextOptions = order.status.nextOptions(order.deliveryType);
+    final nextOptions = order.nextStatusOptions;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -129,6 +121,14 @@ class AdminOrderCard extends StatelessWidget {
                           const SizedBox(height: 2),
                           Text(customerTitle, style: TextStyle(fontSize: 13, color: textColor)),
                           Text('$_formattedDate · ${order.deliveryType.label}', style: TextStyle(fontSize: 12, color: subtitleColor)),
+                          if (order.awaitsValidation)
+                            const Padding(
+                              padding: EdgeInsets.only(top: 3),
+                              child: Text(
+                                'Comprobante por validar',
+                                style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFFFF9800)),
+                              ),
+                            ),
                         ],
                       ),
                     ),
@@ -212,14 +212,11 @@ class AdminOrderCard extends StatelessWidget {
                   if (order.notes.isNotEmpty) infoRow(Icons.sticky_note_2_outlined, 'Nota: ${order.notes}'),
 
                   const SizedBox(height: 12),
-                  Text('Pago', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: subtitleColor)),
-                  infoRow(
-                    Icons.credit_card_rounded,
-                    [
-                      if (order.paymentTitle.isNotEmpty) order.paymentTitle else 'Sin método registrado',
-                      if (order.paymentDetail.isNotEmpty) order.paymentDetail,
-                      _paymentStatusLabel,
-                    ].join(' · '),
+                  AdminPaymentSection(
+                    order: order,
+                    isBusy: isBusy,
+                    onValidate: onValidatePayment,
+                    onInvalidate: onInvalidatePayment,
                   ),
 
                   // Acciones

@@ -11,10 +11,19 @@ import {
     createOrder,
     getAllOrders,
     updateOrderStatus,
-    updatePaymentStatus,
     cancelOrder,
     deleteOrder
 } from "../controllers/orderController.js";
+
+import {
+    uploadPaymentProof,
+    validatePayment,
+    invalidatePayment
+} from "../controllers/orderPaymentController.js";
+
+import {
+    uploadProofImage
+} from "../middlewares/uploadMiddleware.js";
 
 const router = express.Router();
 
@@ -50,6 +59,14 @@ router.patch(
     cancelOrder
 );
 
+// UPLOAD PAYMENT PROOF (captura de la transferencia)
+router.post(
+    "/:id/payment-proof",
+    verifyToken,
+    uploadProofImage,
+    uploadPaymentProof
+);
+
 // ===================================
 // PROTECTED ADMIN ROUTES
 // ===================================
@@ -70,12 +87,20 @@ router.patch(
     updateOrderStatus
 );
 
-// UPDATE PAYMENT STATUS
+// VALIDATE PAYMENT (el pedido pasa a CONFIRMED)
 router.patch(
-    "/:id/payment-status",
+    "/:id/payment/validate",
     verifyToken,
     adminOnly,
-    updatePaymentStatus
+    validatePayment
+);
+
+// INVALIDATE PAYMENT (el pedido se cancela automáticamente)
+router.patch(
+    "/:id/payment/invalidate",
+    verifyToken,
+    adminOnly,
+    invalidatePayment
 );
 
 // DELETE ORDER (solo pedidos CANCELLED)

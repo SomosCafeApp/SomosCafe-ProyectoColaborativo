@@ -18,6 +18,30 @@ export const DELIVERY_TYPES = ["PICKUP", "DELIVERY"];
 
 export const DELIVERY_FEE = 5000;
 
+// CASH = se paga al domiciliario o en la cafetería al recoger.
+// TRANSFER = se paga por QR y el cliente sube el comprobante.
+export const PAYMENT_METHODS = ["CASH", "TRANSFER"];
+
+export const PAYMENT_STATUSES = [
+    // Efectivo: se cobra al entregar / en el local.
+    "PENDING",
+    // Transferencia: falta que el cliente suba el comprobante.
+    "AWAITING_PROOF",
+    // Transferencia: comprobante subido, el admin debe revisarlo.
+    "PROOF_SUBMITTED",
+    // Transferencia: el admin validó el pago.
+    "VALIDATED",
+    // Transferencia: el admin lo invalidó (el pedido se cancela).
+    "INVALIDATED"
+];
+
+// El cliente solo puede cancelar mientras no haya enviado un
+// comprobante: después el dinero ya se movió y solo el admin decide.
+export const USER_CANCELLABLE_PAYMENT_STATUSES = [
+    "PENDING",
+    "AWAITING_PROOF"
+];
+
 const customizationSchema = new mongoose.Schema(
     {
         size: { type: String, required: true },
@@ -130,13 +154,11 @@ const addressSnapshotSchema = new mongoose.Schema(
     }
 );
 
-// Foto del método de pago (nunca datos sensibles: solo lo visible).
-const paymentSnapshotSchema = new mongoose.Schema(
+// Comprobante de pago (captura de la transferencia) que sube el cliente.
+const paymentProofSchema = new mongoose.Schema(
     {
-        type: { type: String, default: "" },
-        provider: { type: String, default: "" },
-        name: { type: String, default: "" },
-        lastFourDigits: { type: String, default: "" }
+        url: { type: String, required: true },
+        uploadedAt: { type: Date, default: Date.now }
     },
     {
         _id: false
@@ -222,26 +244,27 @@ const orderSchema = new mongoose.Schema(
             default: "PENDING"
         },
 
+        paymentMethod: {
+            type: String,
+            enum: PAYMENT_METHODS,
+            default: "CASH"
+        },
+
         paymentStatus: {
             type: String,
-            enum: [
-                "PENDING",
-                "PAID",
-                "FAILED",
-                "REFUNDED"
-            ],
+            enum: PAYMENT_STATUSES,
             default: "PENDING"
         },
 
-        paymentMethodId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "PaymentMethod",
-            default: null
+        paymentProof: {
+            type: paymentProofSchema,
+            default: undefined
         },
 
-        paymentSnapshot: {
-            type: paymentSnapshotSchema,
-            default: undefined
+        // Cuándo el admin validó o invalidó el pago.
+        paymentReviewedAt: {
+            type: Date,
+            default: null
         },
 
         notes: {
@@ -291,6 +314,12 @@ orderSchema.methods.cancelSecondsRemaining = function () {
     if (!this.createdAt) return 0;
 
     if (!USER_CANCELLABLE_STATUSES.includes(this.status)) return 0;
+
+    if (
+        !USER_CANCELLABLE_PAYMENT_STATUSES.includes(
+            this.paymentStatus
+        )
+    ) return 0;
 
     const remainingMs =
         this.cancelDeadline().getTime() - Date.now();

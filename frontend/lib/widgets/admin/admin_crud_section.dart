@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
+import 'admin_add_button.dart';
 
 /// Shell genérico de "lista + botón agregar + formulario inline" que
-/// ya se repetía en addresses_page.dart y payment_methods_page.dart.
+/// ya se repetía en varias pantallas (por ejemplo addresses_page.dart).
 /// Los próximos admin (Productos, Promociones, Eventos) lo reutilizan
 /// en vez de reescribir el mismo boilerplate cada vez: cada pantalla
 /// solo aporta su propio formulario ([formChild]) y cómo se ve cada
@@ -33,31 +34,13 @@ class AdminCrudSection<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final primaryBrown = AppColors.primary;
     final subtitleColor =
         theme.brightness == Brightness.dark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (!showForm)
-          SizedBox(
-            width: double.infinity,
-            height: 50,
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryBrown,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                elevation: 0,
-              ),
-              onPressed: onAddPressed,
-              icon: const Icon(Icons.add, color: Colors.white),
-              label: Text(
-                addButtonLabel,
-                style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ),
+        if (!showForm) AdminAddButton(label: addButtonLabel, onPressed: onAddPressed),
         if (showForm) ...[
           formChild,
           const SizedBox(height: 20),

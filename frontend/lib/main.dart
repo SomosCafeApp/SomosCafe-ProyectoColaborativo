@@ -24,7 +24,6 @@ import 'providers/address_provider.dart';
 import 'providers/chat_provider.dart';
 import 'providers/reviews_provider.dart';
 import 'providers/notification_provider.dart';
-import 'providers/payment_method_provider.dart';
 import 'providers/points_provider.dart';
 
 void main() {
@@ -59,10 +58,6 @@ void main() {
           create: (_) => NotificationProvider(),
           update: (_, auth, notifications) =>
               (notifications ?? NotificationProvider())..updateAuth(auth.token),
-        ),
-        ChangeNotifierProxyProvider<AuthProvider, PaymentMethodProvider>(
-          create: (_) => PaymentMethodProvider(),
-          update: (_, auth, methods) => (methods ?? PaymentMethodProvider())..updateAuth(auth.token),
         ),
         ChangeNotifierProxyProvider<AuthProvider, PointsProvider>(
           create: (_) => PointsProvider(),

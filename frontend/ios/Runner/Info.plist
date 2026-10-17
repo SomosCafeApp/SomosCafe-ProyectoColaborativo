@@ -67,6 +67,8 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Necesitamos acceso a tus fotos para elegir la imagen del producto.</string>
+	<string>Necesitamos acceso a tus fotos para elegir imágenes (productos o comprobantes de pago).</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Necesitamos permiso para guardar el código QR de pago en tu galería.</string>
 </dict>
 </plist>

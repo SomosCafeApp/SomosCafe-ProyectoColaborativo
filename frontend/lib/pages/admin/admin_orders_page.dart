@@ -8,7 +8,8 @@ import '../../models/order.dart';
 import '../../providers/admin_orders_provider.dart';
 import '../../widgets/admin/admin_order_card.dart';
 import '../../widgets/admin/admin_order_filter_chips.dart';
-import '../../widgets/admin/admin_order_search_bar.dart';
+import '../../widgets/admin/admin_search_bar.dart';
+import '../../widgets/admin/confirm_action_dialog.dart';
 import '../../widgets/profile/profile_sub_page_header.dart';
 
 class AdminOrdersPage extends StatefulWidget {
@@ -54,94 +55,99 @@ class _AdminOrdersPageState extends State<AdminOrdersPage> {
     if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-      ),
+      SnackBar(content: Text(message)),
     );
   }
 
-  Future<void> _handleChangeStatus(
-    Order order,
-    OrderStatus status,
-  ) async {
-    if (status == OrderStatus.cancelled) {
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Cancelar pedido'),
-          content: Text(
-            '¿Cancelar el pedido #${order.shortId}? '
-            'El cliente recibirá una notificación.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Sí, cancelar'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('No'),
-            ),
-          ],
-        ),
-      );
+  /// Ejecuta una acción del provider y muestra el resultado: el mensaje
+  /// de éxito, o el motivo del error que dejó el provider.
+  Future<void> _run(
+    Future<bool> Function() action, {
+    required String success,
+    required String failure,
+  }) async {
+    final provider = context.read<AdminOrdersProvider>();
+    final ok = await action();
+    if (!mounted) return;
+    _snack(ok ? success : (provider.errorMessage ?? failure));
+  }
 
-      if (confirmed != true) return;
+  Future<void> _handleChangeStatus(Order order, OrderStatus status) async {
+    if (status == OrderStatus.cancelled) {
+      final confirmed = await confirmAction(
+        context,
+        title: 'Cancelar pedido',
+        message: '¿Cancelar el pedido #${order.shortId}? El cliente recibirá una notificación.',
+        confirmLabel: 'Sí, cancelar',
+        destructive: true,
+      );
+      if (!confirmed || !mounted) return;
     }
 
-    if (!mounted) return;
+    final provider = context.read<AdminOrdersProvider>();
+    await _run(
+      () => provider.updateStatus(order.id, status),
+      success: 'Pedido #${order.shortId}: ${status.label}',
+      failure: 'No se pudo cambiar el estado',
+    );
+  }
+
+  Future<void> _handleValidatePayment(Order order) async {
+    final confirmed = await confirmAction(
+      context,
+      title: 'Validar pago',
+      message: '¿Confirmas que el pago de ${_money(order.total)} del pedido #${order.shortId} '
+          'llegó a tu cuenta? Se avisará al cliente y el pedido pasará a Confirmado.',
+      confirmLabel: 'Sí, validar',
+    );
+    if (!confirmed || !mounted) return;
 
     final provider = context.read<AdminOrdersProvider>();
-
-    final ok = await provider.updateStatus(
-      order.id,
-      status,
+    await _run(
+      () => provider.validatePayment(order.id),
+      success: 'Pago validado. Se notificó al cliente.',
+      failure: 'No se pudo validar el pago',
     );
+  }
 
-    if (!mounted) return;
+  Future<void> _handleInvalidatePayment(Order order) async {
+    final confirmed = await confirmAction(
+      context,
+      title: 'Invalidar pago',
+      message: '¿El comprobante del pedido #${order.shortId} es falso o no corresponde? '
+          'El pedido se cancelará automáticamente y se notificará al cliente.',
+      confirmLabel: 'Sí, invalidar',
+      destructive: true,
+    );
+    if (!confirmed || !mounted) return;
 
-    _snack(
-      ok
-          ? 'Pedido #${order.shortId}: ${status.label}'
-          : (provider.errorMessage ?? 'No se pudo cambiar el estado'),
+    final provider = context.read<AdminOrdersProvider>();
+    await _run(
+      () => provider.invalidatePayment(order.id),
+      success: 'Pago invalidado. El pedido fue cancelado y se notificó al cliente.',
+      failure: 'No se pudo invalidar el pago',
     );
   }
 
   Future<void> _handleDelete(Order order) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Eliminar pedido'),
-        content: Text(
-          '¿Eliminar definitivamente el pedido #${order.shortId}?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('No'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Sí, eliminar'),
-          ),
-        ],
-      ),
+    final confirmed = await confirmAction(
+      context,
+      title: 'Eliminar pedido',
+      message: '¿Eliminar definitivamente el pedido #${order.shortId}?',
+      confirmLabel: 'Sí, eliminar',
+      destructive: true,
     );
-
-    if (confirmed != true || !mounted) return;
+    if (!confirmed || !mounted) return;
 
     final provider = context.read<AdminOrdersProvider>();
-
-    final ok = await provider.deleteOrder(order.id);
-
-    if (!mounted) return;
-
-    _snack(
-      ok
-          ? 'Pedido eliminado'
-          : (provider.errorMessage ?? 'No se pudo eliminar el pedido'),
+    await _run(
+      () => provider.deleteOrder(order.id),
+      success: 'Pedido eliminado',
+      failure: 'No se pudo eliminar el pedido',
     );
   }
+
+  String _money(double value) => '\$${value.toStringAsFixed(0)} COP';
 
   @override
   Widget build(BuildContext context) {
@@ -161,16 +167,10 @@ class _AdminOrdersPageState extends State<AdminOrdersPage> {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: Column(
               children: [
-                AdminOrderSearchBar(
+                AdminSearchBar(
                   controller: _searchController,
-                  searchQuery: provider.searchQuery,
-                  onChanged: (value) {
-                    provider.setSearchQuery(value);
-                  },
-                  onClear: () {
-                    _searchController.clear();
-                    provider.setSearchQuery('');
-                  },
+                  hint: 'Buscar por pedido, cliente, correo o teléfono...',
+                  onChanged: provider.setSearchQuery,
                 ),
                 const SizedBox(height: 10),
                 AdminOrderFilterChips(
@@ -268,12 +268,10 @@ class _AdminOrdersPageState extends State<AdminOrdersPage> {
                   _expandedOrderId == order.id ? null : order.id;
             });
           },
-          onChangeStatus: (status) {
-            _handleChangeStatus(order, status);
-          },
-          onDelete: () {
-            _handleDelete(order);
-          },
+          onChangeStatus: (status) => _handleChangeStatus(order, status),
+          onValidatePayment: () => _handleValidatePayment(order),
+          onInvalidatePayment: () => _handleInvalidatePayment(order),
+          onDelete: () => _handleDelete(order),
         );
       },
     );

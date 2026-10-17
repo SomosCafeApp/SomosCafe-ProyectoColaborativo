@@ -1,4 +1,4 @@
-import 'payment_method_model.dart';
+import 'order_payment.dart';
 import 'product_customization.dart';
 
 /// Un producto dentro de una orden ya creada. A diferencia de
@@ -190,7 +190,6 @@ class Order {
   final double discount;
   final double total;
   final OrderStatus status;
-  final String paymentStatus;
   final String notes;
   final DateTime? createdAt;
 
@@ -202,9 +201,12 @@ class Order {
   final String addressLabel;
   final String addressText;
 
-  // Método de pago (snapshot): título + detalle.
-  final String paymentTitle;
-  final String paymentDetail;
+  // Pago: efectivo o transferencia (con comprobante).
+  final PaymentMethodType paymentMethod;
+  final PaymentStatus paymentStatus;
+
+  /// URL del comprobante que subió el cliente ('' si no hay).
+  final String paymentProofUrl;
 
   // Cliente (solo viene poblado en GET /orders, vista admin).
   final String customerName;
@@ -223,7 +225,6 @@ class Order {
     required this.discount,
     required this.total,
     required this.status,
-    required this.paymentStatus,
     required this.notes,
     required this.createdAt,
     required this.deliveryType,
@@ -231,8 +232,9 @@ class Order {
     required this.recipientPhone,
     required this.addressLabel,
     required this.addressText,
-    required this.paymentTitle,
-    required this.paymentDetail,
+    required this.paymentMethod,
+    required this.paymentStatus,
+    this.paymentProofUrl = '',
     this.customerName = '',
     this.customerEmail = '',
     this.customerPhone = '',
@@ -254,6 +256,45 @@ class Order {
 
   bool get canCancel => cancelRemaining > Duration.zero;
 
+  bool get isTransfer => paymentMethod == PaymentMethodType.transfer;
+
+  bool get hasProof => paymentProofUrl.isNotEmpty;
+
+  /// Transferencia a la que todavía le falta subir el comprobante.
+  bool get needsProof =>
+      isTransfer && paymentStatus == PaymentStatus.awaitingProof && status != OrderStatus.cancelled;
+
+  /// Comprobante subido y esperando que el admin lo valide o invalide.
+  bool get awaitsValidation =>
+      isTransfer && paymentStatus == PaymentStatus.proofSubmitted && status != OrderStatus.cancelled;
+
+  /// El pago ya fue validado y el pedido sigue abierto: el admin aún
+  /// podría invalidarlo si detecta que el comprobante era falso.
+  bool get canInvalidateValidated =>
+      isTransfer && paymentStatus == PaymentStatus.validated && !status.isFinal;
+
+  /// Texto corto del estado del pago para el historial de pedidos.
+  String get paymentStatusLabel {
+    if (!isTransfer) {
+      if (status == OrderStatus.delivered) return 'Pagado en efectivo';
+      if (status == OrderStatus.cancelled) return 'Sin cobrar';
+      return deliveryType == DeliveryType.delivery ? 'Se paga al domiciliario' : 'Se paga en la cafetería';
+    }
+    // Se canceló antes de que el pago llegara a validarse.
+    final neverValidated = paymentStatus == PaymentStatus.awaitingProof || paymentStatus == PaymentStatus.proofSubmitted;
+    if (status == OrderStatus.cancelled && neverValidated) return 'Pago sin validar';
+    return paymentStatus.label;
+  }
+
+  /// Siguientes estados que puede aplicar el admin. Un pedido por
+  /// transferencia no avanza (solo se puede cancelar) hasta que su
+  /// pago esté validado; el backend aplica la misma regla.
+  List<OrderStatus> get nextStatusOptions {
+    final options = status.nextOptions(deliveryType);
+    if (!isTransfer || paymentStatus == PaymentStatus.validated) return options;
+    return options.where((s) => s == OrderStatus.cancelled).toList();
+  }
+
   factory Order.fromJson(Map<String, dynamic> json) {
     // Dirección: snapshot del pedido; para pedidos antiguos (sin
     // snapshot) se usa la dirección poblada, si todavía existe.
@@ -273,16 +314,8 @@ class Order {
       addressText = parts.join(', ');
     }
 
-    String paymentTitle = '';
-    String paymentDetail = '';
-    final rawPayment = json['paymentSnapshot'];
-    if (rawPayment is Map<String, dynamic> && (rawPayment['type'] as String? ?? '').isNotEmpty) {
-      final method = PaymentMethod.fromJson(rawPayment);
-      paymentTitle = method.displayTitle;
-      paymentDetail = method.type == 'CARD' && method.lastFourDigits.isNotEmpty
-          ? '•••• ${method.lastFourDigits}'
-          : method.displaySubtitle;
-    }
+    final rawProof = json['paymentProof'];
+    final paymentProofUrl = rawProof is Map<String, dynamic> ? (rawProof['url'] as String? ?? '') : '';
 
     String customerName = '';
     String customerEmail = '';
@@ -319,7 +352,6 @@ class Order {
       discount: (json['discount'] as num?)?.toDouble() ?? 0,
       total: (json['total'] as num?)?.toDouble() ?? 0,
       status: parseOrderStatus(json['status'] as String?),
-      paymentStatus: json['paymentStatus'] as String? ?? 'PENDING',
       notes: json['notes'] as String? ?? '',
       createdAt: createdAt,
       deliveryType: parseDeliveryType(json['deliveryType'] as String?),
@@ -327,8 +359,9 @@ class Order {
       recipientPhone: json['recipientPhone'] as String? ?? '',
       addressLabel: addressLabel,
       addressText: addressText,
-      paymentTitle: paymentTitle,
-      paymentDetail: paymentDetail,
+      paymentMethod: parsePaymentMethod(json['paymentMethod'] as String?),
+      paymentStatus: parsePaymentStatus(json['paymentStatus'] as String?),
+      paymentProofUrl: paymentProofUrl,
       customerName: customerName,
       customerEmail: customerEmail,
       customerPhone: customerPhone,

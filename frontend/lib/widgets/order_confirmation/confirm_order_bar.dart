@@ -2,16 +2,17 @@ import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
 
-/// Barra inferior con el botón "Confirmar pedido · $total".
+/// Barra inferior con el botón de acción principal de la pantalla
+/// (confirmar pedido, continuar con el pago, enviar comprobante...).
 class ConfirmOrderBar extends StatelessWidget {
-  final double total;
+  final String label;
   final bool isLoading;
   final bool enabled;
   final VoidCallback onConfirm;
 
   const ConfirmOrderBar({
     super.key,
-    required this.total,
+    required this.label,
     required this.isLoading,
     required this.enabled,
     required this.onConfirm,
@@ -38,7 +39,7 @@ class ConfirmOrderBar extends StatelessWidget {
                   child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                 )
               : Text(
-                  'Confirmar pedido · \$${total.toStringAsFixed(0)} COP',
+                  label,
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
         ),

@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/constants/app_colors.dart';
 import '../../models/product_model.dart';
 import '../../providers/admin_products_provider.dart';
 import '../../providers/product_provider.dart';
-import '../../widgets/admin/admin_crud_section.dart';
-import '../../widgets/admin/admin_search_field.dart';
+import '../../widgets/admin/admin_add_button.dart';
+import '../../widgets/admin/admin_search_bar.dart';
 import '../../widgets/admin/product/admin_product_card.dart';
+import '../../widgets/admin/product/admin_product_filters.dart';
 import '../../widgets/admin/product/product_dialogs.dart';
 import '../../widgets/admin/product/product_form_card.dart';
 import '../../widgets/profile/profile_sub_page_header.dart';
@@ -14,6 +16,10 @@ import '../../widgets/profile/profile_sub_page_header.dart';
 /// Sección "Productos" del panel admin: lista de todos los productos
 /// (incluidos los ocultos), formulario con imagen (Cloudinary),
 /// ocultar/mostrar del menú, editar y eliminar definitivamente.
+///
+/// Pensada para catálogos grandes: búsqueda con retraso, filtros por
+/// visibilidad y categoría, y una lista perezosa que solo construye las
+/// tarjetas visibles en pantalla.
 class AdminProductsPage extends StatefulWidget {
   const AdminProductsPage({super.key});
 
@@ -22,6 +28,8 @@ class AdminProductsPage extends StatefulWidget {
 }
 
 class _AdminProductsPageState extends State<AdminProductsPage> {
+  final TextEditingController _searchController = TextEditingController();
+
   bool _showForm = false;
   Product? _editing;
 
@@ -36,6 +44,12 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
       final catalog = context.read<ProductProvider>();
       if (catalog.categories.isEmpty) catalog.fetchCategories();
     });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   void _snack(String message) {
@@ -147,56 +161,117 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
       body: Column(
         children: [
           const ProfileSubPageHeader(title: 'Productos', subtitle: 'Menú, precios e imágenes'),
+          // Búsqueda y filtros fijos arriba (como en Pedidos); con el
+          // formulario abierto se ocultan.
+          if (!_showForm && provider.products.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+              child: Column(
+                children: [
+                  AdminSearchBar(
+                    controller: _searchController,
+                    hint: 'Buscar por nombre o categoría...',
+                    onChanged: provider.setSearchQuery,
+                  ),
+                  const SizedBox(height: 10),
+                  AdminProductFilters(provider: provider),
+                ],
+              ),
+            ),
           Expanded(
             child: RefreshIndicator(
               onRefresh: provider.fetchProducts,
-              child: SingleChildScrollView(
+              child: CustomScrollView(
                 physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (provider.errorMessage != null && provider.products.isEmpty && !provider.isLoading)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: Text(provider.errorMessage!, style: const TextStyle(color: Colors.red)),
-                      ),
-                    if (!_showForm && provider.products.isNotEmpty)
-                      AdminSearchField(
-                        hint: 'Buscar por nombre o categoría',
-                        onChanged: provider.setSearchQuery,
-                      ),
-                    AdminCrudSection<Product>(
-                      addButtonLabel: 'Agregar producto',
-                      showForm: _showForm,
-                      onAddPressed: _openForm,
-                      formChild: ProductFormCard(
-                        key: ValueKey(_editing?.id ?? 'new'),
-                        initial: _editing,
-                        isSubmitting: provider.isSubmitting,
-                        onClose: _closeForm,
-                        onSubmit: _handleSubmit,
-                      ),
-                      isLoading: provider.isLoading,
-                      items: provider.filteredProducts,
-                      emptyText: provider.products.isEmpty
-                          ? 'Todavía no hay productos.'
-                          : 'Ningún producto coincide con la búsqueda.',
-                      itemBuilder: (context, product) => AdminProductCard(
-                        product: product,
-                        isBusy: provider.busyProductId == product.id,
-                        onToggleAvailability: () => _setAvailability(product, !product.isAvailable),
-                        onEdit: () => _openForm(product),
-                        onDelete: () => _handleDelete(product),
-                      ),
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                      child: _showForm
+                          ? ProductFormCard(
+                              key: ValueKey(_editing?.id ?? 'new'),
+                              initial: _editing,
+                              isSubmitting: provider.isSubmitting,
+                              onClose: _closeForm,
+                              onSubmit: _handleSubmit,
+                            )
+                          : AdminAddButton(label: 'Agregar producto', onPressed: () => _openForm()),
                     ),
-                  ],
-                ),
+                  ),
+                  if (!_showForm) ..._listSlivers(provider),
+                  const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                ],
               ),
             ),
           ),
         ],
       ),
     );
+  }
+
+  /// Lista perezosa: SliverList.builder solo crea las tarjetas que se
+  /// ven (antes se construían todas de golpe, con su imagen de red).
+  List<Widget> _listSlivers(AdminProductsProvider provider) {
+    final theme = Theme.of(context);
+    final subtitleColor =
+        theme.brightness == Brightness.dark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
+
+    Widget centered(Widget child) => SliverFillRemaining(
+          hasScrollBody: false,
+          child: Center(child: Padding(padding: const EdgeInsets.all(24), child: child)),
+        );
+
+    if (provider.isLoading && provider.products.isEmpty) {
+      return [centered(const CircularProgressIndicator())];
+    }
+
+    if (provider.errorMessage != null && provider.products.isEmpty) {
+      return [
+        centered(Text(provider.errorMessage!, textAlign: TextAlign.center, style: const TextStyle(color: Colors.red))),
+      ];
+    }
+
+    final items = provider.filteredProducts;
+
+    if (items.isEmpty) {
+      return [
+        centered(
+          Text(
+            provider.products.isEmpty ? 'Todavía no hay productos.' : 'Ningún producto coincide con la búsqueda.',
+            style: TextStyle(color: subtitleColor, fontSize: 14),
+          ),
+        ),
+      ];
+    }
+
+    return [
+      SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+          child: Text(
+            'Mostrando ${items.length} de ${provider.products.length} productos',
+            style: TextStyle(fontSize: 12, color: subtitleColor),
+          ),
+        ),
+      ),
+      SliverPadding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        sliver: SliverList.builder(
+          itemCount: items.length,
+          itemBuilder: (context, index) {
+            final product = items[index];
+
+            return AdminProductCard(
+              key: ValueKey(product.id),
+              product: product,
+              isBusy: provider.busyProductId == product.id,
+              onToggleAvailability: () => _setAvailability(product, !product.isAvailable),
+              onEdit: () => _openForm(product),
+              onDelete: () => _handleDelete(product),
+            );
+          },
+        ),
+      ),
+    ];
   }
 }

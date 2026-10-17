@@ -7,6 +7,7 @@ import '../models/order.dart';
 import '../models/product_model.dart';
 import '../providers/cart_provider.dart';
 import '../providers/order_provider.dart';
+import 'transfer_payment_page.dart';
 import '../widgets/profile/profile_sub_page_header.dart';
 import '../widgets/orders/order_card_item.dart';
 import '../widgets/orders/empty_orders_view.dart';
@@ -153,6 +154,14 @@ class _OrdersPageState extends State<OrdersPage> {
     );
   }
 
+  /// Pedido por transferencia al que aún le falta el comprobante.
+  void _openPayment(Order order) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => TransferPaymentPage(order: order)),
+    );
+  }
+
   void _handleExploreMenu() {
     if (widget.onExploreMenu != null) {
       widget.onExploreMenu!();
@@ -247,6 +256,7 @@ class _OrdersPageState extends State<OrdersPage> {
             });
           },
           onReorder: () => _handleReorder(order),
+          onPay: order.needsProof ? () => _openPayment(order) : null,
           onCancel: order.canCancel
               ? () => _handleCancel(order)
               : null,

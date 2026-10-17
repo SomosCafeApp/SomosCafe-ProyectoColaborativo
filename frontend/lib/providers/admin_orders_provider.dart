@@ -5,9 +5,10 @@ import '../services/api_client.dart';
 import '../services/api_exception.dart';
 
 /// Pedidos de TODOS los usuarios para el panel admin.
-/// Reutiliza GET /orders, PATCH /orders/:id/status y DELETE /orders/:id
-/// (todas protegidas con adminOnly en el backend: aunque alguien
-/// llegara a esta pantalla sin ser admin, el servidor lo rechaza).
+/// Reutiliza GET /orders, PATCH /orders/:id/status, DELETE /orders/:id
+/// y PATCH /orders/:id/payment/(validate|invalidate) (todas protegidas
+/// con adminOnly en el backend: aunque alguien llegara a esta pantalla
+/// sin ser admin, el servidor lo rechaza).
 class AdminOrdersProvider extends ChangeNotifier {
   List<Order> _orders = [];
   String? _token;
@@ -20,6 +21,9 @@ class AdminOrdersProvider extends ChangeNotifier {
   String? _busyOrderId;
 
   OrderStatus? _statusFilter;
+
+  /// Filtro rápido: solo pedidos con comprobante esperando validación.
+  bool _validationFilter = false;
   String _searchQuery = '';
 
   List<Order> get orders => _orders;
@@ -27,6 +31,7 @@ class AdminOrdersProvider extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   String? get busyOrderId => _busyOrderId;
   OrderStatus? get statusFilter => _statusFilter;
+  bool get validationFilter => _validationFilter;
   String get searchQuery => _searchQuery;
 
   /// Pedidos tras aplicar filtro de estado y búsqueda (por número de
@@ -36,6 +41,7 @@ class AdminOrdersProvider extends ChangeNotifier {
 
     return _orders.where((o) {
       if (_statusFilter != null && o.status != _statusFilter) return false;
+      if (_validationFilter && !o.awaitsValidation) return false;
       if (query.isEmpty) return true;
 
       final haystack = [
@@ -55,6 +61,9 @@ class AdminOrdersProvider extends ChangeNotifier {
   int countFor(OrderStatus? status) =>
       status == null ? _orders.length : _orders.where((o) => o.status == status).length;
 
+  /// Pedidos con comprobante subido que el admin aún debe validar.
+  int get pendingValidationCount => _orders.where((o) => o.awaitsValidation).length;
+
   void updateAuth(String? token, bool isAdmin) {
     final wasAdmin = _token != null && _isAdmin;
     _token = token;
@@ -64,6 +73,7 @@ class AdminOrdersProvider extends ChangeNotifier {
       if (wasAdmin || _orders.isNotEmpty) {
         _orders = [];
         _statusFilter = null;
+        _validationFilter = false;
         _searchQuery = '';
         _errorMessage = null;
         notifyListeners();
@@ -73,6 +83,13 @@ class AdminOrdersProvider extends ChangeNotifier {
 
   void setStatusFilter(OrderStatus? status) {
     _statusFilter = status;
+    _validationFilter = false;
+    notifyListeners();
+  }
+
+  void setValidationFilter() {
+    _validationFilter = true;
+    _statusFilter = null;
     notifyListeners();
   }
 
@@ -137,6 +154,53 @@ class AdminOrdersProvider extends ChangeNotifier {
       _busyOrderId = null;
       notifyListeners();
     }
+  }
+
+  /// Valida el pago por transferencia: el pedido pasa a Confirmado y el
+  /// cliente recibe la notificación. Devuelve true si se aplicó.
+  Future<bool> validatePayment(String orderId) => _paymentAction(orderId, 'validate');
+
+  /// Invalida el pago (comprobante falso): el pedido se cancela solo y
+  /// el cliente recibe la notificación. Devuelve true si se aplicó.
+  Future<bool> invalidatePayment(String orderId) => _paymentAction(orderId, 'invalidate');
+
+  Future<bool> _paymentAction(String orderId, String action) async {
+    if (_token == null || !_isAdmin) return false;
+
+    _busyOrderId = orderId;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await ApiClient.patch('/orders/$orderId/payment/$action', token: _token);
+      await fetchOrders(silent: true);
+      return true;
+    } on ApiException catch (e) {
+      _errorMessage = _translatePaymentError(e.message);
+      // Pudo cambiar en otro lado (el cliente reemplazó el comprobante...).
+      await fetchOrders(silent: true);
+      return false;
+    } finally {
+      _busyOrderId = null;
+      notifyListeners();
+    }
+  }
+
+  String _translatePaymentError(String message) {
+    final lower = message.toLowerCase();
+    if (lower.contains('no payment proof')) {
+      return 'Este pedido no tiene un comprobante pendiente de revisión.';
+    }
+    if (lower.contains('already closed')) {
+      return 'El pedido ya está cerrado y no se puede modificar.';
+    }
+    if (lower.contains('was cancelled')) {
+      return 'Este pedido ya fue cancelado.';
+    }
+    if (lower.contains('changed in the meantime')) {
+      return 'El pedido cambió mientras lo revisabas. Revísalo de nuevo.';
+    }
+    return message;
   }
 
   /// Elimina un pedido (el backend solo permite los CANCELLED).

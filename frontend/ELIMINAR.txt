@@ -1,1 +1,0 @@
-Eliminar: lib/widgets/admin/product/product_image_picker.dart (reemplazado por lib/widgets/admin/admin_image_picker.dart)

@@ -15,7 +15,6 @@ import 'addresses_page.dart';
 import 'favorites_page.dart';
 import 'notifications_page.dart';
 import 'orders_page.dart';
-import 'payment_methods_page.dart';
 import 'rewards_page.dart';
 import 'settings_page.dart';
 
@@ -116,26 +115,6 @@ class ProfilePage extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (_) => const NotificationsPage(),
-                      ),
-                    ),
-                  ),
-
-                  // MÉTODOS DE PAGO
-                  ProfileOptionCard(
-                    cardColor: cardColor,
-                    textColor: textColor,
-                    subtitleColor: subtitleColor,
-                    icon: Icons.credit_card_rounded,
-                    iconBgColor: isDark
-                        ? const Color(0xFF332029)
-                        : AppColors.catSweet,
-                    iconColor: const Color(0xFFE91E63),
-                    title: 'Métodos de Pago',
-                    subtitle: 'Tarjetas y opciones de pago',
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const PaymentMethodsPage(),
                       ),
                     ),
                   ),

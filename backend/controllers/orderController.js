@@ -4,12 +4,13 @@ import Order, {
     ORDER_STATUSES,
     DELIVERY_TYPES,
     DELIVERY_FEE,
+    PAYMENT_METHODS,
     CANCEL_WINDOW_MINUTES,
-    USER_CANCELLABLE_STATUSES
+    USER_CANCELLABLE_STATUSES,
+    USER_CANCELLABLE_PAYMENT_STATUSES
 } from "../models/orderModel.js";
 import Product from "../models/productModel.js";
 import Address from "../models/addressModel.js";
-import PaymentMethod from "../models/paymentMethodModel.js";
 import Cart from "../models/cartModel.js";
 import User from "../models/userModel.js";
 import Point from "../models/pointsModel.js";
@@ -21,6 +22,8 @@ import {
 } from "../utils/customization.js";
 
 import { getDiscountResolver } from "../utils/promotions.js";
+
+import { deleteCloudinaryImage } from "../utils/cloudinary.js";
 
 // Puntos que gana el cliente cuando el pedido pasa a DELIVERED
 // (mismo valor que anuncia rewards_page.dart: "10 puntos por cada compra").
@@ -40,6 +43,10 @@ const shortId = (order) =>
 // y CANCELLED desde cualquier estado que aún no sea final.
 // Los pedidos "En local" (PICKUP) no pasan por OUT_FOR_DELIVERY:
 // READY → DELIVERED. Los de envío (DELIVERY) sí deben pasar por él.
+//
+// Los pedidos por TRANSFER no avanzan (salvo cancelar) hasta que el
+// admin valide el comprobante: validar el pago los pasa a CONFIRMED
+// (ver orderPaymentController.js).
 
 const NEXT_STATUSES = {
     PENDING: ["CONFIRMED", "CANCELLED"],
@@ -249,7 +256,7 @@ export const getOrderById = async (req, res) => {
 // CREATE ORDER
 // ===================================
 // El cliente solo manda QUÉ quiere (producto, cantidad, opciones) y
-// DÓNDE/CÓMO (entrega, receptor, dirección, método de pago). Precios,
+// DÓNDE/CÓMO (entrega, receptor, dirección, CASH o TRANSFER). Precios,
 // personalizaciones, envío, descuento y total se calculan aquí.
 export const createOrder = async (req, res) => {
 
@@ -261,7 +268,7 @@ export const createOrder = async (req, res) => {
             recipientName,
             recipientPhone,
             addressId,
-            paymentMethodId,
+            paymentMethod,
             notes
         } = req.body;
 
@@ -337,27 +344,12 @@ export const createOrder = async (req, res) => {
         }
 
         // ===================================
-        // PAYMENT METHOD (debe ser del usuario y estar activo)
+        // PAYMENT METHOD (efectivo o transferencia)
         // ===================================
 
-        if (
-            !paymentMethodId ||
-            !mongoose.isValidObjectId(paymentMethodId)
-        ) {
+        if (!PAYMENT_METHODS.includes(paymentMethod)) {
             return res.status(400).json({
-                message: "Payment method is required"
-            });
-        }
-
-        const paymentMethod = await PaymentMethod.findOne({
-            _id: paymentMethodId,
-            userId: req.user.id,
-            isActive: true
-        });
-
-        if (!paymentMethod) {
-            return res.status(404).json({
-                message: "Payment method not found"
+                message: "Payment method must be CASH or TRANSFER"
             });
         }
 
@@ -513,16 +505,15 @@ export const createOrder = async (req, res) => {
             shippingCost,
             discount,
             total,
-            paymentMethodId: paymentMethod._id,
-            paymentSnapshot: {
-                type: paymentMethod.type,
-                provider: paymentMethod.provider,
-                name: paymentMethod.name,
-                lastFourDigits: paymentMethod.lastFourDigits
-            },
+            paymentMethod,
             notes: orderNotes,
             status: "PENDING",
-            paymentStatus: "PENDING"
+            // Efectivo se cobra al entregar; transferencia espera el
+            // comprobante que sube el cliente.
+            paymentStatus:
+                paymentMethod === "TRANSFER"
+                    ? "AWAITING_PROOF"
+                    : "PENDING"
         });
 
         // El carrito se vacía solo si el pedido se creó bien (si
@@ -640,6 +631,20 @@ export const updateOrderStatus = async (req, res) => {
             });
         }
 
+        // Un pedido por transferencia no se prepara ni se entrega
+        // hasta que el admin valide el comprobante (cancelar sí se
+        // puede siempre).
+        if (
+            status !== "CANCELLED" &&
+            order.paymentMethod === "TRANSFER" &&
+            order.paymentStatus !== "VALIDATED"
+        ) {
+            return res.status(400).json({
+                message:
+                    "The transfer payment must be validated before moving this order forward"
+            });
+        }
+
         const update = { status };
 
         if (status === "DELIVERED") {
@@ -686,63 +691,12 @@ export const updateOrderStatus = async (req, res) => {
 };
 
 // ===================================
-// UPDATE PAYMENT STATUS - ADMIN
-// ===================================
-export const updatePaymentStatus = async (req, res) => {
-
-    try {
-
-        const { paymentStatus } = req.body;
-
-        const validStatuses = [
-            "PENDING",
-            "PAID",
-            "FAILED",
-            "REFUNDED"
-        ];
-
-        if (!validStatuses.includes(paymentStatus)) {
-            return res.status(400).json({
-                message: "Invalid payment status"
-            });
-        }
-
-        const order = await Order.findById(req.params.id);
-
-        if (!order) {
-            return res.status(404).json({
-                message: "Order not found"
-            });
-        }
-
-        order.paymentStatus = paymentStatus;
-
-        await order.save();
-
-        return res.status(200).json({
-            message: "Payment status updated successfully",
-            order
-        });
-
-    } catch (error) {
-
-        console.error("Update payment status error:", error);
-
-        return res.status(500).json({
-            message: "Error updating payment status",
-            error: error.message
-        });
-
-    }
-
-};
-
-// ===================================
 // CANCEL USER ORDER
 // ===================================
 // Reglas (todas verificadas aquí, no en Flutter):
 //  - el pedido es del usuario
 //  - estado cancelable (PENDING o CONFIRMED, como ya existía)
+//  - sin comprobante de pago enviado (si ya pagó, solo el admin cancela)
 //  - dentro de los CANCEL_WINDOW_MINUTES desde su creación
 export const cancelOrder = async (req, res) => {
 
@@ -777,6 +731,17 @@ export const cancelOrder = async (req, res) => {
             });
         }
 
+        if (
+            !USER_CANCELLABLE_PAYMENT_STATUSES.includes(
+                order.paymentStatus
+            )
+        ) {
+            return res.status(400).json({
+                message:
+                    "This order can no longer be cancelled because its payment is already in review"
+            });
+        }
+
         const now = new Date();
 
         const windowStart = new Date(
@@ -792,6 +757,9 @@ export const cancelOrder = async (req, res) => {
                 _id: order._id,
                 userId: req.user.id,
                 status: { $in: USER_CANCELLABLE_STATUSES },
+                paymentStatus: {
+                    $in: USER_CANCELLABLE_PAYMENT_STATUSES
+                },
                 createdAt: { $gte: windowStart }
             },
             {
@@ -869,6 +837,12 @@ export const deleteOrder = async (req, res) => {
             return res.status(400).json({
                 message: "Only cancelled orders can be deleted"
             });
+        }
+
+        // El comprobante es un archivo en Cloudinary: se borra junto
+        // con el pedido para no dejar huérfanos.
+        if (order.paymentProof?.url) {
+            await deleteCloudinaryImage(order.paymentProof.url);
         }
 
         await order.deleteOne();

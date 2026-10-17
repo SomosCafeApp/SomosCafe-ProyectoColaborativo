@@ -39,6 +39,13 @@ class AdminProductsProvider extends ChangeNotifier {
   ProductVisibilityFilter _visibilityFilter = ProductVisibilityFilter.all;
   String? _categoryFilter;
 
+  // Resultado de filtrar, guardado hasta que cambie la lista o un filtro:
+  // la UI lo consulta en cada reconstrucción y recalcularlo con muchos
+  // productos era el cuello de botella.
+  List<Product>? _filteredCache;
+
+  void _invalidateFilter() => _filteredCache = null;
+
   List<Product> get products => _products;
   bool get isLoading => _isLoading;
   bool get isSubmitting => _isSubmitting;
@@ -50,7 +57,9 @@ class AdminProductsProvider extends ChangeNotifier {
   String? get categoryFilter => _categoryFilter;
 
   /// Productos tras aplicar búsqueda, visibilidad y categoría.
-  List<Product> get filteredProducts {
+  List<Product> get filteredProducts => _filteredCache ??= _computeFiltered();
+
+  List<Product> _computeFiltered() {
     final query = _searchQuery.trim().toLowerCase();
 
     return _products.where((p) {
@@ -106,23 +115,28 @@ class AdminProductsProvider extends ChangeNotifier {
       _searchQuery = '';
       _visibilityFilter = ProductVisibilityFilter.all;
       _categoryFilter = null;
+      _invalidateFilter();
       notifyListeners();
     }
   }
 
   void setSearchQuery(String query) {
+    if (query == _searchQuery) return;
     _searchQuery = query;
+    _invalidateFilter();
     notifyListeners();
   }
 
   void setVisibilityFilter(ProductVisibilityFilter filter) {
     _visibilityFilter = filter;
+    _invalidateFilter();
     notifyListeners();
   }
 
   /// Tocar la categoría ya seleccionada quita el filtro.
   void toggleCategoryFilter(String categoryId) {
     _categoryFilter = _categoryFilter == categoryId ? null : categoryId;
+    _invalidateFilter();
     notifyListeners();
   }
 
@@ -136,6 +150,7 @@ class AdminProductsProvider extends ChangeNotifier {
       final data = await ApiClient.get('/products/admin/all', token: _token);
       final raw = data['products'] as List? ?? [];
       _products = raw.map((e) => Product.fromJson(e as Map<String, dynamic>)).toList();
+      _invalidateFilter();
     } on ApiException catch (e) {
       _errorMessage = e.message;
     } finally {
@@ -239,6 +254,13 @@ class AdminProductsProvider extends ChangeNotifier {
   Future<bool> setAvailability(String id, bool isAvailable) {
     return _runBusy(id, () async {
       await ApiClient.put('/products/$id', token: _token, body: {'isAvailable': isAvailable});
+
+      // Se actualiza solo ese producto en memoria: volver a descargar
+      // toda la lista por cambiar un interruptor era lo más lento.
+      _products = [
+        for (final p in _products) p.id == id ? p.copyWith(isAvailable: isAvailable) : p,
+      ];
+      _invalidateFilter();
     });
   }
 
@@ -248,6 +270,15 @@ class AdminProductsProvider extends ChangeNotifier {
   Future<bool> deleteProduct(String id) {
     return _runBusy(id, () async {
       await ApiClient.delete('/products/$id', token: _token);
+
+      _products = _products.where((p) => p.id != id).toList();
+
+      // Si era el último de la categoría filtrada, se quita el filtro
+      // (su chip desaparece y la lista quedaría vacía sin salida).
+      if (_categoryFilter != null && !_products.any((p) => p.categoryId == _categoryFilter)) {
+        _categoryFilter = null;
+      }
+      _invalidateFilter();
     });
   }
 
@@ -259,7 +290,6 @@ class AdminProductsProvider extends ChangeNotifier {
 
     try {
       await action();
-      await fetchProducts();
       return true;
     } on ApiException catch (e) {
       _errorMessage = e.message;

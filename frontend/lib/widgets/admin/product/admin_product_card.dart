@@ -61,6 +61,10 @@ class AdminProductCard extends StatelessWidget {
                         ? Image.network(
                             product.imageUrl,
                             fit: BoxFit.cover,
+                            // Se decodifica al tamaño real del recuadro (72 px):
+                            // con cientos de productos, las imágenes completas
+                            // consumían mucha memoria y tiempo.
+                            cacheWidth: 160,
                             errorBuilder: (_, __, ___) => Icon(Icons.local_cafe_outlined, color: subtitleColor),
                           )
                         : Icon(Icons.local_cafe_outlined, color: subtitleColor),

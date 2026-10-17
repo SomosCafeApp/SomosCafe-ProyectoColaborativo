@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../core/constants/app_colors.dart';
 import '../models/order.dart';
+import '../models/order_payment.dart';
 import 'main_navigation_screen.dart';
 
 class OrderSuccessPage extends StatelessWidget {
@@ -12,6 +13,22 @@ class OrderSuccessPage extends StatelessWidget {
     final id = order.id;
     final shortId = id.length >= 6 ? id.substring(id.length - 6) : id;
     return '#${shortId.toUpperCase()}';
+  }
+
+  String get _title =>
+      order.isTransfer ? '¡Comprobante enviado!' : '¡Pedido Confirmado!';
+
+  /// Qué sigue según el método de pago elegido.
+  String get _message {
+    if (order.isTransfer) {
+      return 'Estamos validando tu pago. Te avisaremos cuando sea validado y comencemos a preparar tu café.';
+    }
+
+    final payTo = order.deliveryType == DeliveryType.delivery
+        ? 'Paga en efectivo al domiciliario cuando recibas tu pedido.'
+        : 'Paga en efectivo en la cafetería cuando recojas tu pedido.';
+
+    return 'Recibimos tu pedido. $payTo Puedes cancelarlo desde Mis Pedidos durante los próximos 10 minutos y te avisaremos cuando cambie de estado.';
   }
 
   @override
@@ -48,7 +65,7 @@ class OrderSuccessPage extends StatelessWidget {
               ),
               const SizedBox(height: 28),
               Text(
-                '¡Pedido Confirmado!',
+                _title,
                 style: TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.bold,
@@ -66,7 +83,7 @@ class OrderSuccessPage extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                'Recibimos tu pedido. Puedes cancelarlo desde Mis Pedidos durante los próximos 10 minutos y te avisaremos cuando cambie de estado.',
+                _message,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 15,
