@@ -6,7 +6,9 @@ import '../models/product_model.dart';
 import '../pages/product_detail_page.dart';
 import '../providers/favorites_provider.dart';
 
-class ProductCard extends StatelessWidget {
+import '../animations/animations.dart';
+import '../providers/auth_provider.dart';
+class ProductCard extends StatefulWidget {
   final Product product;
   final VoidCallback onAddToCart;
 
@@ -15,6 +17,31 @@ class ProductCard extends StatelessWidget {
     required this.product,
     required this.onAddToCart,
   });
+
+  @override
+  State<ProductCard> createState() => _ProductCardState();
+}
+
+class _ProductCardState extends State<ProductCard> {
+  // Etiqueta única por tarjeta: así la foto "vuela" al detalle sin chocar
+  // con el mismo producto mostrado en otra pestaña.
+  final Object _heroTag = UniqueKey();
+
+  Product get product => widget.product;
+  VoidCallback get onAddToCart => widget.onAddToCart;
+
+  /// Lanza la miniatura hacia el carrito (solo si hay sesión iniciada,
+  /// que es cuando el producto sí se agrega).
+  void _flyFrom(BuildContext fromContext) {
+    if (!context.read<AuthProvider>().isLoggedIn) return;
+    final box = fromContext.findRenderObject();
+    if (box is! RenderBox || !box.attached) return;
+    CartFly.launch(
+      context,
+      from: box.localToGlobal(Offset.zero) & box.size,
+      imageUrl: product.imageUrl,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +88,7 @@ class ProductCard extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => ProductDetailPage(product: product),
+                builder: (context) => ProductDetailPage(product: product, heroTag: _heroTag),
               ),
             );
           },
@@ -74,7 +101,9 @@ class ProductCard extends StatelessWidget {
                   children: [
                     // Imagen sin bordes ni padding
                     Positioned.fill(
-                      child: ClipRRect(
+                      child: Hero(
+                        tag: _heroTag,
+                        child: ClipRRect(
                         borderRadius: const BorderRadius.vertical(
                           top: Radius.circular(20),
                         ),
@@ -100,6 +129,7 @@ class ProductCard extends StatelessWidget {
                                     ))
                               : _buildFallbackIcon(AppColors.primary),
                         ),
+                      ),
                       ),
                     ),
 
@@ -160,14 +190,17 @@ class ProductCard extends StatelessWidget {
                               ),
                             ],
                           ),
-                          child: Icon(
-                            isFav
-                                ? Icons.favorite_rounded
-                                : Icons.favorite_border_rounded,
-                            color: isFav
-                                ? const Color(0xFFE53935)
-                                : subtitleColor,
-                            size: 18,
+                          child: HeartPop(
+                            active: isFav,
+                            child: Icon(
+                              isFav
+                                  ? Icons.favorite_rounded
+                                  : Icons.favorite_border_rounded,
+                              color: isFav
+                                  ? const Color(0xFFE53935)
+                                  : subtitleColor,
+                              size: 18,
+                            ),
                           ),
                         ),
                       ),
@@ -301,8 +334,12 @@ class ProductCard extends StatelessWidget {
                             ),
                           ],
                         ),
-                        GestureDetector(
-                          onTap: onAddToCart,
+                        Builder(
+                          builder: (btnContext) => PressScale(
+                          onTap: () {
+                            _flyFrom(btnContext);
+                            onAddToCart();
+                          },
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 10,
@@ -330,6 +367,7 @@ class ProductCard extends StatelessWidget {
                                 ),
                               ],
                             ),
+                          ),
                           ),
                         ),
                       ],

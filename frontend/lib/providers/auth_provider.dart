@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_client.dart';
 import '../services/api_exception.dart';
 import '../services/google_auth_service.dart';
+import '../services/push_service.dart';
 import '../models/user_model.dart';
 
 const _kTokenKey = 'auth_token';
@@ -323,6 +324,133 @@ class AuthProvider extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
+  // ===================================
+  // CUENTA (usuario logueado) → /api/account
+  // ===================================
+
+  /// Guarda los datos personales. [birthDate] ("AAAA-MM-DD") solo se
+  /// acepta si todavía no tenía uno registrado. Devuelve true si se guardó.
+  Future<bool> updateProfile({
+    required String name,
+    required String lastName,
+    required String phone,
+    String? birthDate,
+  }) async {
+    if (_token == null) return false;
+    _setLoading(true);
+    _errorMessage = null;
+    try {
+      final data = await ApiClient.patch('/account/profile', token: _token, body: {
+        'name': name.trim(),
+        'lastName': lastName.trim(),
+        'phone': phone.trim(),
+        if (birthDate != null) 'birthDate': birthDate,
+      });
+      _user = AppUser.fromJson(data['user'] as Map<String, dynamic>);
+      await _persistSession(_token!, _user!);
+      _setLoading(false);
+      return true;
+    } on ApiException catch (e) {
+      _errorMessage = _translateAccountError(e.message);
+      _setLoading(false);
+      return false;
+    }
+  }
+
+  /// Método 1: contraseña actual + nueva. La sesión sigue abierta.
+  Future<bool> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) =>
+      _accountPasswordCall('/account/password', {
+        'currentPassword': currentPassword,
+        'newPassword': newPassword,
+      });
+
+  /// Método 2, paso 1 ("¿Olvidaste tu contraseña?"): envía el código al
+  /// correo de la cuenta logueada (no se pide el correo).
+  Future<bool> requestOwnPasswordCode() => _accountPasswordCall('/account/password/code', const {});
+
+  /// Método 2, paso 2: valida el código y guarda la nueva contraseña.
+  Future<bool> changePasswordWithCode({
+    required String code,
+    required String newPassword,
+  }) =>
+      _accountPasswordCall('/account/password/reset', {
+        'code': code.trim(),
+        'newPassword': newPassword,
+      });
+
+  Future<bool> _accountPasswordCall(String path, Map<String, dynamic> body) async {
+    if (_token == null) return false;
+    _setLoading(true);
+    _errorMessage = null;
+    try {
+      await ApiClient.post(path, token: _token, body: body);
+      _setLoading(false);
+      return true;
+    } on ApiException catch (e) {
+      _errorMessage = _translateAccountError(e.message);
+      _setLoading(false);
+      return false;
+    }
+  }
+
+  /// Elimina la cuenta (irreversible; el backend anonimiza los datos).
+  /// [password] solo hace falta si la cuenta tiene contraseña. Si sale
+  /// bien, cierra la sesión en este teléfono.
+  Future<bool> deleteAccount({String? password}) async {
+    if (_token == null) return false;
+    _setLoading(true);
+    _errorMessage = null;
+    try {
+      await ApiClient.post('/account/delete', token: _token, body: {
+        if (password != null) 'password': password,
+        'confirmation': 'ELIMINAR',
+      });
+      // La cuenta ya no existe: se limpia la sesión local sin intentar
+      // dar de baja el dispositivo (el backend ya lo borró).
+      _stopKeepAlive();
+      _user = null;
+      _token = null;
+      _pendingVerificationEmail = null;
+      _isLoading = false;
+      notifyListeners();
+      await _clearSession();
+      GoogleAuthService.signOut().catchError((_) {});
+      return true;
+    } on ApiException catch (e) {
+      _errorMessage = _translateAccountError(e.message);
+      _setLoading(false);
+      return false;
+    }
+  }
+
+  String _translateAccountError(String message) {
+    final lower = message.toLowerCase();
+    if (lower.contains('current password is incorrect')) return 'La contraseña actual no es correcta';
+    if (lower.contains('must be different')) return 'La nueva contraseña debe ser distinta a la actual';
+    if (lower.contains('account has no password')) {
+      return 'Tu cuenta no tiene contraseña (entraste con Google). Usa "¿Olvidaste tu contraseña?" para crear una';
+    }
+    if (lower.contains('invalid or expired recovery code')) return 'Código inválido o vencido';
+    if (lower.contains('wait before requesting')) return 'Espera un minuto antes de pedir otro código';
+    if (lower.contains('could not send recovery email')) return 'No pudimos enviar el correo. Intenta de nuevo';
+    if (lower.contains('birth date can only be set once')) return 'El cumpleaños solo se puede registrar una vez';
+    if (lower.contains('invalid birth date')) return 'Ingresa una fecha de nacimiento válida';
+    if (lower.contains('invalid phone')) return 'Ingresa un teléfono válido';
+    if (lower.contains('password is incorrect')) return 'La contraseña no es correcta';
+    if (lower.contains('orders in progress')) {
+      return 'Tienes pedidos en curso. Podrás eliminar tu cuenta cuando terminen';
+    }
+    if (lower.contains('admin accounts cannot')) return 'Las cuentas de administrador no se pueden eliminar';
+    if (lower.contains('name is required')) return 'Ingresa tu nombre';
+    if (lower.contains('password must contain') || lower.contains('password cannot exceed')) {
+      return 'La contraseña debe tener mín. 6 caracteres, mayúscula, minúscula, número y carácter especial';
+    }
+    return message;
+  }
+
   /// Login/registro con Google. [idToken] debe venir del flujo de
   /// google_sign_in en el frontend.
   Future<bool> loginWithGoogle(String idToken) async {
@@ -350,6 +478,14 @@ class AuthProvider extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   Future<void> logout() async {
+    // Desvincular este teléfono ANTES de borrar el token: el backend
+    // necesita la sesión para aceptar la baja. Sin await para no
+    // retrasar el cierre de sesión.
+    final currentToken = _token;
+    if (currentToken != null) {
+      unawaited(PushService.instance.unregister(currentToken));
+    }
+
     _stopKeepAlive();
     _user = null;
     _token = null;

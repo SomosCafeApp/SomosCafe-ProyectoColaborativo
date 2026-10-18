@@ -9,7 +9,6 @@ import {
     getUserPoints,
     getPointHistory,
     addPoints,
-    redeemPoints,
     adjustPoints
 } from "../controllers/pointsController.js";
 
@@ -41,15 +40,6 @@ router.post(
     verifyToken,
     adminOnly,
     addPoints
-);
-
-// ===================================
-// REDEEM POINTS
-// ===================================
-router.post(
-    "/redeem",
-    verifyToken,
-    redeemPoints
 );
 
 // ===================================

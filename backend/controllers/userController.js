@@ -1,3 +1,4 @@
+import { formatBirthDate } from "../utils/userFormat.js";
 import User from "../models/userModel.js";
 
 // ===================================
@@ -305,8 +306,14 @@ export const registerUser = async (req, res) => {
             isActive:
                 user.isActive,
 
-            isEmailVerified:
-                user.isEmailVerified
+            hasPassword:
+                    Boolean(user.password),
+
+                birthDate:
+                    formatBirthDate(user.birthDate),
+
+                isEmailVerified:
+                    user.isEmailVerified
 
         };
 

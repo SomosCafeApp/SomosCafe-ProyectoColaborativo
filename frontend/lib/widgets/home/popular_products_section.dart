@@ -3,6 +3,7 @@ import '../../core/constants/app_colors.dart';
 import '../../models/product_model.dart';
 import '../product_card.dart';
 
+import '../../animations/animations.dart';
 class PopularProductsSection extends StatelessWidget {
   final List<Product> products;
   final VoidCallback? onOrderNow;
@@ -105,9 +106,12 @@ class PopularProductsSection extends StatelessWidget {
             ),
             itemBuilder: (context, index) {
               final product = products[index];
-              return ProductCard(
-                product: product,
-                onAddToCart: () => onAddToCart(product),
+              return FadeSlideIn.staggered(
+                index: index,
+                child: ProductCard(
+                  product: product,
+                  onAddToCart: () => onAddToCart(product),
+                ),
               );
             },
           ),

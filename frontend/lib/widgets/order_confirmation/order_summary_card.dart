@@ -12,6 +12,10 @@ class OrderSummaryCard extends StatelessWidget {
   final double subtotal;
   final double shipping;
   final double discount;
+
+  /// Descuento del cupón de recompensas (0 = sin cupón). En el resumen
+  /// solo se muestra "Cupón aplicado" y el valor descontado.
+  final double couponDiscount;
   final double total;
 
   const OrderSummaryCard({
@@ -20,6 +24,7 @@ class OrderSummaryCard extends StatelessWidget {
     required this.subtotal,
     required this.shipping,
     required this.discount,
+    this.couponDiscount = 0,
     required this.total,
   });
 
@@ -46,6 +51,8 @@ class OrderSummaryCard extends StatelessWidget {
           _AmountRow('Subtotal', _money(subtotal), textColor: textColor),
           _AmountRow('Envío', shipping == 0 ? 'Gratis' : _money(shipping), textColor: textColor),
           _AmountRow('Descuento', discount == 0 ? '\$0' : '-${_money(discount)}', textColor: textColor),
+          if (couponDiscount > 0)
+            _AmountRow('Cupón aplicado', '-${_money(couponDiscount)}', textColor: textColor),
           const Divider(height: 20),
           _AmountRow('Total', _money(total), textColor: textColor, bold: true, valueColor: AppColors.primary),
         ],

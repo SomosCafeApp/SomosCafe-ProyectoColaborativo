@@ -188,6 +188,10 @@ class Order {
   final double subtotal;
   final double shippingCost;
   final double discount;
+
+  /// Descuento del cupón de recompensas usado en el pedido (0 si no hubo).
+  final double couponDiscount;
+  final String couponName;
   final double total;
   final OrderStatus status;
   final String notes;
@@ -223,6 +227,8 @@ class Order {
     required this.subtotal,
     required this.shippingCost,
     required this.discount,
+    this.couponDiscount = 0,
+    this.couponName = '',
     required this.total,
     required this.status,
     required this.notes,
@@ -350,6 +356,8 @@ class Order {
       subtotal: (json['subtotal'] as num?)?.toDouble() ?? 0,
       shippingCost: (json['shippingCost'] as num?)?.toDouble() ?? 0,
       discount: (json['discount'] as num?)?.toDouble() ?? 0,
+      couponDiscount: (json['couponDiscount'] as num?)?.toDouble() ?? 0,
+      couponName: json['couponName'] as String? ?? '',
       total: (json['total'] as num?)?.toDouble() ?? 0,
       status: parseOrderStatus(json['status'] as String?),
       notes: json['notes'] as String? ?? '',

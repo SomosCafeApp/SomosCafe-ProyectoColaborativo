@@ -5,8 +5,9 @@ class AppNotification {
   final String id;
   final String title;
   final String message;
-  final String type; // GENERAL | ORDER | PROMOTION | SYSTEM | REWARD
+  final String type; // GENERAL | ORDER | PROMOTION | SYSTEM | REWARD | EVENT
   final bool isRead;
+  final String? relatedId; // id del pedido, etc. (puede ser null)
   final DateTime? createdAt;
 
   AppNotification({
@@ -15,6 +16,7 @@ class AppNotification {
     required this.message,
     required this.type,
     required this.isRead,
+    this.relatedId,
     this.createdAt,
   });
 
@@ -31,6 +33,7 @@ class AppNotification {
       message: json['message'] as String? ?? '',
       type: json['type'] as String? ?? 'GENERAL',
       isRead: json['isRead'] as bool? ?? false,
+      relatedId: json['relatedId']?.toString(),
       createdAt: createdAt,
     );
   }
@@ -42,6 +45,7 @@ class AppNotification {
       message: message,
       type: type,
       isRead: isRead ?? this.isRead,
+      relatedId: relatedId,
       createdAt: createdAt,
     );
   }

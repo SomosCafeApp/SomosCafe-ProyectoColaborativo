@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
 
+import '../../animations/animations.dart';
 class EmptyOrdersView extends StatelessWidget {
   final VoidCallback? onExploreMenu;
 
@@ -11,7 +12,9 @@ class EmptyOrdersView extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => SoftFadeIn(child: _buildSoft(context));
+
+  Widget _buildSoft(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -43,17 +46,30 @@ class EmptyOrdersView extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Container(
+                SizedBox(
                   width: 130,
-                  height: 130,
-                  decoration: BoxDecoration(
-                    color: circleBgColor,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.receipt_long_outlined,
-                    size: 56,
-                    color: iconColor,
+                  height: 160,
+                  child: Stack(
+                    alignment: Alignment.bottomCenter,
+                    children: [
+                      Container(
+                        width: 130,
+                        height: 130,
+                        decoration: BoxDecoration(
+                          color: circleBgColor,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.receipt_long_outlined,
+                          size: 56,
+                          color: iconColor,
+                        ),
+                      ),
+                      Positioned(
+                        top: 0,
+                        child: CoffeeSteam(size: 40, color: iconColor),
+                      ),
+                    ],
                   ),
                 ),
 

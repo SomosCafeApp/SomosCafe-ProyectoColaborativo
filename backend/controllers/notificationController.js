@@ -1,5 +1,6 @@
 import Notification from "../models/notificationModel.js";
 import User from "../models/userModel.js";
+import DeviceToken from "../models/deviceTokenModel.js";
 
 // ===================================
 // GET USER NOTIFICATIONS
@@ -449,6 +450,267 @@ export const deleteNotification = async (
 
             message:
                 "Error deleting notification",
+
+            error: error.message
+
+        });
+
+    }
+
+};
+
+// ===================================
+// REGISTER DEVICE TOKEN (push)
+// ===================================
+// La app lo llama tras iniciar sesión y cada vez que FCM renueva el
+// token. Es un upsert por token: si el teléfono ya estaba registrado
+// con otra cuenta, pasa a esta. La preferencia `pushEnabled` solo se
+// fija al crear; re-registrar no pisa lo que el usuario eligió.
+
+export const registerDeviceToken = async (
+    req,
+    res
+) => {
+
+    try {
+
+        const {
+            token,
+            platform
+        } = req.body;
+
+        if (
+            !token ||
+            typeof token !== "string"
+        ) {
+
+            return res.status(400).json({
+
+                message:
+                    "Device token is required"
+
+            });
+
+        }
+
+        const safePlatform =
+            ["android", "ios", "web"].includes(platform)
+                ? platform
+                : "unknown";
+
+        const cleanToken = token.trim();
+
+        // Si el teléfono estaba registrado con OTRA cuenta, la
+        // preferencia guardada no es de este usuario: se reinicia.
+        const existing =
+            await DeviceToken.findOne({
+                token: cleanToken
+            }).select("userId");
+
+        const ownerChanged =
+            existing &&
+            String(existing.userId) !== String(req.user.id);
+
+        const update = {
+            $set: {
+                userId: req.user.id,
+                platform: safePlatform,
+                lastSeenAt: new Date(),
+                ...(ownerChanged && { pushEnabled: true })
+            }
+        };
+
+        if (!ownerChanged) {
+            update.$setOnInsert = { pushEnabled: true };
+        }
+
+        const device =
+            await DeviceToken.findOneAndUpdate(
+
+                { token: cleanToken },
+
+                update,
+
+                {
+                    upsert: true,
+                    new: true,
+                    setDefaultsOnInsert: true
+                }
+
+            );
+
+        return res.status(200).json({
+
+            message:
+                "Device registered successfully",
+
+            pushEnabled:
+                device.pushEnabled
+
+        });
+
+    } catch (error) {
+
+        console.error(
+            "Register device token error:",
+            error
+        );
+
+        return res.status(500).json({
+
+            message:
+                "Error registering device",
+
+            error: error.message
+
+        });
+
+    }
+
+};
+
+// ===================================
+// UNREGISTER DEVICE TOKEN (logout)
+// ===================================
+
+export const unregisterDeviceToken = async (
+    req,
+    res
+) => {
+
+    try {
+
+        const { token } = req.body;
+
+        if (
+            !token ||
+            typeof token !== "string"
+        ) {
+
+            return res.status(400).json({
+
+                message:
+                    "Device token is required"
+
+            });
+
+        }
+
+        // Solo borra si el token es del usuario autenticado.
+        await DeviceToken.deleteOne({
+
+            token: token.trim(),
+
+            userId: req.user.id
+
+        });
+
+        return res.status(200).json({
+
+            message:
+                "Device unregistered successfully"
+
+        });
+
+    } catch (error) {
+
+        console.error(
+            "Unregister device token error:",
+            error
+        );
+
+        return res.status(500).json({
+
+            message:
+                "Error unregistering device",
+
+            error: error.message
+
+        });
+
+    }
+
+};
+
+// ===================================
+// SET PUSH PREFERENCE (switch "Push")
+// ===================================
+
+export const setPushPreference = async (
+    req,
+    res
+) => {
+
+    try {
+
+        const {
+            token,
+            pushEnabled
+        } = req.body;
+
+        if (
+            !token ||
+            typeof token !== "string" ||
+            typeof pushEnabled !== "boolean"
+        ) {
+
+            return res.status(400).json({
+
+                message:
+                    "Device token and pushEnabled (boolean) are required"
+
+            });
+
+        }
+
+        const device =
+            await DeviceToken.findOneAndUpdate(
+
+                {
+                    token: token.trim(),
+                    userId: req.user.id
+                },
+
+                {
+                    $set: { pushEnabled }
+                },
+
+                { new: true }
+
+            );
+
+        if (!device) {
+
+            return res.status(404).json({
+
+                message:
+                    "Device not registered"
+
+            });
+
+        }
+
+        return res.status(200).json({
+
+            message:
+                "Push preference updated",
+
+            pushEnabled:
+                device.pushEnabled
+
+        });
+
+    } catch (error) {
+
+        console.error(
+            "Set push preference error:",
+            error
+        );
+
+        return res.status(500).json({
+
+            message:
+                "Error updating push preference",
 
             error: error.message
 

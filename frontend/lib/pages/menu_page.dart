@@ -2,13 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
 import '../core/utils/cart_guard.dart';
+import '../core/utils/menu_category_request.dart';
 import '../models/product_model.dart';
+import '../widgets/menu/menu_category_chips.dart';
 import '../widgets/product_card.dart';
 import '../providers/cart_provider.dart';
 import '../providers/product_provider.dart';
 
+import '../animations/animations.dart';
 class MenuPage extends StatefulWidget {
-  const MenuPage({super.key});
+  /// Si llega una petición nueva (p. ej. desde las categorías del Home),
+  /// el Menú selecciona esa categoría.
+  final MenuCategoryRequest? categoryRequest;
+
+  const MenuPage({super.key, this.categoryRequest});
 
   @override
   State<MenuPage> createState() => _MenuPageState();
@@ -16,23 +23,28 @@ class MenuPage extends StatefulWidget {
 
 class _MenuPageState extends State<MenuPage> {
   int _selectedCategoryIndex = 0;
+  final ScrollController _scrollController = ScrollController();
 
-  // Mismas palabras clave que usa la Home, para que "Calientes",
-  // "Frías" y "Postres" filtren de verdad contra el nombre real de
-  // categoría que trae cada producto desde el backend.
+  // Los 'id' coinciden con los de las tarjetas de categoría del Home
+  // (así el Home puede abrir el Menú ya filtrado). Las palabras clave
+  // filtran contra el nombre real de categoría que trae cada producto
+  // desde el backend.
   final List<Map<String, dynamic>> _categories = const [
-    {'label': 'Todo', 'icon': Icons.auto_awesome, 'keywords': <String>[]},
+    {'id': 'all', 'label': 'Todo', 'icon': Icons.auto_awesome, 'keywords': <String>[]},
     {
+      'id': 'hot_coffee',
       'label': 'Calientes',
       'icon': Icons.coffee_rounded,
       'keywords': ['caliente', 'hot', 'café', 'cafe', 'coffee'],
     },
     {
+      'id': 'cold_drinks',
       'label': 'Frías',
       'icon': Icons.ac_unit_rounded,
       'keywords': ['fría', 'fria', 'cold', 'helad', 'frappe', 'frappé'],
     },
     {
+      'id': 'desserts',
       'label': 'Postres',
       'icon': Icons.cake_rounded,
       'keywords': ['postre', 'dessert', 'torta', 'pastel', 'cheesecake'],
@@ -42,11 +54,36 @@ class _MenuPageState extends State<MenuPage> {
   @override
   void initState() {
     super.initState();
+    final request = widget.categoryRequest;
+    if (request != null) {
+      _selectedCategoryIndex = _indexForCategory(request.categoryId);
+    }
     // Se dispara después del primer frame para poder usar `context.read`
     // de forma segura dentro de initState.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ProductProvider>().fetchProducts();
     });
+  }
+
+  @override
+  void didUpdateWidget(MenuPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final request = widget.categoryRequest;
+    if (request != null && request.requestId != oldWidget.categoryRequest?.requestId) {
+      setState(() => _selectedCategoryIndex = _indexForCategory(request.categoryId));
+      if (_scrollController.hasClients) _scrollController.jumpTo(0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  int _indexForCategory(String id) {
+    final index = _categories.indexWhere((c) => c['id'] == id);
+    return index < 0 ? 0 : index;
   }
 
   List<Product> _applyCategoryFilter(List<Product> products) {
@@ -125,49 +162,10 @@ class _MenuPageState extends State<MenuPage> {
                   const SizedBox(height: 20),
 
                   // Filtro Horizontal de Categorías
-                  SizedBox(
-                    height: 40,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: _categories.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 10),
-                      itemBuilder: (context, index) {
-                        final isSelected = _selectedCategoryIndex == index;
-                        return GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _selectedCategoryIndex = index;
-                            });
-                          },
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: isSelected ? Colors.white : Colors.white.withOpacity(0.25),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  _categories[index]['icon'],
-                                  size: 16,
-                                  color: isSelected ? AppColors.primary : Colors.white,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  _categories[index]['label'],
-                                  style: TextStyle(
-                                    color: isSelected ? AppColors.primary : Colors.white,
-                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+                  MenuCategoryChips(
+                    categories: _categories,
+                    selectedIndex: _selectedCategoryIndex,
+                    onSelected: (index) => setState(() => _selectedCategoryIndex = index),
                   ),
                 ],
               ),
@@ -213,7 +211,10 @@ class _MenuPageState extends State<MenuPage> {
     CartProvider cartProvider,
   ) {
     if (productProvider.isLoading && productProvider.products.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 20),
+        child: Shimmer(child: ProductGridSkeleton(count: 6)),
+      );
     }
 
     if (productProvider.errorMessage != null && productProvider.products.isEmpty) {
@@ -251,6 +252,7 @@ class _MenuPageState extends State<MenuPage> {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
         child: GridView.builder(
+          controller: _scrollController,
           padding: const EdgeInsets.only(bottom: 20),
           physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
           itemCount: products.length,
@@ -262,9 +264,12 @@ class _MenuPageState extends State<MenuPage> {
           ),
           itemBuilder: (context, index) {
             final product = products[index];
-            return ProductCard(
-              product: product,
-              onAddToCart: () => CartGuard.addToCart(context, product),
+            return FadeSlideIn.staggered(
+              index: index,
+              child: ProductCard(
+                product: product,
+                onAddToCart: () => CartGuard.addToCart(context, product),
+              ),
             );
           },
         ),

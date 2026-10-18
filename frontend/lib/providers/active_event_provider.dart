@@ -9,6 +9,7 @@ import '../services/api_exception.dart';
 class ActiveEventProvider extends ChangeNotifier {
   AppEvent? _event;
   bool _popupShown = false;
+  int _popupRequestCount = 0;
 
   AppEvent? get event => _event;
 
@@ -16,6 +17,16 @@ class ActiveEventProvider extends ChangeNotifier {
   bool get popupShown => _popupShown;
 
   void markPopupShown() => _popupShown = true;
+
+  /// Contador de peticiones de "mostrar el pop-up ahora" (cuando el
+  /// usuario toca la push de un evento nuevo). EventPopupGate lo
+  /// escucha para mostrarlo y MainNavigationScreen para volver a Inicio.
+  int get popupRequestCount => _popupRequestCount;
+
+  void requestPopup() {
+    _popupRequestCount++;
+    notifyListeners();
+  }
 
   /// Devuelve el evento activo (o null si no hay / falló la red: el
   /// arranque de la app nunca debe depender de esto).

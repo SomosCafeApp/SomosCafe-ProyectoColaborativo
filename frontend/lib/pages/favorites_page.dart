@@ -7,6 +7,7 @@ import '../widgets/favorites/empty_favorites_view.dart';
 import '../widgets/product_card.dart';
 import '../widgets/profile/profile_sub_page_header.dart';
 
+import '../animations/animations.dart';
 class FavoritesPage extends StatelessWidget {
   const FavoritesPage({super.key});
 
@@ -41,10 +42,13 @@ class FavoritesPage extends StatelessWidget {
                     itemBuilder: (context, index) {
                       final product = favorites[index];
 
-                      return ProductCard(
-                        product: product,
-                        onAddToCart: () =>
-                            CartGuard.addToCart(context, product),
+                      return FadeSlideIn.staggered(
+                        index: index,
+                        child: ProductCard(
+                          product: product,
+                          onAddToCart: () =>
+                              CartGuard.addToCart(context, product),
+                        ),
                       );
                     },
                   ),

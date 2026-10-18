@@ -1,8 +1,11 @@
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 // Módulos y páginas
 import 'core/theme/app_theme.dart';
+import 'core/utils/push_router.dart';
+import 'services/push_service.dart';
 import 'pages/main_navigation_screen.dart';
 import 'widgets/events/event_popup_gate.dart';
 
@@ -11,6 +14,7 @@ import 'providers/cart_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/order_provider.dart';
 import 'providers/active_event_provider.dart';
+import 'providers/admin_coupons_provider.dart';
 import 'providers/admin_events_provider.dart';
 import 'providers/admin_orders_provider.dart';
 import 'providers/admin_products_provider.dart';
@@ -24,9 +28,17 @@ import 'providers/address_provider.dart';
 import 'providers/chat_provider.dart';
 import 'providers/reviews_provider.dart';
 import 'providers/notification_provider.dart';
+import 'providers/coupons_provider.dart';
 import 'providers/points_provider.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Push (FCM). Si Firebase aún no está configurado, la app sigue
+  // funcionando sin notificaciones push.
+  PushService.instance.onTap = PushRouter.handle;
+  await PushService.instance.init();
+
   runApp(
     MultiProvider(
       providers: [
@@ -63,6 +75,11 @@ void main() {
           create: (_) => PointsProvider(),
           update: (_, auth, points) => (points ?? PointsProvider())..updateAuth(auth.token, auth.user?.id),
         ),
+        // Cupones de recompensas del cliente (catálogo + los que ya canjeó).
+        ChangeNotifierProxyProvider<AuthProvider, CouponsProvider>(
+          create: (_) => CouponsProvider(),
+          update: (_, auth, coupons) => (coupons ?? CouponsProvider())..updateAuth(auth.token),
+        ),
         ChangeNotifierProxyProvider<AuthProvider, OrderProvider>(
           create: (_) => OrderProvider(),
           update: (_, auth, orders) => (orders ?? OrderProvider())..updateAuth(auth.token),
@@ -78,6 +95,11 @@ void main() {
           create: (_) => AdminProductsProvider(),
           update: (_, auth, products) =>
               (products ?? AdminProductsProvider())..updateAuth(auth.token, auth.isAdmin),
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, AdminCouponsProvider>(
+          create: (_) => AdminCouponsProvider(),
+          update: (_, auth, coupons) =>
+              (coupons ?? AdminCouponsProvider())..updateAuth(auth.token, auth.isAdmin),
         ),
         ChangeNotifierProxyProvider<AuthProvider, AdminEventsProvider>(
           create: (_) => AdminEventsProvider(),
@@ -139,6 +161,11 @@ class _SessionBootstrapState extends State<_SessionBootstrap> {
     super.initState();
     context.read<AuthProvider>().tryAutoLogin().whenComplete(() {
       if (mounted) setState(() => _ready = true);
+      // Si la app se abrió tocando una push, ahora que la sesión está
+      // restaurada se navega a la pantalla correspondiente.
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => PushService.instance.flushPendingTap(),
+      );
     });
   }
 
@@ -181,7 +208,13 @@ class MyApp extends StatelessWidget {
 
     return MaterialApp(
       title: 'SOMOS CafeApp',
+      navigatorKey: PushRouter.navigatorKey,
       debugShowCheckedModeBanner: false,
+
+      // Idioma: la app está en español (calendarios, botones del sistema).
+      locale: const Locale('es'),
+      supportedLocales: const [Locale('es'), Locale('en')],
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
 
       // Temas
       theme: AppTheme.lightTheme,

@@ -9,6 +9,7 @@ import '../widgets/chat/chat_message_bubble.dart';
 import '../widgets/chat/chat_input_bar.dart';
 import '../widgets/chat/chat_empty_state.dart';
 
+import '../animations/animations.dart';
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key});
 
@@ -92,7 +93,7 @@ class _ChatPageState extends State<ChatPage> {
 
           Expanded(
             child: chat.isLoadingHistory
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(child: CoffeeCupLoader())
                 : chat.messages.isEmpty
                     ? ChatEmptyState(
                         textColor: textColor,

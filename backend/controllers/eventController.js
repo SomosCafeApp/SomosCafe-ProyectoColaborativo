@@ -1,4 +1,75 @@
+import mongoose from "mongoose";
+
 import Event from "../models/eventModel.js";
+import { deleteCloudinaryImage } from "../utils/cloudinary.js";
+import {
+    notifyAllCustomers,
+    formatDate
+} from "../utils/notify.js";
+
+// ===================================
+// HELPERS
+// ===================================
+
+// multipart envía todo como texto ("true"), JSON envía booleanos.
+const parseBoolean = (value) =>
+    value === true || value === "true";
+
+const cleanText = (value) =>
+    value === undefined || value === null
+        ? ""
+        : String(value).trim();
+
+// Si Multer ya subió la imagen a Cloudinary pero la operación
+// falla, se borra para no dejar archivos huérfanos.
+const discardUploadedImage = async (req) => {
+    if (req.file?.path) {
+        await deleteCloudinaryImage(req.file.path);
+    }
+};
+
+// Solo un evento activo a la vez (es el que sale como pop-up).
+const deactivateOthers = (exceptId) =>
+    Event.updateMany(
+        { _id: { $ne: exceptId }, isActive: true },
+        { $set: { isActive: false } }
+    );
+
+const hasEnded = (endDate) =>
+    new Date(endDate) < new Date();
+
+// ===================================
+// NOTIFY EVENT (push + pantalla de notificaciones)
+// ===================================
+// Avisa a todos los clientes de un evento. Se usa al crear un evento
+// activo y cuando un evento pasa de inactivo a activo (reactivación).
+// Solo avisa si está activo y no ha terminado. Nunca lanza error y no
+// hay que esperarla (no retrasa la respuesta).
+const notifyEvent = (event, title) => {
+
+    if (
+        !event.isActive ||
+        hasEnded(event.endDate)
+    ) {
+        return;
+    }
+
+    const where =
+        event.location
+            ? ` en ${event.location}`
+            : "";
+
+    notifyAllCustomers({
+        title,
+        message:
+            `${event.name}${where} ` +
+            `(${formatDate(event.startDate)}). ` +
+            "¡Te esperamos!",
+        type: "EVENT",
+        relatedId: event._id
+    });
+
+};
 
 // ===================================
 // GET ALL EVENTS
@@ -42,11 +113,65 @@ export const getEvents = async (req, res) => {
 };
 
 // ===================================
+// GET ACTIVE EVENT (pop-up de inicio)
+// ===================================
+// Público. Devuelve el evento activo que no haya terminado, o
+// `event: null` si no hay (la app simplemente no muestra pop-up).
+export const getActiveEvent = async (req, res) => {
+
+    try {
+
+        const event = await Event.findOne({
+            isActive: true,
+            endDate: { $gte: new Date() }
+        }).sort({ startDate: 1 });
+
+        return res.status(200).json({
+
+            message:
+                "Active event retrieved successfully",
+
+            event: event || null
+
+        });
+
+    } catch (error) {
+
+        console.error(
+            "Get active event error:",
+            error
+        );
+
+        return res.status(500).json({
+
+            message:
+                "Error retrieving active event",
+
+            error: error.message
+
+        });
+
+    }
+
+};
+
+// ===================================
 // GET EVENT BY ID
 // ===================================
 export const getEventById = async (req, res) => {
 
     try {
+
+        if (!mongoose.isValidObjectId(req.params.id)) {
+
+            return res.status(400).json({
+
+                message:
+                    "Invalid event id"
+
+            });
+
+        }
 
         const event =
             await Event.findById(
@@ -96,19 +221,16 @@ export const getEventById = async (req, res) => {
 // ===================================
 // CREATE EVENT
 // ===================================
+// Acepta multipart (imagen en el campo "imagen") o JSON (con una
+// URL en `image`).
 export const createEvent = async (req, res) => {
 
     try {
 
-        const {
-            name,
-            description,
-            image,
-            location,
-            startDate,
-            endDate,
-            isActive
-        } = req.body;
+        // En multipart sin campos, req.body puede llegar undefined.
+        const body = req.body || {};
+
+        const name = cleanText(body.name);
 
         // ===================================
         // VALIDATE REQUIRED DATA
@@ -116,9 +238,11 @@ export const createEvent = async (req, res) => {
 
         if (
             !name ||
-            !startDate ||
-            !endDate
+            !body.startDate ||
+            !body.endDate
         ) {
+
+            await discardUploadedImage(req);
 
             return res.status(400).json({
 
@@ -134,15 +258,17 @@ export const createEvent = async (req, res) => {
         // ===================================
 
         const parsedStartDate =
-            new Date(startDate);
+            new Date(body.startDate);
 
         const parsedEndDate =
-            new Date(endDate);
+            new Date(body.endDate);
 
         if (
             isNaN(parsedStartDate.getTime()) ||
             isNaN(parsedEndDate.getTime())
         ) {
+
+            await discardUploadedImage(req);
 
             return res.status(400).json({
 
@@ -158,10 +284,34 @@ export const createEvent = async (req, res) => {
             parsedStartDate
         ) {
 
+            await discardUploadedImage(req);
+
             return res.status(400).json({
 
                 message:
                     "End date cannot be before start date"
+
+            });
+
+        }
+
+        const isActive =
+            body.isActive !== undefined
+                ? parseBoolean(body.isActive)
+                : true;
+
+        // Un evento que ya terminó no puede quedar activo.
+        if (
+            isActive &&
+            hasEnded(parsedEndDate)
+        ) {
+
+            await discardUploadedImage(req);
+
+            return res.status(400).json({
+
+                message:
+                    "Event has already ended"
 
             });
 
@@ -173,23 +323,17 @@ export const createEvent = async (req, res) => {
 
         const newEvent = new Event({
 
-            name:
-                name.trim(),
+            name,
 
             description:
-                description
-                    ? description.trim()
-                    : "",
+                cleanText(body.description),
 
             image:
-                image
-                    ? image.trim()
-                    : "",
+                req.file?.path ||
+                cleanText(body.image),
 
             location:
-                location
-                    ? location.trim()
-                    : "",
+                cleanText(body.location),
 
             startDate:
                 parsedStartDate,
@@ -197,10 +341,7 @@ export const createEvent = async (req, res) => {
             endDate:
                 parsedEndDate,
 
-            isActive:
-                isActive !== undefined
-                    ? isActive
-                    : true
+            isActive
 
         });
 
@@ -209,6 +350,12 @@ export const createEvent = async (req, res) => {
         // ===================================
 
         await newEvent.save();
+
+        if (newEvent.isActive) {
+            await deactivateOthers(newEvent._id);
+        }
+
+        notifyEvent(newEvent, "Nuevo evento");
 
         return res.status(201).json({
 
@@ -220,6 +367,8 @@ export const createEvent = async (req, res) => {
         });
 
     } catch (error) {
+
+        await discardUploadedImage(req);
 
         console.error(
             "Create event error:",
@@ -242,51 +391,22 @@ export const createEvent = async (req, res) => {
 // ===================================
 // UPDATE EVENT
 // ===================================
+// Acepta multipart o JSON. Si llega una imagen nueva reemplaza la
+// anterior (que se borra de Cloudinary); si no, se conserva.
 export const updateEvent = async (req, res) => {
 
     try {
 
-        const {
-            name,
-            description,
-            image,
-            location,
-            startDate,
-            endDate,
-            isActive
-        } = req.body;
+        const body = req.body || {};
 
-        // ===================================
-        // VALIDATE DATES IF PROVIDED
-        // ===================================
+        if (!mongoose.isValidObjectId(req.params.id)) {
 
-        if (
-            startDate &&
-            isNaN(
-                new Date(startDate).getTime()
-            )
-        ) {
+            await discardUploadedImage(req);
 
             return res.status(400).json({
 
                 message:
-                    "Invalid start date"
-
-            });
-
-        }
-
-        if (
-            endDate &&
-            isNaN(
-                new Date(endDate).getTime()
-            )
-        ) {
-
-            return res.status(400).json({
-
-                message:
-                    "Invalid end date"
+                    "Invalid event id"
 
             });
 
@@ -296,12 +416,14 @@ export const updateEvent = async (req, res) => {
         // GET CURRENT EVENT
         // ===================================
 
-        const currentEvent =
+        const event =
             await Event.findById(
                 req.params.id
             );
 
-        if (!currentEvent) {
+        if (!event) {
+
+            await discardUploadedImage(req);
 
             return res.status(404).json({
 
@@ -313,27 +435,57 @@ export const updateEvent = async (req, res) => {
         }
 
         // ===================================
-        // CALCULATE FINAL DATES
+        // VALIDATE FIELDS
         // ===================================
+
+        if (
+            body.name !== undefined &&
+            !cleanText(body.name)
+        ) {
+
+            await discardUploadedImage(req);
+
+            return res.status(400).json({
+
+                message:
+                    "Event name cannot be empty"
+
+            });
+
+        }
 
         const finalStartDate =
-            startDate
-                ? new Date(startDate)
-                : currentEvent.startDate;
+            body.startDate
+                ? new Date(body.startDate)
+                : event.startDate;
 
         const finalEndDate =
-            endDate
-                ? new Date(endDate)
-                : currentEvent.endDate;
+            body.endDate
+                ? new Date(body.endDate)
+                : event.endDate;
 
-        // ===================================
-        // VALIDATE DATE ORDER
-        // ===================================
+        if (
+            isNaN(finalStartDate.getTime()) ||
+            isNaN(finalEndDate.getTime())
+        ) {
+
+            await discardUploadedImage(req);
+
+            return res.status(400).json({
+
+                message:
+                    "Invalid date format"
+
+            });
+
+        }
 
         if (
             finalEndDate <
             finalStartDate
         ) {
+
+            await discardUploadedImage(req);
 
             return res.status(400).json({
 
@@ -344,70 +496,88 @@ export const updateEvent = async (req, res) => {
 
         }
 
+        const wantsActive =
+            body.isActive !== undefined
+                ? parseBoolean(body.isActive)
+                : event.isActive;
+
+        // Un evento activo no puede quedar con fecha final pasada.
+        if (
+            wantsActive &&
+            hasEnded(finalEndDate)
+        ) {
+
+            await discardUploadedImage(req);
+
+            return res.status(400).json({
+
+                message:
+                    "Event has already ended"
+
+            });
+
+        }
+
         // ===================================
         // UPDATE EVENT
         // ===================================
 
-        const updatedEvent =
-            await Event.findByIdAndUpdate(
+        const oldImage = event.image;
+        const wasActive = event.isActive;
 
-                req.params.id,
+        if (body.name !== undefined)
+            event.name = cleanText(body.name);
 
-                {
-                    ...(name !== undefined && {
-                        name:
-                            name.trim()
-                    }),
+        if (body.description !== undefined)
+            event.description = cleanText(body.description);
 
-                    ...(description !== undefined && {
-                        description:
-                            description.trim()
-                    }),
+        if (body.location !== undefined)
+            event.location = cleanText(body.location);
 
-                    ...(image !== undefined && {
-                        image:
-                            image.trim()
-                    }),
+        if (body.startDate)
+            event.startDate = finalStartDate;
 
-                    ...(location !== undefined && {
-                        location:
-                            location.trim()
-                    }),
+        if (body.endDate)
+            event.endDate = finalEndDate;
 
-                    ...(startDate !== undefined && {
-                        startDate:
-                            finalStartDate
-                    }),
+        if (body.isActive !== undefined)
+            event.isActive = wantsActive;
 
-                    ...(endDate !== undefined && {
-                        endDate:
-                            finalEndDate
-                    }),
+        if (req.file?.path) {
+            event.image = req.file.path;
+        } else if (body.image !== undefined) {
+            event.image = cleanText(body.image);
+        }
 
-                    ...(isActive !== undefined && {
-                        isActive
-                    })
+        await event.save();
 
-                },
+        if (event.isActive) {
+            await deactivateOthers(event._id);
+        }
 
-                {
-                    new: true,
-                    runValidators: true
-                }
+        // Editar un evento que ya estaba activo NO avisa (evita spam);
+        // solo cuando se reactiva.
+        if (!wasActive && event.isActive) {
+            notifyEvent(event, "Evento disponible");
+        }
 
-            );
+        // La imagen anterior se borra solo cuando ya se guardó la nueva.
+        if (oldImage && oldImage !== event.image) {
+            await deleteCloudinaryImage(oldImage);
+        }
 
         return res.status(200).json({
 
             message:
                 "Event updated successfully",
 
-            event:
-                updatedEvent
+            event
 
         });
 
     } catch (error) {
+
+        await discardUploadedImage(req);
 
         console.error(
             "Update event error:",
@@ -428,11 +598,131 @@ export const updateEvent = async (req, res) => {
 };
 
 // ===================================
+// SET EVENT ACTIVE (PATCH /:id/active)
+// ===================================
+// Activar un evento desactiva el que estuviera activo.
+export const setEventActive = async (req, res) => {
+
+    try {
+
+        const body = req.body || {};
+
+        if (!mongoose.isValidObjectId(req.params.id)) {
+
+            return res.status(400).json({
+
+                message:
+                    "Invalid event id"
+
+            });
+
+        }
+
+        if (typeof body.isActive !== "boolean") {
+
+            return res.status(400).json({
+
+                message:
+                    "isActive (boolean) is required"
+
+            });
+
+        }
+
+        const event =
+            await Event.findById(
+                req.params.id
+            );
+
+        if (!event) {
+
+            return res.status(404).json({
+
+                message:
+                    "Event not found"
+
+            });
+
+        }
+
+        if (
+            body.isActive &&
+            hasEnded(event.endDate)
+        ) {
+
+            return res.status(400).json({
+
+                message:
+                    "Event has already ended"
+
+            });
+
+        }
+
+        const wasActive = event.isActive;
+
+        event.isActive = body.isActive;
+
+        await event.save();
+
+        if (event.isActive) {
+            await deactivateOthers(event._id);
+        }
+
+        // Solo avisa cuando pasa de inactivo a activo (reactivación);
+        // volver a enviar "activar" sobre uno ya activo no avisa.
+        if (!wasActive && event.isActive) {
+            notifyEvent(event, "Evento disponible");
+        }
+
+        return res.status(200).json({
+
+            message:
+                event.isActive
+                    ? "Event activated successfully"
+                    : "Event deactivated successfully",
+
+            event
+
+        });
+
+    } catch (error) {
+
+        console.error(
+            "Set event active error:",
+            error
+        );
+
+        return res.status(500).json({
+
+            message:
+                "Error updating event status",
+
+            error: error.message
+
+        });
+
+    }
+
+};
+
+// ===================================
 // DELETE EVENT
 // ===================================
 export const deleteEvent = async (req, res) => {
 
     try {
+
+        if (!mongoose.isValidObjectId(req.params.id)) {
+
+            return res.status(400).json({
+
+                message:
+                    "Invalid event id"
+
+            });
+
+        }
 
         const deletedEvent =
             await Event.findByIdAndDelete(
@@ -448,6 +738,11 @@ export const deleteEvent = async (req, res) => {
 
             });
 
+        }
+
+        // Borra la imagen de Cloudinary (si falla solo se registra).
+        if (deletedEvent.image) {
+            await deleteCloudinaryImage(deletedEvent.image);
         }
 
         return res.status(200).json({

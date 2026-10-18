@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/utils/category_labels.dart';
 import '../../../models/product_model.dart';
 
 /// Tarjeta de un producto en el panel admin. Acciones:
@@ -83,7 +84,7 @@ class AdminProductCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        product.categoryName ?? 'Sin categoría',
+                        product.categoryName == null ? 'Sin categoría' : categoryLabel(product.categoryName),
                         style: TextStyle(fontSize: 12, color: subtitleColor),
                       ),
                       const SizedBox(height: 4),

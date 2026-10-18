@@ -5,7 +5,8 @@ import '../../core/constants/app_colors.dart';
 
 class RewardHeader extends StatelessWidget {
   final int points;
-  final int nextRewardPoints;
+  /// Puntos que cuesta el próximo cupón; null si no hay cupones por canjear.
+  final int? nextRewardPoints;
   final double progress;
 
   const RewardHeader({
@@ -73,7 +74,7 @@ class RewardHeader extends StatelessWidget {
                         ),
                         SizedBox(height: 2),
                         Text(
-                          'Gana puntos y obtén premios',
+                          'Canjea tus puntos por cupones de descuento',
                           style: TextStyle(
                             fontSize: 13,
                             color: Colors.white70,
@@ -143,7 +144,7 @@ class RewardHeader extends StatelessWidget {
                           ],
                         ),
                         Text(
-                          '$nextRewardPoints',
+                          nextRewardPoints == null ? '—' : '$nextRewardPoints',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 22,

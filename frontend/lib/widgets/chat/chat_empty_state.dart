@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 
+import '../../animations/animations.dart';
 class ChatEmptyState extends StatelessWidget {
   final Color textColor;
   final Color subtitleColor;
@@ -12,7 +13,9 @@ class ChatEmptyState extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => SoftFadeIn(child: _buildSoft(context));
+
+  Widget _buildSoft(BuildContext context) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),

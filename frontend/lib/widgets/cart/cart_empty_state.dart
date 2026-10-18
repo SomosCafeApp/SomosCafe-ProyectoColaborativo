@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 
+import '../../animations/animations.dart';
 class CartEmptyState extends StatelessWidget {
   final Color primaryBrown;
   final VoidCallback? onExploreMenu;
@@ -12,11 +13,20 @@ class CartEmptyState extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => SoftFadeIn(child: _buildSoft(context));
+
+  Widget _buildSoft(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
     final textColor = theme.colorScheme.onSurface;
+
+    // Mismos colores que el resto de estados vacíos (p. ej. el buscador):
+    // círculo más claro que el fondo y ícono beige en modo oscuro.
+    final circleBg = isDark
+        ? AppColors.darkSurfaceSubtle
+        : primaryBrown.withOpacity(0.15);
+    final iconColor = isDark ? const Color(0xFFD4BBA5) : primaryBrown;
     final subtitleColor = isDark
         ? AppColors.darkTextSecondary
         : AppColors.lightTextSecondary;
@@ -25,17 +35,30 @@ class CartEmptyState extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: primaryBrown.withOpacity(0.15),
-            ),
-            child: Icon(
-              Icons.shopping_bag_outlined,
-              size: 40,
-              color: primaryBrown,
+          SizedBox(
+            width: 96,
+            height: 118,
+            child: Stack(
+              alignment: Alignment.bottomCenter,
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: circleBg,
+                  ),
+                  child: Icon(
+                    Icons.coffee_outlined,
+                    size: 40,
+                    color: iconColor,
+                  ),
+                ),
+                Positioned(
+                  top: 0,
+                  child: CoffeeSteam(size: 36, color: iconColor),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 20),

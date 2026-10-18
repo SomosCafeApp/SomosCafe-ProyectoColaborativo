@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../models/payment_method_model.dart';
 
+import '../../animations/animations.dart';
 /// Solo la lista de métodos guardados; el botón/formulario para
 /// agregar uno nuevo vive en la página (mismo patrón que direcciones).
 class SavedPaymentMethodsSection extends StatelessWidget {
@@ -58,7 +59,7 @@ class SavedPaymentMethodsSection extends StatelessWidget {
         if (isLoading && methods.isEmpty)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 24),
-            child: Center(child: CircularProgressIndicator()),
+            child: Center(child: CoffeeCupLoader()),
           )
         else if (methods.isEmpty)
           Padding(

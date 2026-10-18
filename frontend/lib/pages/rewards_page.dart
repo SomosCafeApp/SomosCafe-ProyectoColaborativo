@@ -2,48 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
+import '../models/coupon.dart';
+import '../providers/coupons_provider.dart';
 import '../providers/points_provider.dart';
-import '../widgets/rewards/reward_card.dart';
+import 'points_history_page.dart';
+import '../widgets/common/styled_confirm_dialog.dart';
+import '../widgets/rewards/coupon_catalog_section.dart';
+import '../widgets/rewards/earn_points_card.dart';
+import '../widgets/rewards/my_coupons_section.dart';
 import '../widgets/rewards/reward_header.dart';
+import '../widgets/rewards/rewards_tab_bar.dart';
 
-/// Recompensa canjeable. El backend no tiene un catálogo de premios
-/// (solo un saldo de puntos + POST /points/redeem con monto libre),
-/// así que el catálogo vive aquí; el canje sí es 100% real.
-class _RewardOption {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final int cost;
-
-  const _RewardOption({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.cost,
-  });
-}
-
-const _rewardCatalog = [
-  _RewardOption(
-    icon: Icons.percent,
-    title: '30% de Descuento',
-    subtitle: 'En tu próxima compra',
-    cost: 200,
-  ),
-  _RewardOption(
-    icon: Icons.card_giftcard,
-    title: '2x1 en Postres',
-    subtitle: 'Compra uno y lleva otro gratis',
-    cost: 350,
-  ),
-  _RewardOption(
-    icon: Icons.local_cafe_outlined,
-    title: 'Café Gratis',
-    subtitle: 'Cualquier café de tamaño medio',
-    cost: 500,
-  ),
-];
-
+import '../animations/animations.dart';
+/// Recompensas: el cliente canjea sus puntos por cupones reales que
+/// crea el administrador (ver backend /api/coupons) y consulta los que
+/// ya tiene. Los cupones se aplican al confirmar un pedido.
 class RewardsPage extends StatefulWidget {
   const RewardsPage({super.key});
 
@@ -52,196 +25,130 @@ class RewardsPage extends StatefulWidget {
 }
 
 class _RewardsPageState extends State<RewardsPage> {
+  bool _showMine = false;
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<PointsProvider>().fetchBalance();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _refresh());
   }
 
-  Future<void> _handleRedeem(_RewardOption reward) async {
-    final pointsProvider = context.read<PointsProvider>();
+  Future<void> _refresh() => Future.wait([
+        context.read<PointsProvider>().fetchBalance(),
+        context.read<CouponsProvider>().fetchAll(),
+      ]);
 
-    if (pointsProvider.balance < reward.cost) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No tienes suficientes puntos para este premio')),
-      );
+  void _snack(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _handleRedeem(Coupon coupon) async {
+    final points = context.read<PointsProvider>();
+    final coupons = context.read<CouponsProvider>();
+
+    final confirmed = await showStyledConfirmDialog(
+      context,
+      icon: Icons.card_giftcard_rounded,
+      title: 'Canjear puntos',
+      message: '¿Canjear ${coupon.pointsCost} puntos por "${coupon.name}" (${coupon.label})?',
+      confirmLabel: 'Canjear',
+      destructive: false,
+    );
+    if (!confirmed || !mounted) return;
+
+    final result = await coupons.redeem(coupon);
+    if (!mounted) return;
+
+    if (result == null) {
+      _snack(coupons.errorMessage ?? 'No se pudo canjear el cupón');
       return;
     }
 
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Canjear puntos'),
-        content: Text('¿Canjear ${reward.cost} puntos por "${reward.title}"?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Canjear')),
-        ],
-      ),
-    );
-    if (confirmed != true) return;
+    points.setBalance(result.balance);
+    setState(() => _showMine = true);
+    _snack('¡Canjeaste "${coupon.name}"! Úsalo al confirmar tu pedido.');
+  }
 
-    final success = await pointsProvider.redeemPoints(amount: reward.cost, description: reward.title);
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(success ? '¡Canjeaste "${reward.title}"!' : (pointsProvider.errorMessage ?? 'No se pudo canjear')),
-      ),
-    );
+  /// Próximo cupón al que apunta el usuario: el más barato que aún no
+  /// puede pagar (o el más caro si ya alcanza para todos).
+  Coupon? _nextCoupon(List<Coupon> catalog, int balance) {
+    final redeemable = catalog.where((c) => c.isRedeemable).toList()
+      ..sort((a, b) => a.pointsCost.compareTo(b.pointsCost));
+    if (redeemable.isEmpty) return null;
+    return redeemable.firstWhere((c) => c.pointsCost > balance, orElse: () => redeemable.last);
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-
     final textColor = isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
-    final subtitleColor = isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
-    final surfaceColor = isDark ? AppColors.darkSurface : AppColors.lightSurface;
-    final subtleSurfaceColor = isDark ? AppColors.darkSurfaceSubtle : AppColors.lightSurfaceSubtle;
-    final pointsSectionBackground = isDark ? AppColors.darkSurfaceSubtle : const Color(0xFFFFFDE7);
 
-    final pointsProvider = context.watch<PointsProvider>();
-    final balance = pointsProvider.balance;
+    final balance = context.watch<PointsProvider>().balance;
+    final coupons = context.watch<CouponsProvider>();
 
-    // Próxima recompensa: la más barata que el usuario todavía no
-    // puede pagar (o la más cara del catálogo si ya las tiene todas).
-    final nextReward = _rewardCatalog.firstWhere(
-      (r) => r.cost > balance,
-      orElse: () => _rewardCatalog.last,
-    );
-    final progress = nextReward.cost > 0 ? (balance / nextReward.cost).clamp(0.0, 1.0) : 1.0;
+    final next = _nextCoupon(coupons.catalog, balance);
+    final progress = next == null || next.pointsCost <= 0 ? 0.0 : (balance / next.pointsCost).clamp(0.0, 1.0);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: RefreshIndicator(
-        onRefresh: pointsProvider.fetchBalance,
+        onRefresh: _refresh,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              RewardHeader(
-                points: balance,
-                nextRewardPoints: nextReward.cost,
-                progress: progress,
-              ),
+              RewardHeader(points: balance, nextRewardPoints: next?.pointsCost, progress: progress),
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildSectionHeader(context, Icons.auto_awesome, 'Disponibles para Ti'),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton.icon(
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const PointsHistoryPage()),
+                        ),
+                        icon: const Icon(Icons.history_rounded, size: 18),
+                        label: const Text('Historial de puntos'),
+                      ),
+                    ),
+                    RewardsTabBar(
+                      showMine: _showMine,
+                      availableCount: coupons.available.length,
+                      onChanged: (value) => setState(() => _showMine = value),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      _showMine ? 'Mis cupones' : 'Disponibles para Ti',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textColor),
+                    ),
                     const SizedBox(height: 12),
-                    if (pointsProvider.isLoading)
+                    if (coupons.isLoading && coupons.catalog.isEmpty && coupons.mine.isEmpty)
                       const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 16),
-                        child: Center(child: CircularProgressIndicator()),
+                        padding: EdgeInsets.symmetric(vertical: 24),
+                        child: Center(child: CoffeeCupLoader()),
                       )
+                    else if (_showMine)
+                      MyCouponsSection(coupons: coupons.mine, onGoRedeem: () => setState(() => _showMine = false))
                     else
-                      ..._rewardCatalog.map((reward) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: RewardCard(
-                              icon: reward.icon,
-                              iconBg: isDark ? AppColors.darkSurfaceSubtle : const Color(0xFFE8F5E9),
-                              iconColor: isDark ? AppColors.primary : Colors.green,
-                              title: reward.title,
-                              subtitle: reward.subtitle,
-                              points: reward.cost,
-                              expiry: balance >= reward.cost ? 'Disponible' : 'Te faltan ${reward.cost - balance}',
-                              onRedeem: () => _handleRedeem(reward),
-                            ),
-                          )),
-                    const SizedBox(height: 8),
-                    _buildSectionHeader(context, Icons.bookmark_outline, 'Sigue Acumulando'),
-                    const SizedBox(height: 12),
-                    Card(
-                      elevation: 0,
-                      color: surfaceColor,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: subtleSurfaceColor,
-                          child: Icon(Icons.stars_rounded, color: AppColors.primary),
-                        ),
-                        title: Text(
-                          'Tienes $balance puntos',
-                          style: TextStyle(fontWeight: FontWeight.bold, color: textColor),
-                        ),
-                        subtitle: Text(
-                          'Sigue comprando y dejando reseñas para ganar más',
-                          style: TextStyle(color: subtitleColor),
-                        ),
+                      CouponCatalogSection(
+                        coupons: coupons.catalog,
+                        balance: balance,
+                        redeemingId: coupons.redeemingId,
+                        onRedeem: _handleRedeem,
                       ),
-                    ),
                     const SizedBox(height: 20),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: pointsSectionBackground,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildSectionHeader(context, Icons.auto_awesome, 'Cómo Ganar Puntos', color: AppColors.primary),
-                          const SizedBox(height: 12),
-                          _buildInstruction(context, Icons.local_cafe, '10 puntos', 'por cada compra'),
-                          _buildInstruction(context, Icons.star_outline, '50 puntos', 'por cada reseña'),
-                          _buildInstruction(context, Icons.card_giftcard, '100 puntos', 'por referir amigos'),
-                        ],
-                      ),
-                    ),
+                    EarnPointsCard(balance: balance),
                   ],
                 ),
               ),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildSectionHeader(BuildContext context, IconData icon, String title, {Color? color}) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final textColor = isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
-
-    return Row(
-      children: [
-        Icon(icon, color: color ?? AppColors.primary, size: 18),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textColor)),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildInstruction(BuildContext context, IconData icon, String boldText, String normalText) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final textColor = isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
-    final subtitleColor = isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
-    final iconBackground = isDark ? AppColors.darkSurface : AppColors.lightSurface;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 16,
-            backgroundColor: iconBackground,
-            child: Icon(icon, size: 16, color: AppColors.primary),
-          ),
-          const SizedBox(width: 12),
-          Text(boldText, style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
-          const SizedBox(width: 4),
-          Expanded(child: Text(normalText, style: TextStyle(color: subtitleColor))),
-        ],
       ),
     );
   }

@@ -196,6 +196,11 @@ class AdminOrderCard extends StatelessWidget {
                   amountRow('Subtotal', _money(order.subtotal)),
                   amountRow('Envío', order.shippingCost == 0 ? 'Gratis' : _money(order.shippingCost)),
                   amountRow('Descuento', order.discount == 0 ? '\$0' : '-${_money(order.discount)}'),
+                  if (order.couponDiscount > 0)
+                    amountRow(
+                      order.couponName.isEmpty ? 'Cupón' : 'Cupón · ${order.couponName}',
+                      '-${_money(order.couponDiscount)}',
+                    ),
                   const SizedBox(height: 4),
                   amountRow('Total', _money(order.total), bold: true),
 

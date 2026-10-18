@@ -1,4 +1,5 @@
 import User from "../models/userModel.js";
+import { grantWelcomeCoupon } from "../utils/coupons.js";
 import EmailVerification from "../models/emailVerificationModel.js";
 
 import {
@@ -405,6 +406,10 @@ export const verifyEmail =
                 true;
 
             await user.save();
+
+            // Cupón de bienvenida (si el admin tiene uno habilitado).
+            // No se espera y nunca rompe la verificación.
+            grantWelcomeCoupon(user._id);
 
             // ===================================
             // DELETE USED CODE

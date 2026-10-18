@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
+import '../core/utils/menu_category_request.dart';
+import '../providers/active_event_provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/product_provider.dart';
 import '../widgets/chat/chat_fab.dart';
 import 'cart_tab.dart';
 import 'menu_page.dart';
@@ -11,6 +14,8 @@ import 'profile_page.dart';
 import 'search_page.dart';
 import 'home_page.dart';
 
+import '../animations/animations.dart';
+import '../providers/cart_provider.dart';
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
 
@@ -20,10 +25,41 @@ class MainNavigationScreen extends StatefulWidget {
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
+  int? _lastEventPopupRequest;
+  MenuCategoryRequest? _menuCategoryRequest;
+  int _menuRequestCount = 0;
+
+  /// Si el usuario toca la push de un evento, se vuelve a la pestaña
+  /// Inicio (donde sale el pop-up).
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final requests = Provider.of<ActiveEventProvider>(context).popupRequestCount;
+    if (_lastEventPopupRequest != null && requests != _lastEventPopupRequest) {
+      _currentIndex = 0;
+    }
+    _lastEventPopupRequest = requests;
+  }
 
   void _changeTab(int index) {
+    // Al volver a Inicio se recargan los productos: así "Lo Más Popular"
+    // refleja las calificaciones más recientes y no las del arranque.
+    if (index == 0 && _currentIndex != 0) {
+      context.read<ProductProvider>().fetchProducts();
+    }
     setState(() {
       _currentIndex = index;
+    });
+  }
+
+  /// Abre la pestaña Menú con la categoría indicada ya seleccionada.
+  void _openMenuCategory(String categoryId) {
+    setState(() {
+      _menuCategoryRequest = MenuCategoryRequest(
+        categoryId: categoryId,
+        requestId: ++_menuRequestCount,
+      );
+      _currentIndex = 1;
     });
   }
 
@@ -38,6 +74,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
+    final cartCount = context.select<CartProvider, int>((c) => c.itemCount);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -49,8 +86,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     final borderColor = isDark ? AppColors.darkSurfaceSubtle : const Color(0xFFEEEEEE);
 
     final List<Widget> pages = [
-      HomePage(onOrderNow: () => _changeTab(1)),
-      const MenuPage(),
+      HomePage(
+        onOrderNow: () => _changeTab(1),
+        onCategorySelected: _openMenuCategory,
+      ),
+      MenuPage(categoryRequest: _menuCategoryRequest),
       const SearchPage(),
       CartTab(onExploreMenu: () => _changeTab(1)),
       authProvider.isLoggedIn
@@ -62,9 +102,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       children: [
         Scaffold(
           resizeToAvoidBottomInset: false,
-          body: IndexedStack(
+          body: TabFade(
             index: _currentIndex,
-            children: pages,
+            child: IndexedStack(
+              index: _currentIndex,
+              children: pages,
+            ),
           ),
           bottomNavigationBar: SafeArea(
             top: false,
@@ -96,11 +139,20 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                             color: isSelected ? activePillColor : Colors.transparent,
                             borderRadius: BorderRadius.circular(16),
                           ),
-                          child: Icon(
-                            isSelected ? item['activeIcon'] : item['icon'],
-                            color: isSelected ? Colors.white : inactiveColor,
-                            size: 22,
-                          ),
+                          child: index == 3
+                              ? CartTabIcon(
+                                  count: cartCount,
+                                  child: Icon(
+                                    isSelected ? item['activeIcon'] : item['icon'],
+                                    color: isSelected ? Colors.white : inactiveColor,
+                                    size: 22,
+                                  ),
+                                )
+                              : Icon(
+                                  isSelected ? item['activeIcon'] : item['icon'],
+                                  color: isSelected ? Colors.white : inactiveColor,
+                                  size: 22,
+                                ),
                         ),
                         const SizedBox(height: 2),
                         Text(

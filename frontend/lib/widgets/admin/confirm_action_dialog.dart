@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../common/styled_confirm_dialog.dart';
+
 /// Diálogo de confirmación genérico del panel admin. Devuelve true solo
 /// si el administrador pulsa el botón de confirmación.
 Future<bool> confirmAction(
@@ -8,27 +10,16 @@ Future<bool> confirmAction(
   required String message,
   required String confirmLabel,
   bool destructive = false,
-}) async {
-  final result = await showDialog<bool>(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      title: Text(title),
-      content: Text(message),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('No'),
-        ),
-        TextButton(
-          onPressed: () => Navigator.pop(ctx, true),
-          child: Text(
-            confirmLabel,
-            style: destructive ? const TextStyle(color: Color(0xFFE53935)) : null,
-          ),
-        ),
-      ],
-    ),
+  IconData? icon,
+}) {
+  return showStyledConfirmDialog(
+    context,
+    icon: icon ??
+        (destructive ? Icons.warning_amber_rounded : Icons.help_outline_rounded),
+    title: title,
+    message: message,
+    confirmLabel: confirmLabel,
+    cancelLabel: 'No',
+    destructive: destructive,
   );
-
-  return result == true;
 }

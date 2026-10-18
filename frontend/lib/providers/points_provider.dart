@@ -15,13 +15,11 @@ class PointsProvider extends ChangeNotifier {
   int _balance = 0;
   List<PointHistoryEntry> _history = [];
   bool _isLoading = false;
-  bool _isRedeeming = false;
   String? _errorMessage;
 
   int get balance => _balance;
   List<PointHistoryEntry> get history => _history;
   bool get isLoading => _isLoading;
-  bool get isRedeeming => _isRedeeming;
   String? get errorMessage => _errorMessage;
 
   void updateAuth(String? token, String? userId) {
@@ -69,29 +67,10 @@ class PointsProvider extends ChangeNotifier {
     }
   }
 
-  /// Canjea [amount] puntos por una recompensa. El backend valida que
-  /// el usuario tenga saldo suficiente; el userId se toma del token,
-  /// nunca de lo que mande el cliente.
-  Future<bool> redeemPoints({required int amount, required String description}) async {
-    if (_token == null) return false;
-    _isRedeeming = true;
-    _errorMessage = null;
+  /// Actualiza el saldo con el valor que devolvió el servidor (por
+  /// ejemplo, después de canjear un cupón).
+  void setBalance(int value) {
+    _balance = value;
     notifyListeners();
-
-    try {
-      final data = await ApiClient.post('/points/redeem', token: _token, body: {
-        'amount': amount,
-        'description': description,
-      });
-      _balance = (data['currentBalance'] as num?)?.toInt() ?? _balance;
-      _isRedeeming = false;
-      notifyListeners();
-      return true;
-    } on ApiException catch (e) {
-      _errorMessage = e.message;
-      _isRedeeming = false;
-      notifyListeners();
-      return false;
-    }
   }
 }

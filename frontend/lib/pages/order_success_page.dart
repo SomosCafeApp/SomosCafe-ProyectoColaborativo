@@ -4,6 +4,7 @@ import '../models/order.dart';
 import '../models/order_payment.dart';
 import 'main_navigation_screen.dart';
 
+import '../animations/animations.dart';
 class OrderSuccessPage extends StatelessWidget {
   final Order order;
 
@@ -44,26 +45,26 @@ class OrderSuccessPage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      body: Center(
+      body: Stack(
+        children: [
+      Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // Icono con contenedor decorativo adaptativo
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: iconContainerBg,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.check_circle_rounded,
-                  size: 80,
-                  color: Colors.green,
-                ),
+              AnimatedCheck(
+                size: 120,
+                color: Colors.green,
+                background: iconContainerBg,
               ),
               const SizedBox(height: 28),
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 500),
+                child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
               Text(
                 _title,
                 style: TextStyle(
@@ -122,9 +123,15 @@ class OrderSuccessPage extends StatelessWidget {
                   ),
                 ),
               ),
+                ],
+                ),
+              ),
             ],
           ),
         ),
+      ),
+      const Positioned.fill(child: IgnorePointer(child: BeanRain())),
+        ],
       ),
     );
   }

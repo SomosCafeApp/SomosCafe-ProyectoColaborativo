@@ -5,6 +5,7 @@ import '../../models/app_event.dart';
 import '../../providers/active_event_provider.dart';
 import '../../providers/admin_events_provider.dart';
 import '../../widgets/admin/admin_crud_section.dart';
+import '../../widgets/admin/confirm_action_dialog.dart';
 import '../../widgets/admin/event/admin_event_card.dart';
 import '../../widgets/admin/event/event_form_card.dart';
 import '../../widgets/profile/profile_sub_page_header.dart';
@@ -104,18 +105,15 @@ class _AdminEventsPageState extends State<AdminEventsPage> {
   }
 
   Future<void> _handleDelete(AppEvent event) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Eliminar evento'),
-        content: Text('¿Eliminar "${event.name}"? Esta acción no se puede deshacer.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('No')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Sí, eliminar')),
-        ],
-      ),
+    final confirmed = await confirmAction(
+      context,
+      title: 'Eliminar evento',
+      message: '¿Eliminar "${event.name}"? Esta acción no se puede deshacer.',
+      confirmLabel: 'Sí, eliminar',
+      destructive: true,
+      icon: Icons.delete_outline_rounded,
     );
-    if (confirmed != true || !mounted) return;
+    if (!confirmed || !mounted) return;
 
     final provider = context.read<AdminEventsProvider>();
     final ok = await provider.deleteEvent(event.id);

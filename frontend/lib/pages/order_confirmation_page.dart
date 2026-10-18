@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../models/coupon.dart';
 import '../models/order.dart';
 import '../models/order_payment.dart';
 import '../providers/address_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/cart_provider.dart';
+import '../providers/coupons_provider.dart';
 import '../providers/order_provider.dart';
 import '../widgets/order_confirmation/address_picker_section.dart';
 import '../widgets/order_confirmation/checkout_field_style.dart';
 import '../widgets/profile/profile_sub_page_header.dart';
 import '../widgets/order_confirmation/confirm_order_bar.dart';
 import '../widgets/order_confirmation/confirm_section_title.dart';
+import '../widgets/order_confirmation/coupon_picker_section.dart';
 import '../widgets/order_confirmation/delivery_type_selector.dart';
 import '../widgets/order_confirmation/order_summary_card.dart';
 import '../widgets/order_confirmation/payment_method_selector.dart';
@@ -44,6 +47,9 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
   DeliveryType _deliveryType = DeliveryType.delivery;
   String? _selectedAddressId;
   PaymentMethodType _paymentMethod = PaymentMethodType.cash;
+
+  // Cupón de recompensas elegido (opcional).
+  UserCoupon? _coupon;
 
   // Si el usuario escribe el receptor a mano, ya no lo pisamos al
   // cambiar de dirección.
@@ -113,6 +119,15 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
+  /// Si el pedido falló por el cupón (ya usado, vencido...), recargamos
+  /// los cupones y quitamos el elegido si ya no se puede usar.
+  Future<void> _refreshCouponAfterError(UserCoupon coupon) async {
+    final coupons = context.read<CouponsProvider>();
+    await coupons.fetchMine();
+    if (!mounted) return;
+    if (!coupons.available.any((c) => c.id == coupon.id)) setState(() => _coupon = null);
+  }
+
   Future<void> _confirm() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -129,6 +144,13 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
       return;
     }
 
+    // El cupón se calcula sobre los productos ya con promociones.
+    final coupon = _coupon;
+    if (coupon != null && !coupon.isApplicableTo(cart.subtotal - cart.discount)) {
+      _snack('Tu compra no alcanza el mínimo de este cupón');
+      return;
+    }
+
     final order = await orderProvider.createOrder(
       lines: cart.lines,
       deliveryType: _deliveryType,
@@ -136,6 +158,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
       recipientPhone: _phoneController.text,
       addressId: _selectedAddressId,
       paymentMethod: _paymentMethod,
+      couponId: coupon?.id,
       notes: _notesController.text,
     );
 
@@ -144,8 +167,12 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
     if (order == null) {
       // El carrito NO se toca: el usuario puede corregir y reintentar.
       _snack(orderProvider.errorMessage ?? 'No se pudo crear el pedido');
+      if (coupon != null) _refreshCouponAfterError(coupon);
       return;
     }
+
+    // El cupón quedó usado: actualizamos "Mis cupones".
+    if (coupon != null) context.read<CouponsProvider>().fetchMine();
 
     // Creación exitosa: el backend ya vació el carrito del servidor;
     // aquí limpiamos la copia local.
@@ -171,7 +198,9 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
     final subtotal = cart.subtotal;
     final shipping = _deliveryType.shippingFee;
     final discount = cart.discount;
-    final total = subtotal + shipping - discount;
+    final merchandise = subtotal - discount;
+    final couponDiscount = _coupon?.discountFor(merchandise) ?? 0;
+    final total = (subtotal + shipping - discount - couponDiscount).clamp(0, double.infinity).toDouble();
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -212,6 +241,12 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                   onChanged: (method) => setState(() => _paymentMethod = method),
                 ),
                 const SizedBox(height: 24),
+                CouponPickerSection(
+                  selected: _coupon,
+                  merchandiseTotal: merchandise,
+                  onChanged: (coupon) => setState(() => _coupon = coupon),
+                ),
+                const SizedBox(height: 24),
                 const ConfirmSectionTitle('Nota del pedido'),
                 TextFormField(
                   controller: _notesController,
@@ -240,6 +275,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                   subtotal: subtotal,
                   shipping: shipping,
                   discount: discount,
+                  couponDiscount: couponDiscount,
                   total: total,
                 ),
                 ],

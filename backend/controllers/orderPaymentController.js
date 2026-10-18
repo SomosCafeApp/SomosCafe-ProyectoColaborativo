@@ -5,6 +5,7 @@ import User from "../models/userModel.js";
 import Notification from "../models/notificationModel.js";
 
 import { deleteCloudinaryImage } from "../utils/cloudinary.js";
+import { releaseCouponForOrder } from "../utils/coupons.js";
 
 // ===================================
 // PAYMENT FLOW (transferencia por QR)
@@ -375,6 +376,9 @@ export const invalidatePayment = async (req, res) => {
                     "The order changed in the meantime. Reload and try again."
             });
         }
+
+        // Pedido cancelado: el cupón que se usó vuelve al cliente.
+        await releaseCouponForOrder(updated._id);
 
         await safeNotify({
             userId: updated.userId,

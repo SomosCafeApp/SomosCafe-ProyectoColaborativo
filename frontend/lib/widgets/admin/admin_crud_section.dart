@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import 'admin_add_button.dart';
 
-/// Shell genérico de "lista + botón agregar + formulario inline" que
-/// ya se repetía en varias pantallas (por ejemplo addresses_page.dart).
-/// Los próximos admin (Productos, Promociones, Eventos) lo reutilizan
-/// en vez de reescribir el mismo boilerplate cada vez: cada pantalla
-/// solo aporta su propio formulario ([formChild]) y cómo se ve cada
-/// tarjeta de la lista ([itemBuilder]).
+/// Shell genérico de "lista + botón agregar + formulario" para el panel
+/// admin (Promociones y Eventos). Cada pantalla solo aporta su propio
+/// formulario ([formChild]) y cómo se ve cada tarjeta de la lista
+/// ([itemBuilder]).
+///
+/// Igual que en Productos: al crear o editar ([showForm] == true) se
+/// muestra SOLO el formulario; la lista y el botón "Agregar" vuelven al
+/// cerrarlo.
 class AdminCrudSection<T> extends StatelessWidget {
   final String addButtonLabel;
   final bool showForm;
@@ -37,14 +39,13 @@ class AdminCrudSection<T> extends StatelessWidget {
     final subtitleColor =
         theme.brightness == Brightness.dark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
 
+    // Crear / editar: solo el formulario, sin la lista debajo.
+    if (showForm) return formChild;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (!showForm) AdminAddButton(label: addButtonLabel, onPressed: onAddPressed),
-        if (showForm) ...[
-          formChild,
-          const SizedBox(height: 20),
-        ],
+        AdminAddButton(label: addButtonLabel, onPressed: onAddPressed),
         const SizedBox(height: 16),
         if (isLoading && items.isEmpty)
           const Padding(

@@ -9,6 +9,7 @@ import '../widgets/product_card.dart';
 import '../widgets/search/search_header.dart';
 import '../widgets/search/search_state_message.dart';
 
+import '../animations/animations.dart';
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
 
@@ -143,9 +144,12 @@ class _SearchPageState extends State<SearchPage> {
               ),
               itemBuilder: (context, index) {
                 final product = _filteredProducts[index];
-                return ProductCard(
-                  product: product,
-                  onAddToCart: () => CartGuard.addToCart(context, product),
+                return FadeSlideIn.staggered(
+                  index: index,
+                  child: ProductCard(
+                    product: product,
+                    onAddToCart: () => CartGuard.addToCart(context, product),
+                  ),
                 );
               },
             ),

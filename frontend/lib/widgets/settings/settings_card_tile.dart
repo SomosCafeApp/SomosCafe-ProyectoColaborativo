@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
 
+import '../../animations/animations.dart';
 class SettingsCardTile extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -19,7 +20,9 @@ class SettingsCardTile extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => SoftFadeIn(child: _buildSoft(context));
+
+  Widget _buildSoft(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 

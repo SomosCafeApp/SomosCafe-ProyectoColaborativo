@@ -7,11 +7,17 @@ import {
 
 import {
     getEvents,
+    getActiveEvent,
     getEventById,
     createEvent,
     updateEvent,
+    setEventActive,
     deleteEvent
 } from "../controllers/eventController.js";
+
+import {
+    uploadEventImage
+} from "../middlewares/uploadMiddleware.js";
 
 const router = Router();
 
@@ -25,6 +31,13 @@ router.get(
     getEvents
 );
 
+// GET ACTIVE EVENT (pop-up de inicio)
+// Debe ir ANTES de "/:id", si no Express lo tomaría como un id.
+router.get(
+    "/active",
+    getActiveEvent
+);
+
 // GET EVENT BY ID
 router.get(
     "/:id",
@@ -35,20 +48,30 @@ router.get(
 // PROTECTED ADMIN ROUTES
 // ===================================
 
-// CREATE EVENT
+// CREATE EVENT (multipart: campo "imagen" opcional)
 router.post(
     "/",
     verifyToken,
     adminOnly,
+    uploadEventImage,
     createEvent
 );
 
-// UPDATE EVENT
+// UPDATE EVENT (multipart: campo "imagen" opcional)
 router.put(
     "/:id",
     verifyToken,
     adminOnly,
+    uploadEventImage,
     updateEvent
+);
+
+// ACTIVATE / DEACTIVATE EVENT (solo uno activo a la vez)
+router.patch(
+    "/:id/active",
+    verifyToken,
+    adminOnly,
+    setEventActive
 );
 
 // DELETE EVENT

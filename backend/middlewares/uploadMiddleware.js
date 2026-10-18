@@ -8,31 +8,21 @@ import cloudinary from "../config/cloudinary.js";
 // ===================================
 
 const storage = new CloudinaryStorage({
+  cloudinary,
 
-    cloudinary,
+  params: {
+    folder: "somoscafeapp/productos",
 
-    params: {
+    allowed_formats: ["jpg", "jpeg", "png", "avif", "webp"],
 
-        folder: "cafe-mistico/productos",
-
-        allowed_formats: [
-            "jpg",
-            "jpeg",
-            "png",
-            "avif",
-            "webp"
-        ],
-
-        transformation: [
-            {
-                width: 800,
-                height: 800,
-                crop: "limit"
-            }
-        ]
-
-    }
-
+    transformation: [
+      {
+        width: 800,
+        height: 800,
+        crop: "limit",
+      },
+    ],
+  },
 });
 
 // ===================================
@@ -40,29 +30,16 @@ const storage = new CloudinaryStorage({
 // ===================================
 
 const imageFilter = (req, file, cb) => {
+  const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/avif"];
 
-    const allowedTypes = [
-        "image/jpeg",
-        "image/png",
-        "image/webp",
-        "image/avif"
-    ];
-
-    if (allowedTypes.includes(file.mimetype)) {
-
-        cb(null, true);
-
-    } else {
-
-        cb(
-            new Error(
-                "Only JPG, JPEG, PNG, WEBP and AVIF images are allowed"
-            ),
-            false
-        );
-
-    }
-
+  if (allowedTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(
+      new Error("Only JPG, JPEG, PNG, WEBP and AVIF images are allowed"),
+      false,
+    );
+  }
 };
 
 // ===================================
@@ -70,15 +47,13 @@ const imageFilter = (req, file, cb) => {
 // ===================================
 
 export const upload = multer({
+  storage,
 
-    storage,
+  fileFilter: imageFilter,
 
-    fileFilter: imageFilter,
-
-    limits: {
-        fileSize: 5 * 1024 * 1024
-    }
-
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+  },
 });
 
 // ===================================
@@ -90,65 +65,101 @@ export const upload = multer({
 // ilegible y el admin no podría validar el pago.
 
 const proofStorage = new CloudinaryStorage({
+  cloudinary,
 
-    cloudinary,
+  params: {
+    folder: "somoscafeapp/comprobantes",
 
-    params: {
+    allowed_formats: ["jpg", "jpeg", "png", "avif", "webp"],
 
-        folder: "cafe-mistico/comprobantes",
-
-        allowed_formats: [
-            "jpg",
-            "jpeg",
-            "png",
-            "avif",
-            "webp"
-        ],
-
-        transformation: [
-            {
-                width: 1600,
-                height: 1600,
-                crop: "limit"
-            }
-        ]
-
-    }
-
+    transformation: [
+      {
+        width: 1600,
+        height: 1600,
+        crop: "limit",
+      },
+    ],
+  },
 });
 
 const PROOF_MAX_SIZE_MB = 8;
 
 const uploadProof = multer({
+  storage: proofStorage,
 
-    storage: proofStorage,
+  fileFilter: imageFilter,
 
-    fileFilter: imageFilter,
-
-    limits: {
-        fileSize: PROOF_MAX_SIZE_MB * 1024 * 1024
-    }
-
+  limits: {
+    fileSize: PROOF_MAX_SIZE_MB * 1024 * 1024,
+  },
 });
 
 // Igual que upload.single("imagen"), pero los errores de multer
 // (archivo muy pesado o formato inválido) se devuelven como JSON
 // para que la app pueda mostrar el motivo.
 export const uploadProofImage = (req, res, next) => {
+  uploadProof.single("imagen")(req, res, (error) => {
+    if (!error) {
+      return next();
+    }
 
-    uploadProof.single("imagen")(req, res, (error) => {
+    const message =
+      error.code === "LIMIT_FILE_SIZE"
+        ? `Payment proof cannot exceed ${PROOF_MAX_SIZE_MB}MB`
+        : error.message || "Invalid payment proof image";
 
-        if (!error) {
-            return next();
-        }
+    return res.status(400).json({ message });
+  });
+};
 
-        const message =
-            error.code === "LIMIT_FILE_SIZE"
-                ? `Payment proof cannot exceed ${PROOF_MAX_SIZE_MB}MB`
-                : error.message || "Invalid payment proof image";
+// ===================================
+// EVENT IMAGE UPLOAD
+// ===================================
+// Imagen del evento (pop-up y detalle). Carpeta propia; se limita a
+// 1200px para que el pop-up cargue rápido.
 
-        return res.status(400).json({ message });
+const eventStorage = new CloudinaryStorage({
+  cloudinary,
 
-    });
+  params: {
+    folder: "somoscafeapp/eventos",
 
+    allowed_formats: ["jpg", "jpeg", "png", "avif", "webp"],
+
+    transformation: [
+      {
+        width: 1200,
+        height: 1200,
+        crop: "limit",
+      },
+    ],
+  },
+});
+
+const uploadEvent = multer({
+  storage: eventStorage,
+
+  fileFilter: imageFilter,
+
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+  },
+});
+
+// Igual que upload.single("imagen"), pero los errores de multer se
+// devuelven como JSON con un mensaje que la app sabe traducir
+// ("Only JPG..." / "File too large").
+export const uploadEventImage = (req, res, next) => {
+  uploadEvent.single("imagen")(req, res, (error) => {
+    if (!error) {
+      return next();
+    }
+
+    const message =
+      error.code === "LIMIT_FILE_SIZE"
+        ? "File too large (max 5MB)"
+        : error.message || "Invalid event image";
+
+    return res.status(400).json({ message });
+  });
 };

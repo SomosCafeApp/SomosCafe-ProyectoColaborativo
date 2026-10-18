@@ -11,6 +11,8 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
+        // Requerido por flutter_local_notifications.
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -41,4 +43,16 @@ android {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // Requerido por flutter_local_notifications.
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+}
+
+// Firebase: el plugin exige google-services.json y rompe el build si
+// falta. Así la app sigue compilando antes de configurar Firebase;
+// cuando agregues android/app/google-services.json se activa solo.
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
 }

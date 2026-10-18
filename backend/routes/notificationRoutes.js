@@ -12,10 +12,42 @@ import {
     createNotification,
     markNotificationAsRead,
     markAllNotificationsAsRead,
-    deleteNotification
+    deleteNotification,
+    registerDeviceToken,
+    unregisterDeviceToken,
+    setPushPreference
 } from "../controllers/notificationController.js";
 
 const router = Router();
+
+// ===================================
+// PUSH DEVICES
+// ===================================
+// (Van antes de las rutas con :id para que no se confundan.)
+
+// REGISTER DEVICE TOKEN
+
+router.post(
+    "/device-token",
+    verifyToken,
+    registerDeviceToken
+);
+
+// UNREGISTER DEVICE TOKEN (logout)
+
+router.post(
+    "/device-token/unregister",
+    verifyToken,
+    unregisterDeviceToken
+);
+
+// SET PUSH PREFERENCE
+
+router.patch(
+    "/device-token/preference",
+    verifyToken,
+    setPushPreference
+);
 
 // ===================================
 // USER NOTIFICATIONS

@@ -4,6 +4,10 @@ import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
 import '../providers/theme_provider.dart';
 import '../providers/font_size_provider.dart';
+import 'personal_data_page.dart';
+import 'security_page.dart';
+import 'chat_page.dart';
+import 'terms_page.dart';
 
 import '../widgets/profile/profile_sub_page_header.dart';
 import '../widgets/settings/settings_section_header.dart';
@@ -96,25 +100,34 @@ class SettingsPage extends StatefulWidget {
 
                   const SizedBox(height: 24),
                   
-                  // PRIVACIDAD Y SEGURIDAD
+                  // CUENTA
 
                   const SettingsSectionHeader(
-                    title: 'Privacidad y Seguridad',
+                    title: 'Cuenta',
                   ),
 
                   SettingsCardTile(
-                    icon: Icons.shield_outlined,
-                    title: 'Privacidad',
-                    subtitle: 'Gestiona tus datos',
+                    icon: Icons.person_outline_rounded,
+                    title: 'Datos Personales',
+                    subtitle: 'Nombre, teléfono y cumpleaños',
                     trailing: Icon(
                       Icons.arrow_forward_rounded,
                       color: primaryBrown,
                       size: 20,
                     ),
-                    onTap: () {},
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const PersonalDataPage()),
+                    ),
                   ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 24),
+
+                  // SEGURIDAD
+
+                  const SettingsSectionHeader(
+                    title: 'Seguridad',
+                  ),
 
                   SettingsCardTile(
                     icon: Icons.lock_outline_rounded,
@@ -125,7 +138,10 @@ class SettingsPage extends StatefulWidget {
                       color: primaryBrown,
                       size: 20,
                     ),
-                    onTap: () {},
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const SecurityPage()),
+                    ),
                   ),
 
                   const SizedBox(height: 24),
@@ -145,7 +161,10 @@ class SettingsPage extends StatefulWidget {
                       color: primaryBrown,
                       size: 20,
                     ),
-                    onTap: () {},
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ChatPage()),
+                    ),
                   ),
 
                   const SizedBox(height: 12),
@@ -159,7 +178,10 @@ class SettingsPage extends StatefulWidget {
                       color: primaryBrown,
                       size: 20,
                     ),
-                    onTap: () {},
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const TermsPage()),
+                    ),
                   ),
 
                   const SizedBox(height: 30),

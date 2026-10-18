@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/utils/category_labels.dart';
 import '../../../models/product_model.dart';
 import '../../../models/picked_image.dart';
 import '../../../providers/product_provider.dart';
@@ -176,7 +177,7 @@ class _ProductFormCardState extends State<ProductFormCard> {
               decoration: style.decoration('Sin categoría'),
               items: [
                 const DropdownMenuItem<String?>(value: null, child: Text('Sin categoría')),
-                for (final c in categories) DropdownMenuItem<String?>(value: c.id, child: Text(c.name)),
+                for (final c in categories) DropdownMenuItem<String?>(value: c.id, child: Text(categoryLabel(c.name))),
               ],
               onChanged: (v) => setState(() => _categoryId = v),
             ),

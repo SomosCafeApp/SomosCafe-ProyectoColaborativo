@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/utils/cart_guard.dart';
+import '../core/utils/popular_products.dart';
 import '../models/product_model.dart';
 import '../providers/product_provider.dart';
 import '../providers/promo_of_the_day_provider.dart';
@@ -13,22 +14,23 @@ import '../widgets/home/offer_card.dart';
 import '../widgets/home/popular_products_section.dart';
 import '../widgets/home/home_divider.dart';
 
+import '../animations/animations.dart';
 class HomePage extends StatefulWidget {
   final VoidCallback? onOrderNow;
 
-  const HomePage({super.key, this.onOrderNow});
+  /// Se llama con el id de la categoría tocada para abrir el Menú ya
+  /// filtrado. Si no se entrega, se abre el Menú sin filtro.
+  final ValueChanged<String>? onCategorySelected;
+
+  const HomePage({super.key, this.onOrderNow, this.onCategorySelected});
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  int _selectedCategoryIndex = 0;
-
-  // Diseño y textos fijos, tal cual el mockup. `keywords` se usa
-  // para encontrar, entre los productos reales del backend, cuáles
-  // pertenecen a cada tarjeta (comparando contra el nombre de la
-  // categoría que cada producto trae poblada).
+  // Diseño y textos fijos, tal cual el mockup. El 'id' coincide con el de
+  // las categorías del Menú, que es quien filtra los productos.
   static const List<Map<String, dynamic>> _categories = [
     {
       'id': 'hot_coffee',
@@ -37,7 +39,6 @@ class _HomePageState extends State<HomePage> {
       'bgColor': Color(0xFFFEF3D6),
       'iconBgColor': Color(0xFFF7E2AD),
       'iconColor': Color(0xFF8C5C2B),
-      'keywords': ['caliente', 'hot', 'café', 'cafe', 'coffee'],
     },
     {
       'id': 'cold_drinks',
@@ -46,7 +47,6 @@ class _HomePageState extends State<HomePage> {
       'bgColor': Color(0xFFE1F5FE),
       'iconBgColor': Color(0xFFB3E5FC),
       'iconColor': Color(0xFF0288D1),
-      'keywords': ['fría', 'fria', 'cold', 'helad', 'frappe', 'frappé'],
     },
     {
       'id': 'desserts',
@@ -55,17 +55,16 @@ class _HomePageState extends State<HomePage> {
       'bgColor': Color(0xFFFCE4EC),
       'iconBgColor': Color(0xFFF8BBD0),
       'iconColor': Color(0xFFC2185B),
-      'keywords': ['postre', 'dessert', 'torta', 'pastel', 'cheesecake'],
     },
   ];
 
-  List<Product> _productsForCategory(List<Product> allProducts, int index) {
-    final keywords = (_categories[index]['keywords'] as List).cast<String>();
-    return allProducts.where((p) {
-      final name = (p.categoryName ?? '').toLowerCase();
-      if (name.isEmpty) return false;
-      return keywords.any((k) => name.contains(k));
-    }).toList();
+  void _openCategory(String categoryId) {
+    final callback = widget.onCategorySelected;
+    if (callback != null) {
+      callback(categoryId);
+    } else {
+      widget.onOrderNow?.call();
+    }
   }
 
   @override
@@ -103,16 +102,15 @@ class _HomePageState extends State<HomePage> {
     final allProducts = productProvider.products;
     final promo = context.watch<PromoOfTheDayProvider>().promo;
 
-    final filtered = _productsForCategory(allProducts, _selectedCategoryIndex).take(4).toList();
+    // "Populares": los 4 productos mejor calificados (ver topRatedProducts).
+    final popular = topRatedProducts(allProducts);
 
-    // "Populares": los mejor calificados; si nadie tiene rating aún,
-    // mostramos los primeros para no dejar la sección vacía.
-    final popular = ([...allProducts]..sort((a, b) => b.rating.compareTo(a.rating)))
-        .take(4)
-        .toList();
+    // Vista previa del menú: productos que no están ya en "Populares".
+    final popularIds = popular.map((p) => p.id).toSet();
+    final menuPreview = allProducts.where((p) => !popularIds.contains(p.id)).take(4).toList();
 
     if (productProvider.isLoading && allProducts.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return const HomeSkeleton();
     }
 
     if (productProvider.errorMessage != null && allProducts.isEmpty) {
@@ -150,13 +148,18 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const HeroHeader(),
+              HeroHeader(productCount: allProducts.length),
               // Sin promo del día vigente no se dibuja la tarjeta.
               if (promo != null)
-                OfferCard(promo: promo, onOrderNow: widget.onOrderNow)
+                FadeSlideIn(
+                  delay: const Duration(milliseconds: 120),
+                  child: OfferCard(promo: promo, onOrderNow: widget.onOrderNow),
+                )
               else
                 const SizedBox(height: 20),
-              Padding(
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 200),
+                child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -177,11 +180,10 @@ class _HomePageState extends State<HomePage> {
                     const SizedBox(height: 16),
                     CategorySelector(
                       categories: _categories,
-                      selectedIndex: _selectedCategoryIndex,
-                      onCategorySelected: (idx) =>
-                          setState(() => _selectedCategoryIndex = idx),
+                      onCategorySelected: _openCategory,
                     ),
                   ],
+                ),
                 ),
               ),
               const SizedBox(height: 28),
@@ -195,11 +197,13 @@ class _HomePageState extends State<HomePage> {
                 const HomeDivider(),
                 const SizedBox(height: 28),
               ],
-              FilteredMenuSection(
-                products: filtered,
-                onAddToCart: (p) => _addToCart(context, p),
-              ),
-              const SizedBox(height: 28),
+              if (menuPreview.isNotEmpty) ...[
+                FilteredMenuSection(
+                  products: menuPreview,
+                  onAddToCart: (p) => _addToCart(context, p),
+                ),
+                const SizedBox(height: 28),
+              ],
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: SizedBox(

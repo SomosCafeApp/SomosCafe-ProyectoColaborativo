@@ -2,6 +2,53 @@ import Promotion from "../models/promotionModel.js";
 import Product from "../models/productModel.js";
 import User from "../models/userModel.js";
 import { decorateProduct, buildDiscountResolver } from "../utils/promotions.js";
+import {
+    notifyUsers,
+    notifyAllCustomers,
+    formatMoney,
+    formatDate
+} from "../utils/notify.js";
+
+// ===================================
+// NOTIFY NEW PROMOTION (push + pantalla de notificaciones)
+// ===================================
+// Se usa al crear una promoción y cuando una promoción pasa de
+// inactiva a activa. Solo avisa si está activa y no ha vencido. Si
+// está dirigida a usuarios concretos (userIds) solo les avisa a
+// ellos; si no, a todos los clientes. Nunca lanza error y no hay que
+// esperarla (no retrasa la respuesta).
+const notifyNewPromotion = (promotion) => {
+
+    if (
+        !promotion.isActive ||
+        promotion.endDate <= new Date()
+    ) {
+        return;
+    }
+
+    const discountText =
+        promotion.discountType === "percentage"
+            ? `${promotion.discountValue}% de descuento`
+            : `${formatMoney(promotion.discountValue)} de descuento`;
+
+    const startsLater =
+        promotion.startDate > new Date()
+            ? ` Disponible desde el ${formatDate(promotion.startDate)}.`
+            : " ¡Aprovéchala!";
+
+    const payload = {
+        title: "Nueva promoción",
+        message: `${promotion.name}: ${discountText}.${startsLater}`,
+        type: "PROMOTION",
+        relatedId: promotion._id
+    };
+
+    if (promotion.userIds.length > 0) {
+        notifyUsers(promotion.userIds, payload);
+    } else {
+        notifyAllCustomers(payload);
+    }
+};
 
 // ===================================
 // GET ALL PROMOTIONS
@@ -395,6 +442,8 @@ export const createPromotion = async (req, res) => {
 
         await newPromotion.save();
 
+        notifyNewPromotion(newPromotion);
+
         return res.status(201).json({
 
             message:
@@ -632,6 +681,9 @@ export const updatePromotion = async (req, res) => {
 
         }
 
+        // Estado previo, para avisar solo si pasa de inactiva a activa.
+        const wasActive = promotion.isActive;
+
         // ===================================
         // UPDATE FIELDS
         // ===================================
@@ -689,6 +741,12 @@ export const updatePromotion = async (req, res) => {
             promotion.isPromoOfTheDay = false;
 
         await promotion.save();
+
+        // Editar una promoción que ya estaba activa NO avisa (evita
+        // spam); solo cuando se activa.
+        if (!wasActive && promotion.isActive) {
+            notifyNewPromotion(promotion);
+        }
 
         return res.status(200).json({
 

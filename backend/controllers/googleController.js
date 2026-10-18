@@ -1,6 +1,8 @@
+import { formatBirthDate } from "../utils/userFormat.js";
 import { OAuth2Client } from "google-auth-library";
 import jwt from "jsonwebtoken";
 import User from "../models/userModel.js";
+import { grantWelcomeCoupon } from "../utils/coupons.js";
 
 // ===================================
 // CLIENTE DE GOOGLE
@@ -399,6 +401,9 @@ export const loginWithGoogle =
 
                     });
 
+                // Cupón de bienvenida (si el admin tiene uno habilitado).
+                grantWelcomeCoupon(user._id);
+
             }
 
             // ===================================
@@ -472,8 +477,14 @@ export const loginWithGoogle =
                     profileImage:
                         user.profileImage,
 
-                    isEmailVerified:
-                        user.isEmailVerified,
+                    hasPassword:
+                    Boolean(user.password),
+
+                birthDate:
+                    formatBirthDate(user.birthDate),
+
+                isEmailVerified:
+                    user.isEmailVerified,
 
                     isActive:
                         user.isActive

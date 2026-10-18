@@ -21,35 +21,70 @@ class EventPopupGate extends StatefulWidget {
 }
 
 class _EventPopupGateState extends State<EventPopupGate> {
+  late final ActiveEventProvider _provider;
+  int _handledRequests = 0;
+
+  // Evita mostrar dos pop-ups a la vez (p. ej. el de apertura y el que
+  // pide una push al abrir la app desde cerrada).
+  bool _busy = false;
+
   @override
   void initState() {
     super.initState();
+    _provider = context.read<ActiveEventProvider>();
+    _handledRequests = _provider.popupRequestCount;
+    _provider.addListener(_onProviderChanged);
+
     WidgetsBinding.instance.addPostFrameCallback((_) => _maybeShow());
   }
 
-  Future<void> _maybeShow() async {
-    final provider = context.read<ActiveEventProvider>();
-    if (provider.popupShown) return;
-    provider.markPopupShown();
-
-    final event = await provider.fetchActiveEvent();
-    if (event == null || !mounted) return;
-
-    // Precargamos la imagen para que el pop-up no aparezca vacío.
-    if (event.hasImage) {
-      try {
-        await precacheImage(NetworkImage(event.image), context).timeout(const Duration(seconds: 6));
-      } catch (_) {
-        // Si no carga, el pop-up usa la tarjeta de texto.
-      }
-      if (!mounted) return;
-    }
-
-    _showDialog(event);
+  @override
+  void dispose() {
+    _provider.removeListener(_onProviderChanged);
+    super.dispose();
   }
 
-  void _showDialog(AppEvent event) {
-    showDialog<void>(
+  /// El usuario tocó la push de un evento: se muestra el pop-up aunque
+  /// ya se hubiera visto en esta apertura de la app.
+  void _onProviderChanged() {
+    if (_provider.popupRequestCount == _handledRequests) return;
+    _handledRequests = _provider.popupRequestCount;
+    _showActiveEvent();
+  }
+
+  Future<void> _maybeShow() async {
+    if (_provider.popupShown) return;
+    _provider.markPopupShown();
+    await _showActiveEvent();
+  }
+
+  Future<void> _showActiveEvent() async {
+    if (_busy) return;
+    _busy = true;
+
+    try {
+      final event = await _provider.fetchActiveEvent();
+      if (event == null || !mounted) return;
+
+      // Precargamos la imagen para que el pop-up no aparezca vacío.
+      if (event.hasImage) {
+        try {
+          await precacheImage(NetworkImage(event.image), context).timeout(const Duration(seconds: 6));
+        } catch (_) {
+          // Si no carga, el pop-up usa la tarjeta de texto.
+        }
+        if (!mounted) return;
+      }
+
+      // Mientras el pop-up esté abierto sigue "ocupado".
+      await _showDialog(event);
+    } finally {
+      _busy = false;
+    }
+  }
+
+  Future<void> _showDialog(AppEvent event) {
+    return showDialog<void>(
       context: context,
       barrierColor: Colors.black.withAlpha(170),
       builder: (dialogContext) => EventPopup(

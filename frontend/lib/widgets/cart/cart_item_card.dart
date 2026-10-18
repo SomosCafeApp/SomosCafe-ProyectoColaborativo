@@ -3,6 +3,7 @@ import '../../core/constants/app_colors.dart';
 import '../../providers/cart_provider.dart';
 import '../product_detail/customization_summary.dart';
 
+import '../../animations/animations.dart';
 class CartItemCard extends StatelessWidget {
   final CartLine line;
   final Color primaryBrown;
@@ -22,7 +23,9 @@ class CartItemCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => SoftFadeIn(child: _buildSoft(context));
+
+  Widget _buildSoft(BuildContext context) {
     final product = line.product;
     final quantity = line.quantity;
     final theme = Theme.of(context);

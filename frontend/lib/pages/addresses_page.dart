@@ -9,6 +9,7 @@ import '../widgets/address/address_form_card.dart';
 import '../widgets/profile/profile_sub_page_header.dart';
 import 'address_map_picker_page.dart';
 
+import '../animations/animations.dart';
 class AddressesPage extends StatefulWidget {
   const AddressesPage({super.key});
 
@@ -193,7 +194,7 @@ class _AddressesPageState extends State<AddressesPage> {
                     if (addressProvider.isLoading && addresses.isEmpty)
                       const Padding(
                         padding: EdgeInsets.symmetric(vertical: 32),
-                        child: Center(child: CircularProgressIndicator()),
+                        child: Center(child: CoffeeCupLoader()),
                       )
                     else if (addresses.isEmpty)
                       Padding(

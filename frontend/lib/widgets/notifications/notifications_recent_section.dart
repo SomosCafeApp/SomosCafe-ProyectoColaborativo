@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../models/notification_item.dart';
 import 'notification_card.dart';
-import 'notification_schedule_card.dart';
+import 'notification_info_card.dart';
 
-class NotificationsRecentSection extends StatelessWidget {
+class NotificationsRecentSection extends StatefulWidget {
   final List<NotificationItem> recentActivity;
   final void Function(String id)? onItemTap;
   final void Function(String id)? onItemDismissed;
@@ -20,7 +20,26 @@ class NotificationsRecentSection extends StatelessWidget {
   });
 
   @override
+  State<NotificationsRecentSection> createState() => _NotificationsRecentSectionState();
+}
+
+class _NotificationsRecentSectionState extends State<NotificationsRecentSection> {
+  /// Cuántas notificaciones se ven sin desplegar.
+  static const int _previewCount = 3;
+
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
+    final recentActivity = widget.recentActivity;
+    final onItemTap = widget.onItemTap;
+    final onItemDismissed = widget.onItemDismissed;
+    final onMarkAllRead = widget.onMarkAllRead;
+
+    final hiddenCount = recentActivity.length - _previewCount;
+    final visibleItems =
+        _expanded ? recentActivity : recentActivity.take(_previewCount).toList();
+
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -121,17 +140,46 @@ class NotificationsRecentSection extends StatelessWidget {
             ),
           )
         else
-          ...recentActivity.map(
-            (item) => NotificationCard(
-              item: item,
-              unreadDotColor: unreadDotColor,
-              cardColor: cardColor,
-              textColor: textColor,
-              subtitleColor: subtitleColor,
-              mutedColor: mutedColor,
-              unreadBorderColor: unreadBorderColor,
-              onTap: onItemTap == null ? null : () => onItemTap!(item.id),
-              onDismissed: onItemDismissed == null ? null : () => onItemDismissed!(item.id),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeInOut,
+            alignment: Alignment.topCenter,
+            child: Column(
+              children: visibleItems
+                  .map(
+                    (item) => NotificationCard(
+                      item: item,
+                      unreadDotColor: unreadDotColor,
+                      cardColor: cardColor,
+                      textColor: textColor,
+                      subtitleColor: subtitleColor,
+                      mutedColor: mutedColor,
+                      unreadBorderColor: unreadBorderColor,
+                      onTap: onItemTap == null ? null : () => onItemTap(item.id),
+                      onDismissed:
+                          onItemDismissed == null ? null : () => onItemDismissed(item.id),
+                    ),
+                  )
+                  .toList(),
+            ),
+          ),
+
+        if (hiddenCount > 0)
+          Center(
+            child: TextButton.icon(
+              onPressed: () => setState(() => _expanded = !_expanded),
+              icon: Icon(
+                _expanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                color: AppColors.primary,
+              ),
+              label: Text(
+                _expanded ? 'Ver menos' : 'Ver más ($hiddenCount)',
+                style: TextStyle(
+                  color: AppColors.primary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ),
 

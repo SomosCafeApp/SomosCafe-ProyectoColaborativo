@@ -1,5 +1,7 @@
 import mongoose from "mongoose";
 
+import { sendPushForNotifications } from "../utils/push.js";
+
 const notificationSchema = new mongoose.Schema(
     {
 
@@ -58,7 +60,8 @@ const notificationSchema = new mongoose.Schema(
                 "ORDER",
                 "PROMOTION",
                 "SYSTEM",
-                "REWARD"
+                "REWARD",
+                "EVENT"
             ],
 
             default: "GENERAL"
@@ -99,6 +102,31 @@ const notificationSchema = new mongoose.Schema(
 
     }
 );
+
+// ===================================
+// PUSH HOOKS
+// ===================================
+// Cada notificación NUEVA (create / save / insertMany) también se
+// envía como push al teléfono. Así no hay que tocar los lugares que
+// ya crean notificaciones (pedidos, pagos, admin).
+// Se envía sin `await`: el push no debe retrasar ni romper la
+// acción que originó la notificación.
+
+// `save()` también se ejecuta al marcar como leída; solo nos
+// interesan los documentos nuevos.
+notificationSchema.pre("save", function () {
+    this.$locals.wasNew = this.isNew;
+});
+
+notificationSchema.post("save", function (doc) {
+    if (doc.$locals.wasNew) {
+        sendPushForNotifications([doc]);
+    }
+});
+
+notificationSchema.post("insertMany", function (docs) {
+    sendPushForNotifications(docs);
+});
 
 // ===================================
 // NOTIFICATION MODEL

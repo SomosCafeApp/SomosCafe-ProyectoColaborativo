@@ -1,3 +1,4 @@
+import '../../core/utils/app_date_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -110,13 +111,12 @@ class _PromotionFormCardState extends State<PromotionFormCard> {
 
   Future<void> _pickDates() async {
     final now = DateTime.now();
-    final picked = await showDateRangePicker(
-      context: context,
+    final picked = await showAppDateRangePicker(
+      context,
       firstDate: DateTime(now.year - 1),
       lastDate: DateTime(now.year + 3),
       initialDateRange: _range,
       helpText: 'Vigencia de la promoción',
-      saveText: 'Listo',
     );
     if (picked != null) {
       setState(() {

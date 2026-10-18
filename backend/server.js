@@ -4,6 +4,7 @@ import express from "express";
 import cors from "cors";
 
 import { conectarDB } from "./db/db.js";
+import { initPush } from "./utils/push.js";
 
 import userRoutes from "./routes/userRoutes.js";
 import loginRoutes from "./routes/loginRoutes.js";
@@ -18,6 +19,9 @@ import inventoryRoutes from "./routes/inventoryRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import pointRoutes from "./routes/pointsRoutes.js";
+import couponRoutes from "./routes/couponRoutes.js";
+import accountRoutes from "./routes/accountRoutes.js";
+import { startRewardsJobs } from "./jobs/rewardsJobs.js";
 import promotionRoutes from "./routes/promotionRoutes.js";
 import reviewsRoutes from "./routes/reviewsRoutes.js";
 import emailVerificationRoutes from "./routes/emailVerificationRoutes.js";
@@ -28,6 +32,9 @@ import chatRoutes from "./routes/chatRoutes.js";
 // ===============================
 
 conectarDB();
+
+// Verifica Firebase al arrancar (muestra si el push quedó listo).
+initPush();
 
 // ===============================
 // PORT
@@ -136,6 +143,16 @@ app.use(
 );
 
 app.use(
+    "/api/account",
+    accountRoutes
+);
+
+app.use(
+    "/api/coupons",
+    couponRoutes
+);
+
+app.use(
     "/api/promotions",
     promotionRoutes
 );
@@ -173,5 +190,8 @@ app.listen(
         console.log(
             `🌐 http://localhost:${PORT}`
         );
+
+        // Avisos de cupones por vencer y cupón de cumpleaños.
+        startRewardsJobs();
     }
 );

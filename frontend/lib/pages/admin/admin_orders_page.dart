@@ -80,6 +80,7 @@ class _AdminOrdersPageState extends State<AdminOrdersPage> {
         message: '¿Cancelar el pedido #${order.shortId}? El cliente recibirá una notificación.',
         confirmLabel: 'Sí, cancelar',
         destructive: true,
+        icon: Icons.cancel_outlined,
       );
       if (!confirmed || !mounted) return;
     }
@@ -99,6 +100,7 @@ class _AdminOrdersPageState extends State<AdminOrdersPage> {
       message: '¿Confirmas que el pago de ${_money(order.total)} del pedido #${order.shortId} '
           'llegó a tu cuenta? Se avisará al cliente y el pedido pasará a Confirmado.',
       confirmLabel: 'Sí, validar',
+      icon: Icons.verified_outlined,
     );
     if (!confirmed || !mounted) return;
 
@@ -118,6 +120,7 @@ class _AdminOrdersPageState extends State<AdminOrdersPage> {
           'El pedido se cancelará automáticamente y se notificará al cliente.',
       confirmLabel: 'Sí, invalidar',
       destructive: true,
+      icon: Icons.gpp_bad_outlined,
     );
     if (!confirmed || !mounted) return;
 
@@ -136,6 +139,7 @@ class _AdminOrdersPageState extends State<AdminOrdersPage> {
       message: '¿Eliminar definitivamente el pedido #${order.shortId}?',
       confirmLabel: 'Sí, eliminar',
       destructive: true,
+      icon: Icons.delete_outline_rounded,
     );
     if (!confirmed || !mounted) return;
 

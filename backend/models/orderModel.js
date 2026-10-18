@@ -226,7 +226,28 @@ const orderSchema = new mongoose.Schema(
             min: 0
         },
 
+        // Descuento total por promociones de producto.
         discount: {
+            type: Number,
+            default: 0,
+            min: 0
+        },
+
+        // Cupón de recompensas usado en el pedido (UserCoupon). Su
+        // descuento va aparte del de promociones y se calcula sobre
+        // los productos (nunca sobre el envío).
+        couponId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "UserCoupon",
+            default: null
+        },
+
+        couponName: {
+            type: String,
+            default: ""
+        },
+
+        couponDiscount: {
             type: Number,
             default: 0,
             min: 0

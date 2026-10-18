@@ -169,32 +169,64 @@ class CartProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Altas pendientes de confirmar en el servidor y cola que las ejecuta
+  /// de una en una. Sin esto, "Pedir de nuevo" lanzaba varios POST en
+  /// paralelo y cada respuesta pisaba el carrito con una foto parcial
+  /// (o llegaba desordenada), dejando la vista desactualizada hasta que
+  /// otra acción la recargaba.
+  int _pendingAdds = 0;
+  Future<void> _addQueue = Future.value();
+
   /// Agrega un producto con su personalización. Misma combinación →
   /// suma cantidad; combinación distinta → línea nueva.
   Future<void> addToCart(
     Product product, {
     int quantity = 1,
     ProductCustomization? customization,
-  }) async {
+  }) {
     final custom = customization ?? ProductCustomization();
 
     // Actualización optimista: se ve al instante en la UI.
     _addLocal(product, quantity, custom);
 
-    if (_token == null) return; // invitado: solo memoria local
+    if (_token == null) return Future.value(); // invitado: solo memoria local
 
+    _pendingAdds++;
+    final task = _addQueue
+        .catchError((_) {})
+        .then((_) => _syncAdd(product, quantity, custom));
+    _addQueue = task;
+    return task;
+  }
+
+  /// Envía un alta al servidor. Solo la última de la cola reemplaza el
+  /// carrito con la respuesta del servidor (que ya incluye todas las
+  /// anteriores); las intermedias conservan el estado optimista.
+  Future<void> _syncAdd(
+    Product product,
+    int quantity,
+    ProductCustomization custom,
+  ) async {
+    var failed = false;
     try {
       final data = await ApiClient.post('/cart/items', token: _token, body: {
         'productId': product.id,
         'quantity': quantity,
         'customization': custom.toJson(),
       });
-      _lines = _parseCart(data['cart'] as Map<String, dynamic>);
-      notifyListeners();
+      if (_pendingAdds == 1) {
+        _lines = _parseCart(data['cart'] as Map<String, dynamic>);
+        notifyListeners();
+      }
     } on ApiException catch (e) {
       _errorMessage = e.message;
-      await fetchCart(); // revertimos al estado real del servidor
+      failed = true;
+    } finally {
+      _pendingAdds--;
     }
+
+    // Si falló la última de la cola, revertimos al estado real del servidor.
+    if (failed && _pendingAdds == 0) await fetchCart();
   }
 
   /// Suma una unidad a una línea existente (botón "+").

@@ -23,11 +23,16 @@ import {
 
 import { getDiscountResolver } from "../utils/promotions.js";
 
+import {
+    claimUserCoupon,
+    releaseCouponForOrder
+} from "../utils/coupons.js";
+
 import { deleteCloudinaryImage } from "../utils/cloudinary.js";
 
-// Puntos que gana el cliente cuando el pedido pasa a DELIVERED
-// (mismo valor que anuncia rewards_page.dart: "10 puntos por cada compra").
-const POINTS_PER_PURCHASE = 10;
+import { pointsForOrder } from "../utils/rewardsConfig.js";
+
+import { notifyAllAdmins, formatMoney } from "../utils/notify.js";
 
 const MAX_NOTES_LENGTH = 300;
 
@@ -100,7 +105,7 @@ const statusNotification = (order, status) => {
             return {
                 title: "Pedido entregado",
                 message: `Tu pedido ${id} fue entregado. ` +
-                    `¡Ganaste ${POINTS_PER_PURCHASE} puntos!`
+                    `¡Ganaste ${pointsForOrder(order)} puntos!`
             };
         case "CANCELLED":
             return {
@@ -119,6 +124,11 @@ const runStatusSideEffects = async (order, status) => {
 
     try {
 
+        // Pedido cancelado: el cupón que se usó vuelve al cliente.
+        if (status === "CANCELLED") {
+            await releaseCouponForOrder(order._id);
+        }
+
         if (status === "DELIVERED") {
 
             const alreadyAwarded = await Point.exists({
@@ -128,15 +138,19 @@ const runStatusSideEffects = async (order, status) => {
 
             if (!alreadyAwarded) {
 
+                // 1 punto por cada $1.000 en productos (ver
+                // utils/rewardsConfig.js).
+                const earned = pointsForOrder(order);
+
                 await User.findByIdAndUpdate(
                     order.userId,
-                    { $inc: { points: POINTS_PER_PURCHASE } }
+                    { $inc: { points: earned } }
                 );
 
                 await Point.create({
                     userId: order.userId,
                     orderId: order._id,
-                    amount: POINTS_PER_PURCHASE,
+                    amount: earned,
                     type: "purchase",
                     description: `Compra - pedido #${shortId(order)}`
                 });
@@ -269,6 +283,7 @@ export const createOrder = async (req, res) => {
             recipientPhone,
             addressId,
             paymentMethod,
+            couponId,
             notes
         } = req.body;
 
@@ -477,44 +492,108 @@ export const createOrder = async (req, res) => {
         const shippingCost =
             deliveryType === "DELIVERY" ? DELIVERY_FEE : 0;
 
-        const total = subtotal + shippingCost - discount;
+        // ===================================
+        // COUPON (recompensas)
+        // ===================================
+        // Se aplica sobre los productos YA con promociones (no sobre
+        // el envío) y vale para cualquier producto. El servidor
+        // valida dueño, estado, vencimiento y compra mínima, y lo
+        // marca como usado de forma atómica.
+
+        const orderId = new mongoose.Types.ObjectId();
+
+        let usedCoupon = null;
+        let couponDiscount = 0;
+
+        if (couponId) {
+
+            if (!mongoose.isValidObjectId(couponId)) {
+                return res.status(400).json({
+                    message: "Invalid coupon id"
+                });
+            }
+
+            const claim = await claimUserCoupon({
+                userCouponId: couponId,
+                userId: req.user.id,
+                merchandiseTotal: subtotal - discount,
+                orderId
+            });
+
+            if (claim.error) {
+                return res.status(400).json({
+                    message: claim.error,
+                    ...(claim.minimumPurchase !== undefined && {
+                        minimumPurchase: claim.minimumPurchase
+                    })
+                });
+            }
+
+            usedCoupon = claim.userCoupon;
+            couponDiscount = claim.discount;
+        }
+
+        const total = Math.max(
+            0,
+            subtotal + shippingCost - discount - couponDiscount
+        );
 
         // ===================================
         // CREATE ORDER
         // ===================================
 
-        const order = await Order.create({
-            userId: req.user.id,
-            addressId: address ? address._id : null,
-            addressSnapshot: address
-                ? {
-                    label: address.label,
-                    recipientName: address.recipientName,
-                    phone: address.phone,
-                    address: address.address,
-                    city: address.city,
-                    neighborhood: address.neighborhood,
-                    additionalInfo: address.additionalInfo
-                }
-                : undefined,
-            deliveryType,
-            recipientName: name,
-            recipientPhone: phone,
-            items: orderItems,
-            subtotal,
-            shippingCost,
-            discount,
-            total,
-            paymentMethod,
-            notes: orderNotes,
-            status: "PENDING",
-            // Efectivo se cobra al entregar; transferencia espera el
-            // comprobante que sube el cliente.
-            paymentStatus:
-                paymentMethod === "TRANSFER"
-                    ? "AWAITING_PROOF"
-                    : "PENDING"
-        });
+        let order;
+
+        try {
+
+            order = await Order.create({
+                _id: orderId,
+                userId: req.user.id,
+                addressId: address ? address._id : null,
+                addressSnapshot: address
+                    ? {
+                        label: address.label,
+                        recipientName: address.recipientName,
+                        phone: address.phone,
+                        address: address.address,
+                        city: address.city,
+                        neighborhood: address.neighborhood,
+                        additionalInfo: address.additionalInfo
+                    }
+                    : undefined,
+                deliveryType,
+                recipientName: name,
+                recipientPhone: phone,
+                items: orderItems,
+                subtotal,
+                shippingCost,
+                discount,
+                couponId: usedCoupon ? usedCoupon._id : null,
+                couponName: usedCoupon ? usedCoupon.name : "",
+                couponDiscount,
+                total,
+                paymentMethod,
+                notes: orderNotes,
+                status: "PENDING",
+                // Efectivo se cobra al entregar; transferencia espera el
+                // comprobante que sube el cliente.
+                paymentStatus:
+                    paymentMethod === "TRANSFER"
+                        ? "AWAITING_PROOF"
+                        : "PENDING"
+            });
+
+        } catch (createError) {
+
+            // Si el pedido no se pudo crear, el cupón vuelve a
+            // quedar disponible para el cliente.
+            if (usedCoupon) {
+                await releaseCouponForOrder(orderId);
+            }
+
+            throw createError;
+
+        }
 
         // El carrito se vacía solo si el pedido se creó bien (si
         // Order.create hubiera fallado, nunca llegamos aquí).
@@ -526,6 +605,19 @@ export const createOrder = async (req, res) => {
         } catch (cartError) {
             console.error("Clear cart after order error:", cartError);
         }
+
+        // Avisa a los administradores (push + notificaciones). Sin
+        // await: no retrasa la respuesta al cliente.
+        notifyAllAdmins({
+            title: "Nuevo pedido",
+            message:
+                `Pedido #${shortId(order)} de ${name}: ` +
+                `${deliveryType === "DELIVERY" ? "a domicilio" : "para recoger"}, ` +
+                `${paymentMethod === "TRANSFER" ? "transferencia" : "efectivo"}, ` +
+                `total ${formatMoney(total)}.`,
+            type: "ORDER",
+            relatedId: order._id
+        });
 
         return res.status(201).json({
             message: "Order created successfully",
@@ -791,6 +883,9 @@ export const cancelOrder = async (req, res) => {
                 message: "This order can no longer be cancelled"
             });
         }
+
+        // El cupón que se usó en este pedido vuelve al cliente.
+        await releaseCouponForOrder(cancelled._id);
 
         return res.status(200).json({
             message: "Order cancelled successfully",

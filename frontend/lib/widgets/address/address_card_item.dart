@@ -5,6 +5,7 @@ import '../../core/constants/app_colors.dart';
 import '../../models/address_model.dart';
 import '../../pages/address_map_picker_page.dart';
 
+import '../../animations/animations.dart';
 class AddressCardItem extends StatelessWidget {
   final AddressItem item;
   final VoidCallback onDelete;
@@ -31,7 +32,9 @@ class AddressCardItem extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => SoftFadeIn(child: _buildSoft(context));
+
+  Widget _buildSoft(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 

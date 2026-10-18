@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
 
+/// Tarjeta de un cupón del catálogo de recompensas: nombre, costo en
+/// puntos, descuento (pastilla amarilla) y botón de canje. Si
+/// [onRedeem] es null el botón queda deshabilitado y muestra [buttonLabel]
+/// (ej. "Agotado", "Ya canjeado", "Te faltan 50 pts").
 class RewardCard extends StatelessWidget {
   final IconData icon;
   final Color iconBg;
@@ -9,8 +13,15 @@ class RewardCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final int points;
-  final String expiry;
-  final VoidCallback onRedeem;
+
+  /// Descuento que da el cupón, ej. "30% OFF".
+  final String pill;
+
+  /// Condiciones en una línea (compra mínima, vigencia, cupos...).
+  final String details;
+  final String buttonLabel;
+  final bool isBusy;
+  final VoidCallback? onRedeem;
 
   const RewardCard({
     super.key,
@@ -20,7 +31,10 @@ class RewardCard extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.points,
-    required this.expiry,
+    required this.pill,
+    this.details = '',
+    required this.buttonLabel,
+    this.isBusy = false,
     required this.onRedeem,
   });
 
@@ -29,25 +43,9 @@ class RewardCard extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final cardColor = isDark
-        ? AppColors.darkSurface
-        : AppColors.lightSurface;
-
-    final textColor = isDark
-        ? AppColors.darkTextPrimary
-        : AppColors.lightTextPrimary;
-
-    final subtitleColor = isDark
-        ? AppColors.darkTextSecondary
-        : AppColors.lightTextSecondary;
-
-    final expiryBackground = isDark
-        ? AppColors.darkSurfaceSubtle
-        : const Color(0xFFFFF3E0);
-
-    final expiryTextColor = isDark
-        ? AppColors.accentYellow
-        : Colors.orange;
+    final cardColor = isDark ? AppColors.darkSurface : AppColors.lightSurface;
+    final textColor = isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
+    final subtitleColor = isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -68,93 +66,62 @@ class RewardCard extends StatelessWidget {
             children: [
               Container(
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: iconBg,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  icon,
-                  color: iconColor,
-                ),
+                decoration: BoxDecoration(color: iconBg, borderRadius: BorderRadius.circular(12)),
+                child: Icon(icon, color: iconColor),
               ),
-
               const SizedBox(width: 12),
-
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                        color: textColor,
-                      ),
-                    ),
-
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        color: subtitleColor,
-                        fontSize: 12,
-                      ),
-                    ),
-
+                    Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: textColor)),
+                    Text(subtitle, style: TextStyle(color: subtitleColor, fontSize: 12)),
                     const SizedBox(height: 4),
-
                     Text(
                       '⭐ $points puntos',
-                      style: TextStyle(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
-                      ),
+                      style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600, fontSize: 12),
                     ),
                   ],
                 ),
               ),
-
+              const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: expiryBackground,
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(color: AppColors.accentYellow, borderRadius: BorderRadius.circular(12)),
                 child: Text(
-                  '⏰ $expiry',
-                  style: TextStyle(
-                    color: expiryTextColor,
-                    fontSize: 11,
-                  ),
+                  pill,
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.black87),
                 ),
               ),
             ],
           ),
-
+          if (details.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(details, style: TextStyle(color: subtitleColor, fontSize: 11)),
+            ),
+          ],
           const SizedBox(height: 12),
-
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: onRedeem,
+              onPressed: isBusy ? null : onRedeem,
               style: ElevatedButton.styleFrom(
                 backgroundColor: theme.colorScheme.primary,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                disabledBackgroundColor: isDark ? AppColors.darkSurfaceSubtle : AppColors.lightSurfaceSubtle,
+                disabledForegroundColor: subtitleColor,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 elevation: 0,
               ),
-              child: const Text(
-                'Canjear Ahora',
-                style: TextStyle(
-                  color: Colors.white,
-                ),
-              ),
+              child: isBusy
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : Text(buttonLabel),
             ),
           ),
         ],

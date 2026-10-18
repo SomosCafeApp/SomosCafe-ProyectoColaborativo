@@ -1,90 +1,115 @@
 import 'package:flutter/material.dart';
 
+import '../../animations/animations.dart';
+
 class HeroHeader extends StatelessWidget {
-  const HeroHeader({super.key});
+  /// Cantidad real de productos del menú.
+  final int productCount;
+
+  const HeroHeader({super.key, required this.productCount});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.only(top: 60, bottom: 36, left: 20, right: 20),
-      decoration: BoxDecoration(
-        image: DecorationImage(
-          image: const AssetImage('assets/images/hero_home_image.jpeg'),
-          fit: BoxFit.cover,
-          colorFilter: ColorFilter.mode(
-            Colors.black.withOpacity(0.55),
-            BlendMode.darken,
+    return Stack(
+      children: [
+        // Fondo con parallax: se mueve más lento que el contenido al
+        // hacer scroll.
+        ParallaxBackground(
+          child: Image.asset(
+            'assets/images/hero_home_image.jpeg',
+            width: double.infinity,
+            height: double.infinity,
+            fit: BoxFit.cover,
+            color: Colors.black.withOpacity(0.55),
+            colorBlendMode: BlendMode.darken,
           ),
         ),
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white.withOpacity(0.3)),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.only(top: 60, bottom: 36, left: 20, right: 20),
+          // El contenido se desvanece suavemente al bajar.
+          child: ScrollFade(
+            child: Column(
               children: [
-                Icon(Icons.workspace_premium_outlined, color: Colors.white, size: 16),
-                SizedBox(width: 6),
-                Text(
-                  'Café Artesanal Premium',
-                  style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.white.withOpacity(0.3)),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.workspace_premium_outlined, color: Colors.white, size: 16),
+                      SizedBox(width: 6),
+                      Text(
+                        'Café Artesanal Premium',
+                        style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                // Taza con vapor suave.
+                const Stack(
+                  clipBehavior: Clip.none,
+                  alignment: Alignment.center,
+                  children: [
+                    Icon(Icons.coffee_rounded, size: 54, color: Colors.white),
+                    Positioned(
+                      top: -26,
+                      child: CoffeeSteam(size: 32),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'SOMOS CafeApp',
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(
+                    5,
+                    (index) => const Icon(Icons.star_rounded, color: Colors.amber, size: 20),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Text(
+                    'Descubre el sabor auténtico del mejor café artesanal',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.white.withOpacity(0.9),
+                      height: 1.3,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 32),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildStatItem('$productCount', productCount == 1 ? 'Producto' : 'Productos'),
+                    _buildVerticalDivider(),
+                    _buildStatItem('50K+', 'Clientes'),
+                    _buildVerticalDivider(),
+                    _buildStatItem('4.9', 'Rating'),
+                  ],
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 24),
-          const Icon(Icons.coffee_rounded, size: 54, color: Colors.white),
-          const SizedBox(height: 12),
-          const Text(
-            'SOMOS CafeApp',
-            style: TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-              letterSpacing: 0.5,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(
-              5,
-              (index) => const Icon(Icons.star_rounded, color: Colors.amber, size: 20),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Text(
-              'Descubre el sabor auténtico del mejor café artesanal',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.white.withOpacity(0.9),
-                height: 1.3,
-              ),
-            ),
-          ),
-          const SizedBox(height: 32),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildStatItem('200+', 'Productos'),
-              _buildVerticalDivider(),
-              _buildStatItem('50K+', 'Clientes'),
-              _buildVerticalDivider(),
-              _buildStatItem('4.9', 'Rating'),
-            ],
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

@@ -1,3 +1,4 @@
+import { formatBirthDate } from "../utils/userFormat.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
@@ -214,6 +215,12 @@ export const loginUser = async (req, res) => {
 
                 isActive:
                     user.isActive,
+
+                hasPassword:
+                    Boolean(user.password),
+
+                birthDate:
+                    formatBirthDate(user.birthDate),
 
                 isEmailVerified:
                     user.isEmailVerified

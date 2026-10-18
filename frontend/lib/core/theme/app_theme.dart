@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 
+import '../../animations/soft_page_transitions.dart';
 class AppTheme {
   // TEMA CLARO
   static ThemeData get lightTheme => ThemeData(
         useMaterial3: true,
         brightness: Brightness.light,
         scaffoldBackgroundColor: AppColors.lightBackground,
+        pageTransitionsTheme: AppMotion.pageTransitions,
 
         colorScheme: const ColorScheme.light(
           primary: AppColors.primary,
@@ -61,6 +63,7 @@ class AppTheme {
         useMaterial3: true,
         brightness: Brightness.dark,
         scaffoldBackgroundColor: AppColors.darkBackground,
+        pageTransitionsTheme: AppMotion.pageTransitions,
 
         colorScheme: const ColorScheme.dark(
           primary: AppColors.primary,

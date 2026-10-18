@@ -14,10 +14,14 @@ import '../widgets/product_detail/product_ingredients.dart';
 import '../widgets/product_detail/product_price_card.dart';
 import '../widgets/product_detail/reviews_section.dart';
 
+import '../animations/animations.dart';
 class ProductDetailPage extends StatefulWidget {
   final Product product;
 
-  const ProductDetailPage({super.key, required this.product});
+  /// Etiqueta del Hero que viene de la tarjeta (null = sin animación).
+  final Object? heroTag;
+
+  const ProductDetailPage({super.key, required this.product, this.heroTag});
 
   @override
   State<ProductDetailPage> createState() => _ProductDetailPageState();
@@ -34,6 +38,24 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   final Set<String> _selectedToppings = {};
 
   Product get _product => widget.product;
+
+  final GlobalKey _imageKey = GlobalKey();
+
+  Widget _wrapHero(Widget child) => widget.heroTag == null
+      ? child
+      : Hero(tag: widget.heroTag!, child: child);
+
+  /// Miniatura que sale de la foto y vuela al carrito.
+  void _flyToCart() {
+    final box = _imageKey.currentContext?.findRenderObject();
+    if (box is! RenderBox || !box.attached) return;
+    final center = (box.localToGlobal(Offset.zero) & box.size).center;
+    CartFly.launch(
+      context,
+      from: Rect.fromCenter(center: center, width: 90, height: 90),
+      imageUrl: _product.imageUrl,
+    );
+  }
 
   /// Lo que el usuario eligió en pantalla. Es lo que viaja al carrito
   /// y luego al pedido (el backend valida y recalcula el precio).
@@ -65,7 +87,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     );
     // Solo cerramos esta pantalla si sí se pudo agregar (si no había
     // sesión, CartGuard ya mostró el aviso pidiendo iniciar sesión).
-    if (isLoggedIn) Navigator.pop(context);
+    if (isLoggedIn) {
+      _flyToCart();
+      Navigator.pop(context);
+    }
   }
 
   void _toggleTopping(String topping) => setState(() {
@@ -95,10 +120,13 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    ProductHeroImage(
-                      imageUrl: _product.imageUrl,
-                      placeholderBg: placeholderBg,
-                      primaryColor: primary,
+                    _wrapHero(
+                      ProductHeroImage(
+                        key: _imageKey,
+                        imageUrl: _product.imageUrl,
+                        placeholderBg: placeholderBg,
+                        primaryColor: primary,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     Text(

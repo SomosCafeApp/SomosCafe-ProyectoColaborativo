@@ -5,6 +5,7 @@ import '../../pages/addresses_page.dart';
 import '../../providers/address_provider.dart';
 import 'selectable_tile.dart';
 
+import '../../animations/animations.dart';
 /// Lista de direcciones guardadas para elegir la de entrega, con
 /// acceso a AddressesPage para agregar o administrar.
 class AddressPickerSection extends StatelessWidget {
@@ -29,7 +30,7 @@ class AddressPickerSection extends StatelessWidget {
     if (provider.isLoading && provider.addresses.isEmpty) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 12),
-        child: Center(child: CircularProgressIndicator()),
+        child: Center(child: CoffeeCupLoader()),
       );
     }
 

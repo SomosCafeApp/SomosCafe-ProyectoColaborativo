@@ -42,6 +42,12 @@ class NotificationUiMapper {
           bgColor: const Color(0xFFFFF8E1),
           color: const Color(0xFFF57F17),
         );
+      case 'EVENT':
+        return _NotificationStyle(
+          icon: Icons.event_outlined,
+          bgColor: const Color(0xFFE3F2FD),
+          color: const Color(0xFF1565C0),
+        );
       case 'SYSTEM':
         return _NotificationStyle(
           icon: Icons.settings_outlined,

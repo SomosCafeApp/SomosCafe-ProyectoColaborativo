@@ -110,7 +110,7 @@ class ProfilePage extends StatelessWidget {
                         : AppColors.catCold,
                     iconColor: const Color(0xFF0288D1),
                     title: 'Notificaciones',
-                    subtitle: 'Preferencias de alertas',
+                    subtitle: 'Consulta tus notificaciones recibidas',
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(

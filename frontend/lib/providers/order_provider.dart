@@ -82,6 +82,7 @@ class OrderProvider extends ChangeNotifier {
     required String recipientPhone,
     required PaymentMethodType paymentMethod,
     String? addressId,
+    String? couponId,
     String notes = '',
   }) async {
     if (_token == null) {
@@ -106,6 +107,8 @@ class OrderProvider extends ChangeNotifier {
         'recipientName': recipientName.trim(),
         'recipientPhone': recipientPhone.trim(),
         'paymentMethod': paymentMethod.apiValue,
+        // Cupón de recompensas (UserCoupon): el servidor valida y calcula el descuento.
+        if (couponId != null) 'couponId': couponId,
         if (deliveryType == DeliveryType.delivery && addressId != null) 'addressId': addressId,
         'notes': notes.trim(),
         'items': lines
@@ -139,6 +142,11 @@ class OrderProvider extends ChangeNotifier {
     if (lower.contains('products were not found')) {
       return 'Algún producto de tu carrito ya no existe. Quítalo para continuar.';
     }
+    if (lower.contains('coupon already used')) return 'Este cupón ya fue usado';
+    if (lower.contains('coupon expired')) return 'Este cupón venció';
+    if (lower.contains('coupon not found')) return 'No encontramos ese cupón';
+    if (lower.contains('minimum purchase not reached')) return 'Tu compra no alcanza el mínimo de este cupón';
+    if (lower.contains('gives no discount')) return 'Este cupón no da descuento en este pedido';
     return message;
   }
 

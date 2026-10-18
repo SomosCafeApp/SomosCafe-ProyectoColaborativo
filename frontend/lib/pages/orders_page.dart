@@ -11,7 +11,9 @@ import 'transfer_payment_page.dart';
 import '../widgets/profile/profile_sub_page_header.dart';
 import '../widgets/orders/order_card_item.dart';
 import '../widgets/orders/empty_orders_view.dart';
+import '../widgets/common/styled_confirm_dialog.dart';
 
+import '../animations/animations.dart';
 class OrdersPage extends StatefulWidget {
   final VoidCallback? onExploreMenu;
 
@@ -77,27 +79,16 @@ class _OrdersPageState extends State<OrdersPage> {
   }
 
   Future<void> _handleCancel(Order order) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Cancelar pedido'),
-        content: const Text(
-          '¿Seguro que quieres cancelar este pedido?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('No'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Sí, cancelar'),
-          ),
-        ],
-      ),
+    final confirmed = await showStyledConfirmDialog(
+      context,
+      icon: Icons.cancel_outlined,
+      title: 'Cancelar pedido',
+      message: '¿Seguro que quieres cancelar este pedido?',
+      confirmLabel: 'Sí, cancelar',
+      cancelLabel: 'No',
     );
 
-    if (confirmed != true) return;
+    if (!confirmed) return;
 
     setState(() {
       _cancellingOrderId = order.id;
@@ -207,9 +198,7 @@ class _OrdersPageState extends State<OrdersPage> {
     List<Order> orders,
   ) {
     if (orderProvider.isLoading && orders.isEmpty) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CoffeeCupLoader());
     }
 
     if (orderProvider.errorMessage != null && orders.isEmpty) {

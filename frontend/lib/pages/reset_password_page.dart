@@ -3,14 +3,21 @@ import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/profile/profile_sub_page_header.dart';
 
 /// Paso 2: el usuario ingresa el código de 6 dígitos que recibió por
 /// correo, la nueva contraseña y su confirmación. Al cambiarla con
 /// éxito, se cierra este flujo y se le pide volver a loguearse.
+///
+/// Con [useSession] = true se usa desde Configuración → Seguridad
+/// ("¿Olvidaste tu contraseña?" con la sesión abierta): el código ya se
+/// envió al correo de la cuenta logueada, se valida con la sesión (sin
+/// volver a pedir el correo) y al terminar NO se cierra la sesión.
 class ResetPasswordPage extends StatefulWidget {
   final String email;
+  final bool useSession;
 
-  const ResetPasswordPage({super.key, required this.email});
+  const ResetPasswordPage({super.key, required this.email, this.useSession = false});
 
   @override
   State<ResetPasswordPage> createState() => _ResetPasswordPageState();
@@ -67,15 +74,23 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
     }
 
     final auth = context.read<AuthProvider>();
-    final success = await auth.resetPassword(
-      email: widget.email,
-      code: code,
-      newPassword: password,
-    );
+    final success = widget.useSession
+        ? await auth.changePasswordWithCode(code: code, newPassword: password)
+        : await auth.resetPassword(
+            email: widget.email,
+            code: code,
+            newPassword: password,
+          );
 
     if (!mounted) return;
 
-    if (success) {
+    if (success && widget.useSession) {
+      // Vuelve a Seguridad (que se cierra sola) sin cerrar la sesión.
+      Navigator.pop(context, true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Contraseña actualizada')),
+      );
+    } else if (success) {
       // Volvemos hasta el login (cierra Forgot + Reset) y pedimos
       // iniciar sesión de nuevo con la nueva contraseña.
       Navigator.popUntil(context, (route) => route.isFirst);
@@ -88,6 +103,19 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
       );
     }
   }
+
+  // En modo sesión la pantalla lleva el header de las pestañas de perfil.
+  Widget _wrap(Widget form) => widget.useSession
+      ? Column(
+          children: [
+            const ProfileSubPageHeader(
+              title: 'Cambiar contraseña',
+              subtitle: 'Confirma el código de tu correo',
+            ),
+            Expanded(child: form),
+          ],
+        )
+      : form;
 
   Widget _buildEyeIcon(bool isObscured, VoidCallback onTap, Color iconColor) {
     return IconButton(
@@ -111,12 +139,14 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: IconThemeData(color: textColor),
-      ),
-      body: SingleChildScrollView(
+      appBar: widget.useSession
+          ? null
+          : AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              iconTheme: IconThemeData(color: textColor),
+            ),
+      body: _wrap(SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -233,7 +263,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
             const SizedBox(height: 24),
           ],
         ),
-      ),
+      )),
     );
   }
 }

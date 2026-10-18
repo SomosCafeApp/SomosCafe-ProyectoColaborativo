@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/utils/category_labels.dart';
 import '../models/picked_image.dart';
 import '../models/product_model.dart';
 import '../services/api_client.dart';
@@ -75,7 +76,7 @@ class AdminProductsProvider extends ChangeNotifier {
       if (_categoryFilter != null && p.categoryId != _categoryFilter) return false;
 
       if (query.isEmpty) return true;
-      return '${p.name} ${p.categoryName ?? ''}'.toLowerCase().contains(query);
+      return '${p.name} ${p.categoryName ?? ''} ${categoryLabel(p.categoryName)}'.toLowerCase().contains(query);
     }).toList();
   }
 

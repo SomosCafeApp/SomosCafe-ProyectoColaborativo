@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../animations/animations.dart';
 class SettingsSectionHeader extends StatelessWidget {
   final String title;
 
@@ -9,7 +10,9 @@ class SettingsSectionHeader extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => SoftFadeIn(child: _buildSoft(context));
+
+  Widget _buildSoft(BuildContext context) {
     final theme = Theme.of(context);
     final textColor = theme.colorScheme.onSurface;
 

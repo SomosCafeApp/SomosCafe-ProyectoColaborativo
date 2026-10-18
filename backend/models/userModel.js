@@ -33,6 +33,14 @@ const userSchema = new mongoose.Schema(
             default: ""
         },
 
+        // Fecha de cumpleaños (guardada a las 12:00 UTC del día para
+        // que no cambie de día por zona horaria). Se registra UNA sola
+        // vez: da derecho al cupón de cumpleaños de cada año.
+        birthDate: {
+            type: Date,
+            default: null
+        },
+
         // ===================================
         // AUTENTICACIÓN TRADICIONAL
         // ===================================
@@ -111,6 +119,12 @@ const userSchema = new mongoose.Schema(
         recoveryCodeExpiration: {
             type: Date,
             default: null
+        },
+
+        // Intentos fallidos con el código actual (se invalida a los 5).
+        recoveryAttempts: {
+            type: Number,
+            default: 0
         }
     },
     {

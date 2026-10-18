@@ -4,6 +4,7 @@ import '../../models/order.dart';
 import '../product_detail/customization_summary.dart';
 import 'order_payment_section.dart';
 
+import '../../animations/animations.dart';
 class OrderCardItem extends StatelessWidget {
   final Order order;
   final bool isExpanded;
@@ -83,6 +84,31 @@ class OrderCardItem extends StatelessWidget {
         return Icons.local_shipping_outlined;
     }
   }
+
+  /// Paso del pedido en la línea de progreso (0 = recibido ... 3 = entregado).
+  int get _timelineStep {
+    switch (order.status) {
+      case OrderStatus.pending:
+      case OrderStatus.confirmed:
+        return 0;
+      case OrderStatus.preparing:
+        return 1;
+      case OrderStatus.ready:
+      case OrderStatus.outForDelivery:
+        return 2;
+      case OrderStatus.delivered:
+        return 3;
+      case OrderStatus.cancelled:
+        return 0;
+    }
+  }
+
+  List<String> get _timelineLabels => [
+        'Recibido',
+        'Preparando',
+        order.deliveryType == DeliveryType.delivery ? 'En camino' : 'Listo',
+        'Entregado',
+      ];
 
   @override
   Widget build(BuildContext context) {
@@ -214,6 +240,18 @@ class OrderCardItem extends StatelessWidget {
                   ],
                 ),
 
+                // Línea de progreso del pedido (no aplica a cancelados).
+                if (order.status != OrderStatus.cancelled) ...[
+                  const SizedBox(height: 14),
+                  OrderStatusTimeline(
+                    labels: _timelineLabels,
+                    currentStep: _timelineStep,
+                    activeColor: primaryBrown,
+                    inactiveColor: subtitleColor.withAlpha(70),
+                    textColor: subtitleColor,
+                  ),
+                ],
+
                 // Cancelación: visible sin expandir mientras dure la ventana.
                 if (onCancel != null) ...[
                   const SizedBox(height: 12),
@@ -291,6 +329,11 @@ class OrderCardItem extends StatelessWidget {
                   amountRow('Subtotal', _money(order.subtotal)),
                   amountRow('Envío', order.shippingCost == 0 ? 'Gratis' : _money(order.shippingCost)),
                   amountRow('Descuento', order.discount == 0 ? '\$0' : '-${_money(order.discount)}'),
+                  if (order.couponDiscount > 0)
+                    amountRow(
+                      order.couponName.isEmpty ? 'Cupón' : 'Cupón · ${order.couponName}',
+                      '-${_money(order.couponDiscount)}',
+                    ),
                   const SizedBox(height: 4),
                   amountRow('Total', _money(order.total), bold: true),
                   const SizedBox(height: 6),

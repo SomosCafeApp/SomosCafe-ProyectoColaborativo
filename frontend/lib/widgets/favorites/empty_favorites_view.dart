@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 
+import '../../animations/animations.dart';
 class EmptyFavoritesView extends StatelessWidget {
   final VoidCallback? onExploreMenu;
 
   const EmptyFavoritesView({super.key, this.onExploreMenu});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => SoftFadeIn(child: _buildSoft(context));
+
+  Widget _buildSoft(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -41,10 +44,12 @@ class EmptyFavoritesView extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                   child: Center(
-                    child: Icon(
-                      Icons.favorite_border_rounded,
-                      size: 58,
-                      color: iconColor,
+                    child: Breathing(
+                      child: Icon(
+                        Icons.favorite_border_rounded,
+                        size: 58,
+                        color: iconColor,
+                      ),
                     ),
                   ),
                 ),

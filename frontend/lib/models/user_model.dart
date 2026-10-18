@@ -10,6 +10,13 @@ class AppUser {
   final bool isActive;
   final bool isEmailVerified;
 
+  /// Cumpleaños "AAAA-MM-DD" (null si aún no lo registra). Se puede
+  /// registrar una sola vez; da derecho al cupón de cumpleaños.
+  final String? birthDate;
+
+  /// false en cuentas creadas con Google (no tienen contraseña).
+  final bool hasPassword;
+
   AppUser({
     required this.id,
     required this.name,
@@ -21,6 +28,8 @@ class AppUser {
     required this.profileImage,
     required this.isActive,
     required this.isEmailVerified,
+    this.birthDate,
+    this.hasPassword = true,
   });
 
   factory AppUser.fromJson(Map<String, dynamic> json) {
@@ -35,6 +44,8 @@ class AppUser {
       profileImage: json['profileImage'] as String? ?? '',
       isActive: json['isActive'] as bool? ?? true,
       isEmailVerified: json['isEmailVerified'] as bool? ?? false,
+      birthDate: json['birthDate'] as String?,
+      hasPassword: json['hasPassword'] as bool? ?? true,
     );
   }
 
@@ -49,5 +60,7 @@ class AppUser {
         'profileImage': profileImage,
         'isActive': isActive,
         'isEmailVerified': isEmailVerified,
+        'birthDate': birthDate,
+        'hasPassword': hasPassword,
       };
 }

@@ -3,6 +3,7 @@ import '../../core/constants/app_colors.dart';
 import '../../models/product_model.dart';
 import '../product_card.dart';
 
+import '../../animations/animations.dart';
 class FilteredMenuSection extends StatelessWidget {
   final List<Product> products;
   final Function(Product) onAddToCart;
@@ -45,7 +46,7 @@ class FilteredMenuSection extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 32),
                   child: Center(
                     child: Text(
-                      'No hay productos disponibles en esta categoría',
+                      'No hay productos disponibles',
                       style: TextStyle(color: subtitleColor, fontSize: 14),
                     ),
                   ),
@@ -62,9 +63,12 @@ class FilteredMenuSection extends StatelessWidget {
                   ),
                   itemBuilder: (context, index) {
                     final product = products[index];
-                    return ProductCard(
-                      product: product,
-                      onAddToCart: () => onAddToCart(product),
+                    return FadeSlideIn.staggered(
+                      index: index,
+                      child: ProductCard(
+                        product: product,
+                        onAddToCart: () => onAddToCart(product),
+                      ),
                     );
                   },
                 ),

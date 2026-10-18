@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/notification_item.dart';
 
+import '../../animations/animations.dart';
 class NotificationCard extends StatelessWidget {
   final NotificationItem item;
   final Color unreadDotColor;
@@ -26,7 +27,9 @@ class NotificationCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => SoftFadeIn(child: _buildSoft(context));
+
+  Widget _buildSoft(BuildContext context) {
     final card = InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),

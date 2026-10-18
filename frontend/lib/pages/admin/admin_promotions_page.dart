@@ -7,6 +7,7 @@ import '../../providers/product_provider.dart';
 import '../../providers/promo_of_the_day_provider.dart';
 import '../../widgets/admin/admin_crud_section.dart';
 import '../../widgets/admin/admin_promotion_card.dart';
+import '../../widgets/admin/confirm_action_dialog.dart';
 import '../../widgets/admin/promotion_form_card.dart';
 import '../../widgets/profile/profile_sub_page_header.dart';
 
@@ -143,20 +144,15 @@ class _AdminPromotionsPageState extends State<AdminPromotionsPage> {
   }
 
   Future<void> _handleDelete(Promotion promotion) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Eliminar promoción'),
-        content: Text(
-          '¿Eliminar "${promotion.name}"? Los productos asignados volverán a su precio normal.',
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('No')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Sí, eliminar')),
-        ],
-      ),
+    final confirmed = await confirmAction(
+      context,
+      title: 'Eliminar promoción',
+      message: '¿Eliminar "${promotion.name}"? Los productos asignados volverán a su precio normal.',
+      confirmLabel: 'Sí, eliminar',
+      destructive: true,
+      icon: Icons.delete_outline_rounded,
     );
-    if (confirmed != true || !mounted) return;
+    if (!confirmed || !mounted) return;
 
     final provider = context.read<AdminPromotionsProvider>();
     final ok = await provider.deletePromotion(promotion.id);

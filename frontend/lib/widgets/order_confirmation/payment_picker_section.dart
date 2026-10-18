@@ -5,6 +5,7 @@ import '../../pages/payment_methods_page.dart';
 import '../../providers/payment_method_provider.dart';
 import 'selectable_tile.dart';
 
+import '../../animations/animations.dart';
 /// Lista de métodos de pago guardados para elegir uno, con acceso a
 /// PaymentMethodsPage para agregar o administrar.
 class PaymentPickerSection extends StatelessWidget {
@@ -30,7 +31,7 @@ class PaymentPickerSection extends StatelessWidget {
     if (provider.isLoading && provider.methods.isEmpty) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 12),
-        child: Center(child: CircularProgressIndicator()),
+        child: Center(child: CoffeeCupLoader()),
       );
     }
 

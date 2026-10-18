@@ -1,3 +1,4 @@
+import '../../../core/utils/app_date_picker.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
@@ -83,13 +84,12 @@ class _EventFormCardState extends State<EventFormCard> {
 
   Future<void> _pickDates() async {
     final now = DateTime.now();
-    final picked = await showDateRangePicker(
-      context: context,
+    final picked = await showAppDateRangePicker(
+      context,
       firstDate: DateTime(now.year - 1),
       lastDate: DateTime(now.year + 3),
       initialDateRange: _range,
       helpText: 'Fechas del evento',
-      saveText: 'Listo',
     );
     if (picked != null) {
       setState(() {

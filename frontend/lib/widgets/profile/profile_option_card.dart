@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../animations/animations.dart';
 class ProfileOptionCard extends StatelessWidget {
   final Color cardColor;
   final Color textColor;
@@ -27,7 +28,9 @@ class ProfileOptionCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => SoftFadeIn(child: _buildSoft(context));
+
+  Widget _buildSoft(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
