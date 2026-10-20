@@ -69,7 +69,7 @@ class AdminImagePicker extends StatelessWidget {
       content = Image.network(
         currentImageUrl!,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _placeholder(subtitleColor),
+        errorBuilder: (_, _, _) => _placeholder(subtitleColor),
       );
     } else {
       content = _placeholder(subtitleColor);

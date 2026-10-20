@@ -71,8 +71,8 @@ class PaymentMethodProvider extends ChangeNotifier {
         'provider': provider,
         'name': name,
         if (lastFourDigits.isNotEmpty) 'lastFourDigits': lastFourDigits,
-        if (expirationMonth != null) 'expirationMonth': expirationMonth,
-        if (expirationYear != null) 'expirationYear': expirationYear,
+        'expirationMonth': ?expirationMonth,
+        'expirationYear': ?expirationYear,
       });
       _methods.add(PaymentMethod.fromJson(data['paymentMethod'] as Map<String, dynamic>));
       _isSubmitting = false;

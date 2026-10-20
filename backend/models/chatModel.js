@@ -12,6 +12,14 @@ const chatMessageSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true
+    },
+
+    // IDs de los productos que el asistente recomendó en este mensaje
+    // (se muestran como tarjetas). El contenido siempre es texto plano.
+    products: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "Product",
+      default: []
     }
   },
   {

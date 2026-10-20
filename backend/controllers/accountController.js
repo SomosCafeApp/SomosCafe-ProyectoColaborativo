@@ -73,12 +73,12 @@ const findAccount = async (req, res) => {
     const user = await User.findById(req.user.id);
 
     if (!user) {
-        res.status(404).json({ message: "User not found" });
+        res.status(404).json({ message: "Usuario no encontrado" });
         return null;
     }
 
     if (!user.isActive) {
-        res.status(403).json({ message: "User account is inactive" });
+        res.status(403).json({ message: "La cuenta de usuario está inactiva" });
         return null;
     }
 
@@ -116,17 +116,17 @@ export const updateProfile = async (req, res) => {
         const rawBirthDate = (req.body.birthDate || "").toString().trim();
 
         if (!name) {
-            return res.status(400).json({ message: "Name is required" });
+            return res.status(400).json({ message: "El nombre es obligatorio" });
         }
 
         if (name.length > 50 || lastName.length > 50) {
             return res.status(400).json({
-                message: "Name and last name cannot exceed 50 characters"
+                message: "El nombre y el apellido no pueden superar los 50 caracteres"
             });
         }
 
         if (phone && !PHONE_REGEX.test(phone)) {
-            return res.status(400).json({ message: "Invalid phone number" });
+            return res.status(400).json({ message: "Número de teléfono inválido" });
         }
 
         // El cumpleaños se registra UNA sola vez: evita cambiarlo para
@@ -137,13 +137,13 @@ export const updateProfile = async (req, res) => {
 
             if (!birthDate) {
                 return res.status(400).json({
-                    message: "Invalid birth date"
+                    message: "Fecha de nacimiento inválida"
                 });
             }
 
             if (birthDate > new Date() || birthDate.getUTCFullYear() < 1900) {
                 return res.status(400).json({
-                    message: "Invalid birth date"
+                    message: "Fecha de nacimiento inválida"
                 });
             }
 
@@ -151,7 +151,7 @@ export const updateProfile = async (req, res) => {
 
                 if (formatBirthDate(user.birthDate) !== rawBirthDate) {
                     return res.status(400).json({
-                        message: "Birth date can only be set once"
+                        message: "La fecha de nacimiento solo se puede establecer una vez"
                     });
                 }
 
@@ -170,7 +170,7 @@ export const updateProfile = async (req, res) => {
         await user.save();
 
         return res.status(200).json({
-            message: "Profile updated successfully",
+            message: "Perfil actualizado correctamente",
             user: userResponse(user)
         });
 
@@ -179,7 +179,7 @@ export const updateProfile = async (req, res) => {
         console.error("Update profile error:", error);
 
         return res.status(500).json({
-            message: "Error updating profile",
+            message: "Error al actualizar el perfil",
             error: error.message
         });
 
@@ -198,7 +198,7 @@ export const changePasswordWithCurrent = async (req, res) => {
 
         if (!currentPassword || !newPassword) {
             return res.status(400).json({
-                message: "All fields are required"
+                message: "Todos los campos son obligatorios"
             });
         }
 
@@ -209,7 +209,7 @@ export const changePasswordWithCurrent = async (req, res) => {
         // crear una con el método del código al correo.
         if (!user.password) {
             return res.status(400).json({
-                message: "Account has no password"
+                message: "La cuenta no tiene contraseña"
             });
         }
 
@@ -220,13 +220,13 @@ export const changePasswordWithCurrent = async (req, res) => {
 
         if (!matches) {
             return res.status(400).json({
-                message: "Current password is incorrect"
+                message: "La contraseña actual es incorrecta"
             });
         }
 
         if (newPassword === currentPassword) {
             return res.status(400).json({
-                message: "New password must be different from the current one"
+                message: "La nueva contraseña debe ser diferente de la actual"
             });
         }
 
@@ -243,7 +243,7 @@ export const changePasswordWithCurrent = async (req, res) => {
         await sendUpdatedEmail(user);
 
         return res.status(200).json({
-            message: "Password updated successfully"
+            message: "Contraseña actualizada correctamente"
         });
 
     } catch (error) {
@@ -251,7 +251,7 @@ export const changePasswordWithCurrent = async (req, res) => {
         console.error("Change password (current) error:", error);
 
         return res.status(500).json({
-            message: "Error changing password",
+            message: "Error al cambiar la contraseña",
             error: error.message
         });
 
@@ -278,7 +278,7 @@ export const requestOwnPasswordCode = async (req, res) => {
 
             if (Date.now() - issuedAt < RESEND_COOLDOWN_MS) {
                 return res.status(429).json({
-                    message: "Please wait before requesting another code"
+                    message: "Espera un momento antes de solicitar otro código"
                 });
             }
 
@@ -305,13 +305,13 @@ export const requestOwnPasswordCode = async (req, res) => {
             console.error("Own recovery email error:", emailError);
 
             return res.status(502).json({
-                message: "Could not send recovery email"
+                message: "No se pudo enviar el correo de recuperación"
             });
 
         }
 
         return res.status(200).json({
-            message: "Recovery email sent successfully",
+            message: "Correo de recuperación enviado correctamente",
             email: user.email
         });
 
@@ -320,7 +320,7 @@ export const requestOwnPasswordCode = async (req, res) => {
         console.error("Request own code error:", error);
 
         return res.status(500).json({
-            message: "Error requesting password code",
+            message: "Error al solicitar el código de contraseña",
             error: error.message
         });
 
@@ -339,7 +339,7 @@ export const changePasswordWithCode = async (req, res) => {
 
         if (!code || !newPassword) {
             return res.status(400).json({
-                message: "All fields are required"
+                message: "Todos los campos son obligatorios"
             });
         }
 
@@ -354,7 +354,7 @@ export const changePasswordWithCode = async (req, res) => {
 
         const invalid = () =>
             res.status(400).json({
-                message: "Invalid or expired recovery code"
+                message: "Código de recuperación inválido o vencido"
             });
 
         if (
@@ -392,7 +392,7 @@ export const changePasswordWithCode = async (req, res) => {
         await sendUpdatedEmail(user);
 
         return res.status(200).json({
-            message: "Password updated successfully"
+            message: "Contraseña actualizada correctamente"
         });
 
     } catch (error) {
@@ -400,7 +400,7 @@ export const changePasswordWithCode = async (req, res) => {
         console.error("Change password (code) error:", error);
 
         return res.status(500).json({
-            message: "Error changing password",
+            message: "Error al cambiar la contraseña",
             error: error.message
         });
 
@@ -434,7 +434,7 @@ export const deleteAccount = async (req, res) => {
 
         if (user.role === "ADMIN") {
             return res.status(403).json({
-                message: "Admin accounts cannot be deleted"
+                message: "Las cuentas de administrador no se pueden eliminar"
             });
         }
 
@@ -443,7 +443,7 @@ export const deleteAccount = async (req, res) => {
             "ELIMINAR"
         ) {
             return res.status(400).json({
-                message: "Confirmation is required"
+                message: "La confirmación es obligatoria"
             });
         }
 
@@ -458,7 +458,7 @@ export const deleteAccount = async (req, res) => {
 
             if (!matches) {
                 return res.status(400).json({
-                    message: "Password is incorrect"
+                    message: "La contraseña es incorrecta"
                 });
             }
 
@@ -471,7 +471,7 @@ export const deleteAccount = async (req, res) => {
 
         if (activeOrder) {
             return res.status(409).json({
-                message: "You have orders in progress"
+                message: "Tienes pedidos en curso"
             });
         }
 
@@ -524,7 +524,7 @@ export const deleteAccount = async (req, res) => {
         );
 
         return res.status(200).json({
-            message: "Account deleted successfully"
+            message: "Cuenta eliminada correctamente"
         });
 
     } catch (error) {
@@ -532,7 +532,112 @@ export const deleteAccount = async (req, res) => {
         console.error("Delete account error:", error);
 
         return res.status(500).json({
-            message: "Error deleting account",
+            message: "Error al eliminar la cuenta",
+            error: error.message
+        });
+
+    }
+
+};
+
+// ===================================
+// PROFILE PHOTO
+// ===================================
+// La foto se sube a Cloudinary (carpeta somoscafeapp/perfiles). Las
+// fotos que vienen de Google (cuentas creadas con Google) son URLs
+// ajenas: no se borran de ningún lado, solo se dejan de usar.
+
+const isOwnProfileImage = (url) =>
+    typeof url === "string" && url.includes("/somoscafeapp/perfiles/");
+
+// ===================================
+// SET / CHANGE PROFILE PHOTO
+// ===================================
+export const updateProfileImage = async (req, res) => {
+
+    try {
+
+        if (!req.file) {
+            return res.status(400).json({
+                message: "La imagen es obligatoria"
+            });
+        }
+
+        const newImage = req.file.path;
+
+        const user = await findAccount(req, res);
+
+        if (!user) {
+            // multer ya la subió: no dejamos archivos huérfanos.
+            await deleteCloudinaryImage(newImage);
+            return;
+        }
+
+        const oldImage = user.profileImage;
+
+        user.profileImage = newImage;
+        user.profileImageRemoved = false;
+        await user.save();
+
+        if (isOwnProfileImage(oldImage)) {
+            await deleteCloudinaryImage(oldImage);
+        }
+
+        return res.status(200).json({
+            message: "Foto de perfil actualizada correctamente",
+            user: userResponse(user)
+        });
+
+    } catch (error) {
+
+        if (req.file?.path) {
+            await deleteCloudinaryImage(req.file.path);
+        }
+
+        console.error("Update profile image error:", error);
+
+        return res.status(500).json({
+            message: "Error al actualizar la foto de perfil",
+            error: error.message
+        });
+
+    }
+
+};
+
+// ===================================
+// DELETE PROFILE PHOTO
+// ===================================
+// Vuelve a mostrarse el avatar con las iniciales. Es idempotente: si
+// no había foto, responde igual que si la hubiera borrado.
+export const deleteProfileImage = async (req, res) => {
+
+    try {
+
+        const user = await findAccount(req, res);
+        if (!user) return;
+
+        const oldImage = user.profileImage;
+
+        user.profileImage = "";
+        user.profileImageRemoved = true;
+        await user.save();
+
+        if (isOwnProfileImage(oldImage)) {
+            await deleteCloudinaryImage(oldImage);
+        }
+
+        return res.status(200).json({
+            message: "Foto de perfil eliminada correctamente",
+            user: userResponse(user)
+        });
+
+    } catch (error) {
+
+        console.error("Delete profile image error:", error);
+
+        return res.status(500).json({
+            message: "Error al eliminar la foto de perfil",
             error: error.message
         });
 

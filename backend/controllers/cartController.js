@@ -138,7 +138,7 @@ export const getCart = async (req, res) => {
         );
 
         return res.status(200).json({
-            message: "Cart retrieved successfully",
+            message: "Carrito obtenido correctamente",
             cart: response,
             subtotal: response.subtotal,
             discount: response.discount,
@@ -150,7 +150,7 @@ export const getCart = async (req, res) => {
         console.error("Get cart error:", error);
 
         return res.status(500).json({
-            message: "Error retrieving cart",
+            message: "Error al obtener el carrito",
             error: error.message
         });
 
@@ -177,7 +177,7 @@ export const addToCart = async (req, res) => {
 
         if (!productId) {
             return res.status(400).json({
-                message: "Product ID is required"
+                message: "El ID del producto es obligatorio"
             });
         }
 
@@ -188,7 +188,7 @@ export const addToCart = async (req, res) => {
             productQuantity < 1
         ) {
             return res.status(400).json({
-                message: "Quantity must be a positive integer"
+                message: "La cantidad debe ser un número entero positivo"
             });
         }
 
@@ -198,13 +198,13 @@ export const addToCart = async (req, res) => {
 
         if (!product) {
             return res.status(404).json({
-                message: "Product not found"
+                message: "Producto no encontrado"
             });
         }
 
         if (!product.isAvailable) {
             return res.status(400).json({
-                message: "Product is currently unavailable"
+                message: "El producto no está disponible por el momento"
             });
         }
 
@@ -257,7 +257,7 @@ export const addToCart = async (req, res) => {
         );
 
         return res.status(200).json({
-            message: "Product added to cart successfully",
+            message: "Producto agregado al carrito correctamente",
             cart: response,
             subtotal: response.subtotal,
             discount: response.discount,
@@ -269,7 +269,7 @@ export const addToCart = async (req, res) => {
         console.error("Add to cart error:", error);
 
         return res.status(500).json({
-            message: "Error adding product to cart",
+            message: "Error al agregar el producto al carrito",
             error: error.message
         });
 
@@ -293,7 +293,7 @@ export const updateCartItem = async (req, res) => {
             quantity < 1
         ) {
             return res.status(400).json({
-                message: "Quantity must be a positive integer"
+                message: "La cantidad debe ser un número entero positivo"
             });
         }
 
@@ -303,7 +303,7 @@ export const updateCartItem = async (req, res) => {
 
         if (!cart) {
             return res.status(404).json({
-                message: "Cart not found"
+                message: "Carrito no encontrado"
             });
         }
 
@@ -311,7 +311,7 @@ export const updateCartItem = async (req, res) => {
 
         if (!item) {
             return res.status(404).json({
-                message: "Item not found in cart"
+                message: "Producto no encontrado en el carrito"
             });
         }
 
@@ -327,7 +327,7 @@ export const updateCartItem = async (req, res) => {
         );
 
         return res.status(200).json({
-            message: "Cart item updated successfully",
+            message: "Producto del carrito actualizado correctamente",
             cart: response,
             subtotal: response.subtotal,
             discount: response.discount,
@@ -339,7 +339,7 @@ export const updateCartItem = async (req, res) => {
         console.error("Update cart item error:", error);
 
         return res.status(500).json({
-            message: "Error updating cart item",
+            message: "Error al actualizar el producto del carrito",
             error: error.message
         });
 
@@ -361,7 +361,7 @@ export const removeFromCart = async (req, res) => {
 
         if (!cart) {
             return res.status(404).json({
-                message: "Cart not found"
+                message: "Carrito no encontrado"
             });
         }
 
@@ -369,7 +369,7 @@ export const removeFromCart = async (req, res) => {
 
         if (!item) {
             return res.status(404).json({
-                message: "Item not found in cart"
+                message: "Producto no encontrado en el carrito"
             });
         }
 
@@ -385,7 +385,7 @@ export const removeFromCart = async (req, res) => {
         );
 
         return res.status(200).json({
-            message: "Product removed from cart successfully",
+            message: "Producto quitado del carrito correctamente",
             cart: response,
             subtotal: response.subtotal,
             discount: response.discount,
@@ -397,7 +397,7 @@ export const removeFromCart = async (req, res) => {
         console.error("Remove from cart error:", error);
 
         return res.status(500).json({
-            message: "Error removing product from cart",
+            message: "Error al quitar el producto del carrito",
             error: error.message
         });
 
@@ -419,7 +419,7 @@ export const clearCart = async (req, res) => {
 
         if (!cart) {
             return res.status(404).json({
-                message: "Cart not found"
+                message: "Carrito no encontrado"
             });
         }
 
@@ -428,7 +428,7 @@ export const clearCart = async (req, res) => {
         await cart.save();
 
         return res.status(200).json({
-            message: "Cart cleared successfully",
+            message: "Carrito vaciado correctamente",
             cart: {
                 _id: cart._id,
                 userId: cart.userId,
@@ -444,7 +444,7 @@ export const clearCart = async (req, res) => {
         console.error("Clear cart error:", error);
 
         return res.status(500).json({
-            message: "Error clearing cart",
+            message: "Error al vaciar el carrito",
             error: error.message
         });
 

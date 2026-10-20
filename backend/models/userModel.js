@@ -75,6 +75,13 @@ const userSchema = new mongoose.Schema(
             default: ""
         },
 
+        // true cuando el usuario eliminó su foto a propósito. Evita que
+        // al volver a entrar con Google se le reponga la foto de Google.
+        profileImageRemoved: {
+            type: Boolean,
+            default: false
+        },
+
         // ===================================
         // INFORMACIÓN DEL USUARIO
         // ===================================

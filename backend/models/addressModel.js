@@ -57,10 +57,11 @@ const addressSchema = new mongoose.Schema(
         // CITY
         // ===================================
 
+        // La app solo opera en Garzón, Huila.
         city: {
             type: String,
-            required: true,
-            trim: true
+            trim: true,
+            default: "Garzón"
         },
 
         // ===================================

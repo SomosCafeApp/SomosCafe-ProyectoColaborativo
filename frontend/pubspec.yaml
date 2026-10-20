@@ -44,6 +44,10 @@ dependencies:
   shared_preferences: ^2.2.0
   google_maps_flutter: ^2.6.0
 
+  # Geocodificador nativo del teléfono: respaldo cuando la API de Google
+  # Geocoding rechaza la key (no necesita API key).
+  geocoding: ^3.0.0
+
   # Notificaciones push (FCM) + notificaciones locales para cuando
   # la app está abierta.
   firebase_core: ^3.15.2

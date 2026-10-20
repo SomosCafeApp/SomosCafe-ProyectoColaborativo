@@ -49,7 +49,7 @@ class CartItemCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.2 : 0.03),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -69,7 +69,7 @@ class CartItemCard extends StatelessWidget {
                 return Container(
                   width: 80,
                   height: 80,
-                  color: primaryBrown.withOpacity(0.1),
+                  color: primaryBrown.withValues(alpha: 0.1),
                   child: Icon(Icons.coffee, color: primaryBrown),
                 );
               },
@@ -176,7 +176,7 @@ class CartItemCard extends StatelessWidget {
                                 '-',
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: quantity > 1 ? textColor : subtitleColor.withOpacity(0.5),
+                                  color: quantity > 1 ? textColor : subtitleColor.withValues(alpha: 0.5),
                                 ),
                               ),
                             ),

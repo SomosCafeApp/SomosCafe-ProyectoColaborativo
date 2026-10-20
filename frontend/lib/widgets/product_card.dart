@@ -52,11 +52,11 @@ class _ProductCardState extends State<ProductCard> {
     final cardColor = isDark ? AppColors.darkSurface : AppColors.lightSurface;
     final textColor = isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
     final subtitleColor = isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
-    final mutedColor = subtitleColor.withOpacity(0.7);
+    final mutedColor = subtitleColor.withValues(alpha: 0.7);
     
     final imagePlaceholderBg = isDark ? AppColors.darkSurfaceSubtle : AppColors.lightSurfaceSubtle;
-    final pillBg = isDark ? AppColors.darkSurfaceSubtle.withOpacity(0.85) : Colors.white.withOpacity(0.9);
-    final viewsBadgeBg = isDark ? AppColors.darkSurfaceSubtle.withOpacity(0.92) : AppColors.lightSurfaceSubtle.withOpacity(0.92);
+    final pillBg = isDark ? AppColors.darkSurfaceSubtle.withValues(alpha: 0.85) : Colors.white.withValues(alpha: 0.9);
+    final viewsBadgeBg = isDark ? AppColors.darkSurfaceSubtle.withValues(alpha: 0.92) : AppColors.lightSurfaceSubtle.withValues(alpha: 0.92);
     final viewsIconColor = isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
     final viewsTextColor = isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
 
@@ -74,7 +74,7 @@ class _ProductCardState extends State<ProductCard> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -184,7 +184,7 @@ class _ProductCardState extends State<ProductCard> {
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
+                                color: Colors.black.withValues(alpha: 0.1),
                                 blurRadius: 4,
                                 offset: const Offset(0, 2),
                               ),
@@ -242,7 +242,7 @@ class _ProductCardState extends State<ProductCard> {
                           borderRadius: BorderRadius.circular(14),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.08),
+                              color: Colors.black.withValues(alpha: 0.08),
                               blurRadius: 4,
                               offset: const Offset(0, 2),
                             ),
@@ -386,7 +386,7 @@ class _ProductCardState extends State<ProductCard> {
     return Center(
       child: Icon(
         Icons.coffee_rounded,
-        color: color.withOpacity(0.4),
+        color: color.withValues(alpha: 0.4),
         size: 38,
       ),
     );

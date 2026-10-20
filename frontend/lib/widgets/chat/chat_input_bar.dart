@@ -29,7 +29,7 @@ class ChatInputBar extends StatelessWidget {
           color: theme.scaffoldBackgroundColor,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.03),
+              color: Colors.black.withValues(alpha: 0.03),
               offset: const Offset(0, -2),
               blurRadius: 4,
             ),
@@ -63,7 +63,7 @@ class ChatInputBar extends StatelessWidget {
               child: CircleAvatar(
                 radius: 20,
                 backgroundColor: isSending
-                    ? AppColors.primary.withOpacity(0.5)
+                    ? AppColors.primary.withValues(alpha: 0.5)
                     : AppColors.primary,
                 child: const Icon(
                   Icons.send_rounded,

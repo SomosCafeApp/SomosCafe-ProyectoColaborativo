@@ -4,27 +4,27 @@
 export const validatePasswordPolicy = (password) => {
 
     if (typeof password !== "string" || password.length < 6) {
-        return "Password must contain at least 6 characters";
+        return "La contraseña debe tener al menos 6 caracteres";
     }
 
     if (password.length > 100) {
-        return "Password cannot exceed 100 characters";
+        return "La contraseña no puede superar los 100 caracteres";
     }
 
     if (!/[0-9]/.test(password)) {
-        return "Password must contain at least one number";
+        return "La contraseña debe contener al menos un número";
     }
 
     if (!/[A-Z]/.test(password)) {
-        return "Password must contain at least one uppercase letter";
+        return "La contraseña debe contener al menos una letra mayúscula";
     }
 
     if (!/[a-z]/.test(password)) {
-        return "Password must contain at least one lowercase letter";
+        return "La contraseña debe contener al menos una letra minúscula";
     }
 
     if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
-        return "Password must contain at least one special character";
+        return "La contraseña debe contener al menos un carácter especial";
     }
 
     return null;

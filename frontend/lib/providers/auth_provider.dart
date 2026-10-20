@@ -8,10 +8,22 @@ import '../services/api_client.dart';
 import '../services/api_exception.dart';
 import '../services/google_auth_service.dart';
 import '../services/push_service.dart';
+import '../models/picked_image.dart';
 import '../models/user_model.dart';
 
 const _kTokenKey = 'auth_token';
 const _kUserKey = 'auth_user';
+const _kRememberMeKey = 'remember_me';
+const _kRememberedEmailKey = 'remembered_email';
+
+/// Lo que el login recuerda entre aperturas de la app: la casilla
+/// "Recordarme" y el correo (la contraseña NUNCA se guarda).
+class RememberedLogin {
+  final bool rememberMe;
+  final String email;
+
+  const RememberedLogin({required this.rememberMe, this.email = ''});
+}
 
 /// Cada cuánto se renueva el JWT mientras la app está abierta (el token
 /// dura 1 hora; renovamos bastante antes de que venza).
@@ -21,7 +33,13 @@ class AuthProvider extends ChangeNotifier with WidgetsBindingObserver {
   AppUser? _user;
   String? _token;
   bool _isLoading = false;
+  bool _isUpdatingPhoto = false;
   String? _errorMessage;
+
+  /// Si es false (el usuario no marcó "Recordarme"), la sesión vive
+  /// solo en memoria: no se escribe en el teléfono y, al cerrar la app,
+  /// habrá que iniciar sesión otra vez.
+  bool _persistEnabled = true;
 
   Timer? _refreshTimer;
   DateTime? _lastRefresh;
@@ -36,6 +54,9 @@ class AuthProvider extends ChangeNotifier with WidgetsBindingObserver {
   AppUser? get user => _user;
   String? get token => _token;
   bool get isLoading => _isLoading;
+
+  /// true mientras se sube o se elimina la foto de perfil.
+  bool get isUpdatingPhoto => _isUpdatingPhoto;
   String? get errorMessage => _errorMessage;
   String? get pendingVerificationEmail => _pendingVerificationEmail;
 
@@ -71,6 +92,8 @@ class AuthProvider extends ChangeNotifier with WidgetsBindingObserver {
 
     if (token == null || userJson == null) return;
 
+    // Hay una sesión guardada: es porque el usuario pidió recordarla.
+    _persistEnabled = true;
     _token = token;
     _user = AppUser.fromJson(jsonDecode(userJson) as Map<String, dynamic>);
 
@@ -157,6 +180,7 @@ class AuthProvider extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   Future<void> _persistSession(String token, AppUser user) async {
+    if (!_persistEnabled) return;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_kTokenKey, token);
     await prefs.setString(_kUserKey, jsonEncode(user.toJson()));
@@ -168,9 +192,34 @@ class AuthProvider extends ChangeNotifier with WidgetsBindingObserver {
     await prefs.remove(_kUserKey);
   }
 
+  /// Lee la preferencia "Recordarme" y el correo guardado para
+  /// rellenar el formulario de login. Por defecto viene activada, que
+  /// es como funcionaba la app antes (la sesión siempre se conservaba).
+  Future<RememberedLogin> loadRememberedLogin() async {
+    final prefs = await SharedPreferences.getInstance();
+    return RememberedLogin(
+      rememberMe: prefs.getBool(_kRememberMeKey) ?? true,
+      email: prefs.getString(_kRememberedEmailKey) ?? '',
+    );
+  }
+
+  Future<void> _saveRememberChoice(bool rememberMe, String email) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_kRememberMeKey, rememberMe);
+    if (rememberMe) {
+      await prefs.setString(_kRememberedEmailKey, email.trim());
+    } else {
+      await prefs.remove(_kRememberedEmailKey);
+    }
+  }
+
   /// Login tradicional (email + contraseña).
+  ///
+  /// [rememberMe] true: la sesión se guarda y se restaura al abrir la
+  /// app, y el correo queda recordado. false: la sesión solo dura
+  /// mientras la app esté abierta.
   /// Devuelve true si fue exitoso.
-  Future<bool> login(String email, String password) async {
+  Future<bool> login(String email, String password, {bool rememberMe = true}) async {
     _setLoading(true);
     _errorMessage = null;
 
@@ -182,7 +231,17 @@ class AuthProvider extends ChangeNotifier with WidgetsBindingObserver {
 
       _token = data['token'] as String;
       _user = AppUser.fromJson(data['user'] as Map<String, dynamic>);
-      await _persistSession(_token!, _user!);
+
+      _persistEnabled = rememberMe;
+      if (rememberMe) {
+        await _persistSession(_token!, _user!);
+      } else {
+        // Borra cualquier sesión guardada de antes para que no
+        // reaparezca al reabrir la app.
+        await _clearSession();
+      }
+      await _saveRememberChoice(rememberMe, email);
+
       _lastRefresh = DateTime.now();
       _startKeepAlive();
 
@@ -194,7 +253,7 @@ class AuthProvider extends ChangeNotifier with WidgetsBindingObserver {
       // El backend devuelve 403 con este mensaje cuando el correo
       // aún no ha sido verificado. Guardamos el email para poder
       // llevar al usuario directo a la pantalla de verificación.
-      if (e.message.toLowerCase().contains('verify your email')) {
+      if (e.message.toLowerCase().contains('verify your email') || e.message.toLowerCase().contains('verifica tu correo')) {
         _pendingVerificationEmail = email.trim().toLowerCase();
       }
       _setLoading(false);
@@ -344,7 +403,7 @@ class AuthProvider extends ChangeNotifier with WidgetsBindingObserver {
         'name': name.trim(),
         'lastName': lastName.trim(),
         'phone': phone.trim(),
-        if (birthDate != null) 'birthDate': birthDate,
+        'birthDate': ?birthDate,
       });
       _user = AppUser.fromJson(data['user'] as Map<String, dynamic>);
       await _persistSession(_token!, _user!);
@@ -354,6 +413,44 @@ class AuthProvider extends ChangeNotifier with WidgetsBindingObserver {
       _errorMessage = _translateAccountError(e.message);
       _setLoading(false);
       return false;
+    }
+  }
+
+  /// Sube (o reemplaza) la foto de perfil. El backend la recorta a un
+  /// cuadrado y devuelve el usuario actualizado. Devuelve true si salió bien.
+  Future<bool> updateProfileImage(PickedImage image) => _photoCall(
+        () => ApiClient.sendMultipart(
+          'PUT',
+          '/account/profile-image',
+          fields: const {},
+          imageBytes: image.bytes,
+          imageName: image.name,
+          token: _token,
+        ),
+      );
+
+  /// Elimina la foto de perfil: vuelven a verse las iniciales.
+  Future<bool> removeProfileImage() => _photoCall(
+        () => ApiClient.delete('/account/profile-image', token: _token),
+      );
+
+  Future<bool> _photoCall(Future<Map<String, dynamic>> Function() request) async {
+    if (_token == null || _isUpdatingPhoto) return false;
+    _isUpdatingPhoto = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final data = await request();
+      _user = AppUser.fromJson(data['user'] as Map<String, dynamic>);
+      await _persistSession(_token!, _user!);
+      return true;
+    } on ApiException catch (e) {
+      _errorMessage = _translateAccountError(e.message);
+      return false;
+    } finally {
+      _isUpdatingPhoto = false;
+      notifyListeners();
     }
   }
 
@@ -405,7 +502,7 @@ class AuthProvider extends ChangeNotifier with WidgetsBindingObserver {
     _errorMessage = null;
     try {
       await ApiClient.post('/account/delete', token: _token, body: {
-        if (password != null) 'password': password,
+        'password': ?password,
         'confirmation': 'ELIMINAR',
       });
       // La cuenta ya no existe: se limpia la sesión local sin intentar
@@ -445,6 +542,8 @@ class AuthProvider extends ChangeNotifier with WidgetsBindingObserver {
     }
     if (lower.contains('admin accounts cannot')) return 'Las cuentas de administrador no se pueden eliminar';
     if (lower.contains('name is required')) return 'Ingresa tu nombre';
+    if (lower.contains('file too large')) return 'La imagen supera los 5 MB. Elige una más liviana';
+    if (lower.contains('only jpg')) return 'Solo se permiten imágenes JPG, PNG, WEBP o AVIF';
     if (lower.contains('password must contain') || lower.contains('password cannot exceed')) {
       return 'La contraseña debe tener mín. 6 caracteres, mayúscula, minúscula, número y carácter especial';
     }
@@ -464,6 +563,8 @@ class AuthProvider extends ChangeNotifier with WidgetsBindingObserver {
 
       _token = data['token'] as String;
       _user = AppUser.fromJson(data['user'] as Map<String, dynamic>);
+      // El acceso con Google no tiene casilla "Recordarme": se conserva.
+      _persistEnabled = true;
       await _persistSession(_token!, _user!);
       _lastRefresh = DateTime.now();
       _startKeepAlive();

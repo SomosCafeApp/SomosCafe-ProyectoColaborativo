@@ -11,7 +11,7 @@ class HomeDivider extends StatelessWidget {
     final primaryBrown = theme.colorScheme.primary;
     final dividerColor = isDark
         ? AppColors.darkSurfaceSubtle
-        : theme.colorScheme.onSurface.withOpacity(0.08);
+        : theme.colorScheme.onSurface.withValues(alpha: 0.08);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -25,7 +25,7 @@ class HomeDivider extends StatelessWidget {
                 Icon(
                   Icons.auto_awesome,
                   size: 12,
-                  color: isDark ? AppColors.accentYellow : primaryBrown.withOpacity(0.6),
+                  color: isDark ? AppColors.accentYellow : primaryBrown.withValues(alpha: 0.6),
                 ),
                 const SizedBox(width: 6),
                 Text(

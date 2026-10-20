@@ -120,7 +120,7 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.wifi_off_rounded, size: 42, color: primaryBrown.withOpacity(0.6)),
+              Icon(Icons.wifi_off_rounded, size: 42, color: primaryBrown.withValues(alpha: 0.6)),
               const SizedBox(height: 12),
               Text(
                 productProvider.errorMessage!,
@@ -214,7 +214,7 @@ class _HomePageState extends State<HomePage> {
                       side: BorderSide(
                         color: isDark
                             ? AppColors.darkSurfaceSubtle
-                            : primaryBrown.withOpacity(0.3),
+                            : primaryBrown.withValues(alpha: 0.3),
                         width: 1.2,
                       ),
                       backgroundColor: isDark ? AppColors.darkBackground : Colors.transparent,

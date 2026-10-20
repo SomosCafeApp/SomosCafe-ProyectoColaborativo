@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+import '../core/config/service_area.dart';
 import '../core/constants/app_colors.dart';
 import '../services/geocoding_service.dart';
 
@@ -40,8 +41,15 @@ class AddressMapPickerPage extends StatefulWidget {
 }
 
 class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
-  // Bogotá como centro por defecto si no hay una dirección inicial.
-  static const _defaultCenter = LatLng(4.7110, -74.0721);
+  // El mapa siempre arranca en Garzón, Huila.
+  static const _defaultCenter =
+      LatLng(ServiceArea.centerLat, ServiceArea.centerLng);
+
+  // Zona de servicio: el mapa no se puede alejar de Garzón.
+  static final _serviceBounds = LatLngBounds(
+    southwest: const LatLng(ServiceArea.southLat, ServiceArea.westLng),
+    northeast: const LatLng(ServiceArea.northLat, ServiceArea.eastLng),
+  );
 
   final _searchController = TextEditingController();
   GoogleMapController? _mapController;
@@ -94,6 +102,13 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
   }
 
   Future<void> _handleMapTap(LatLng position) async {
+    if (!ServiceArea.contains(position.latitude, position.longitude)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Solo atendemos en Garzón, Huila')),
+      );
+      return;
+    }
+
     setState(() {
       _selectedPosition = position;
       _selectedAddress = '';
@@ -148,8 +163,10 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
           GoogleMap(
             initialCameraPosition: CameraPosition(
               target: _selectedPosition ?? _defaultCenter,
-              zoom: _selectedPosition != null ? 16 : 12,
+              zoom: _selectedPosition != null ? 16 : 14,
             ),
+            cameraTargetBounds: CameraTargetBounds(_serviceBounds),
+            minMaxZoomPreference: const MinMaxZoomPreference(11, 20),
             onMapCreated: (controller) => _mapController = controller,
             onTap: _handleMapTap,
             markers: _selectedPosition == null
@@ -175,7 +192,7 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
                       color: theme.scaffoldBackgroundColor,
                       shape: BoxShape.circle,
                       boxShadow: [
-                        BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 6),
+                        BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 6),
                       ],
                     ),
                     child: IconButton(
@@ -190,7 +207,7 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
                         color: theme.scaffoldBackgroundColor,
                         borderRadius: BorderRadius.circular(30),
                         boxShadow: [
-                          BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 6),
+                          BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 6),
                         ],
                       ),
                       child: TextField(
@@ -198,7 +215,7 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
                         style: TextStyle(color: textColor, fontSize: 14),
                         onSubmitted: (_) => _searchAddress(),
                         decoration: InputDecoration(
-                          hintText: 'Buscar dirección...',
+                          hintText: 'Buscar dirección en Garzón...',
                           hintStyle: TextStyle(color: subtitleColor, fontSize: 14),
                           filled: true,
                           fillColor: Colors.transparent,
@@ -242,7 +259,7 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
                   color: theme.scaffoldBackgroundColor,
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
-                    BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 10),
+                    BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 10),
                   ],
                 ),
                 child: Column(

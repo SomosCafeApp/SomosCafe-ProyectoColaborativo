@@ -37,7 +37,7 @@ export const getFavorites = async (req, res) => {
         return res.status(200).json({
 
             message:
-                "Favorites retrieved successfully",
+                "Favoritos obtenidos correctamente",
 
             favorites: decorated
 
@@ -53,7 +53,7 @@ export const getFavorites = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error retrieving favorites",
+                "Error al obtener los favoritos",
 
             error: error.message
 
@@ -83,7 +83,7 @@ export const addFavorite = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Product ID is required"
+                    "El ID del producto es obligatorio"
 
             });
 
@@ -103,7 +103,7 @@ export const addFavorite = async (req, res) => {
             return res.status(404).json({
 
                 message:
-                    "Product not found"
+                    "Producto no encontrado"
 
             });
 
@@ -128,7 +128,7 @@ export const addFavorite = async (req, res) => {
             return res.status(409).json({
 
                 message:
-                    "Product is already in favorites"
+                    "El producto ya está en favoritos"
 
             });
 
@@ -182,7 +182,7 @@ export const addFavorite = async (req, res) => {
         return res.status(201).json({
 
             message:
-                "Product added to favorites",
+                "Producto agregado a favoritos",
 
             favorite
 
@@ -198,7 +198,7 @@ export const addFavorite = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error adding favorite",
+                "Error al agregar el favorito",
 
             error: error.message
 
@@ -238,7 +238,7 @@ export const removeFavorite = async (req, res) => {
             return res.status(404).json({
 
                 message:
-                    "Favorite not found"
+                    "Favorito no encontrado"
 
             });
 
@@ -264,7 +264,7 @@ export const removeFavorite = async (req, res) => {
         return res.status(200).json({
 
             message:
-                "Product removed from favorites"
+                "Producto quitado de favoritos"
 
         });
 
@@ -278,7 +278,7 @@ export const removeFavorite = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error removing favorite",
+                "Error al quitar el favorito",
 
             error: error.message
 

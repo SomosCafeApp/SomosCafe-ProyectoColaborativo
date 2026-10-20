@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 
 class ApiConfig {
   // Backend local
@@ -8,8 +7,8 @@ class ApiConfig {
   // Android físico conectado a la misma red que el PC
   static const String _androidUrl = 'http://192.168.137.1:3000/api';
 
-  // Android Emulator
-  static const String _emulatorUrl = 'http://10.0.2.2:3000/api';
+  // Android Emulator: si lo necesitas, usa 'http://10.0.2.2:3000/api'
+  // como _androidUrl.
 
   /// URL base de la API.
   static String get baseUrl {

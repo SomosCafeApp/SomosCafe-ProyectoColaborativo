@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/profile/profile_sub_page_header.dart';
+import '../widgets/recovery/recovery_button.dart';
+import '../widgets/recovery/recovery_card.dart';
+import '../widgets/recovery/recovery_field.dart';
+import '../widgets/recovery/recovery_layout.dart';
 
 /// Paso 2: el usuario ingresa el código de 6 dígitos que recibió por
 /// correo, la nueva contraseña y su confirmación. Al cambiarla con
@@ -104,166 +109,82 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
     }
   }
 
-  // En modo sesión la pantalla lleva el header de las pestañas de perfil.
-  Widget _wrap(Widget form) => widget.useSession
-      ? Column(
+  List<Widget> _buildForm(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final subtitleColor = isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
+    final isLoading = context.watch<AuthProvider>().isLoading;
+
+    return [
+      RecoveryField(
+        label: 'Código de verificación',
+        hint: '000000',
+        icon: Icons.tag,
+        controller: _codeController,
+        keyboardType: TextInputType.number,
+        maxLength: 6,
+        centered: true,
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+      ),
+      const SizedBox(height: 18),
+      RecoveryField(
+        label: 'Nueva Contraseña',
+        hint: '••••••••',
+        icon: Icons.lock_outline,
+        controller: _passwordController,
+        obscure: _obscurePassword,
+        onToggleObscure: () => setState(() => _obscurePassword = !_obscurePassword),
+      ),
+      const SizedBox(height: 6),
+      Text(
+        'Mín. 6 caracteres, mayúscula, minúscula, número y carácter especial',
+        style: TextStyle(fontSize: 11, color: subtitleColor),
+      ),
+      const SizedBox(height: 18),
+      RecoveryField(
+        label: 'Confirmar Nueva Contraseña',
+        hint: '••••••••',
+        icon: Icons.lock_outline,
+        controller: _confirmController,
+        obscure: _obscureConfirm,
+        onToggleObscure: () => setState(() => _obscureConfirm = !_obscureConfirm),
+      ),
+      const SizedBox(height: 24),
+      RecoveryButton(
+        label: 'Cambiar Contraseña',
+        isLoading: isLoading,
+        onPressed: _handleReset,
+      ),
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Con sesión abierta (Configuración → Seguridad) se mantiene el header
+    // de las pestañas de perfil.
+    if (widget.useSession) {
+      return Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        body: Column(
           children: [
             const ProfileSubPageHeader(
               title: 'Cambiar contraseña',
               subtitle: 'Confirma el código de tu correo',
             ),
-            Expanded(child: form),
-          ],
-        )
-      : form;
-
-  Widget _buildEyeIcon(bool isObscured, VoidCallback onTap, Color iconColor) {
-    return IconButton(
-      icon: Icon(
-        isObscured ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-        color: iconColor,
-        size: 20,
-      ),
-      onPressed: onTap,
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final textColor = isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
-    final subtitleColor = isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
-    final inputBgColor = isDark ? AppColors.darkSurfaceSubtle : AppColors.lightSurfaceSubtle;
-    final auth = context.watch<AuthProvider>();
-
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: widget.useSession
-          ? null
-          : AppBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              iconTheme: IconThemeData(color: textColor),
-            ),
-      body: _wrap(SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 12),
-            Icon(Icons.mark_email_read_outlined, color: AppColors.primary, size: 48),
-            const SizedBox(height: 20),
-            Text(
-              'Ingresa el código',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: textColor),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Enviamos un código de 6 dígitos a ${widget.email}. Ingrésalo junto con tu nueva contraseña.',
-              style: TextStyle(fontSize: 14, color: subtitleColor),
-            ),
-            const SizedBox(height: 24),
-            TextField(
-              controller: _codeController,
-              keyboardType: TextInputType.number,
-              maxLength: 6,
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 22, letterSpacing: 8, color: textColor),
-              decoration: const InputDecoration(
-                counterText: '',
-                hintText: '000000',
-                border: OutlineInputBorder(),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: RecoveryCard(children: _buildForm(context)),
               ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Nueva contraseña',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: subtitleColor),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _passwordController,
-              obscureText: _obscurePassword,
-              style: TextStyle(color: textColor, fontSize: 14),
-              decoration: InputDecoration(
-                hintText: '••••••••',
-                hintStyle: TextStyle(color: subtitleColor.withOpacity(0.5), fontSize: 14),
-                prefixIcon: const Icon(Icons.lock_outline, color: AppColors.primary, size: 20),
-                suffixIcon: _buildEyeIcon(
-                  _obscurePassword,
-                  () => setState(() => _obscurePassword = !_obscurePassword),
-                  subtitleColor,
-                ),
-                filled: true,
-                fillColor: inputBgColor,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 14),
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Mín. 6 caracteres, mayúscula, minúscula, número y carácter especial',
-              style: TextStyle(fontSize: 11, color: subtitleColor),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Confirmar contraseña',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: subtitleColor),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _confirmController,
-              obscureText: _obscureConfirm,
-              style: TextStyle(color: textColor, fontSize: 14),
-              decoration: InputDecoration(
-                hintText: '••••••••',
-                hintStyle: TextStyle(color: subtitleColor.withOpacity(0.5), fontSize: 14),
-                prefixIcon: const Icon(Icons.lock_outline, color: AppColors.primary, size: 20),
-                suffixIcon: _buildEyeIcon(
-                  _obscureConfirm,
-                  () => setState(() => _obscureConfirm = !_obscureConfirm),
-                  subtitleColor,
-                ),
-                filled: true,
-                fillColor: inputBgColor,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 14),
-              ),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: auth.isLoading ? null : _handleReset,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                ),
-                child: auth.isLoading
-                    ? const SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                      )
-                    : const Text(
-                        'Cambiar contraseña',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                      ),
-              ),
-            ),
-            const SizedBox(height: 24),
           ],
         ),
-      )),
+      );
+    }
+
+    return RecoveryLayout(
+      title: 'Nueva Contraseña',
+      subtitle: 'Ingresa el código recibido y define tu nueva contraseña',
+      children: _buildForm(context),
     );
   }
 }

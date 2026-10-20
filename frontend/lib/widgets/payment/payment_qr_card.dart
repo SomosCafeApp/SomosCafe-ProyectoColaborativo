@@ -60,7 +60,7 @@ class _PaymentQrCardState extends State<PaymentQrCard> {
               width: 230,
               height: 230,
               fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) => const _MissingQr(),
+              errorBuilder: (_, _, _) => const _MissingQr(),
             ),
           ),
           const SizedBox(height: 14),

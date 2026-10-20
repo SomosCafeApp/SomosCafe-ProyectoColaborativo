@@ -76,7 +76,7 @@ class _ReviewsSectionState extends State<ReviewsSection> {
     );
   }
 
-  Future<void> _handleSubmit({
+  Future<bool> _handleSubmit({
     required ReviewsProvider reviewsProvider,
     required dynamic myReview,
     required int rating,
@@ -94,7 +94,7 @@ class _ReviewsSectionState extends State<ReviewsSection> {
             comment: comment,
           );
 
-    if (!mounted) return;
+    if (!mounted) return success;
 
     if (success) {
       setState(() {
@@ -105,6 +105,8 @@ class _ReviewsSectionState extends State<ReviewsSection> {
         reviewsProvider: reviewsProvider,
       );
     }
+
+    return success;
   }
 
   Future<void> _handleDelete({
@@ -312,32 +314,13 @@ class _ReviewsSectionState extends State<ReviewsSection> {
               onSubmit: (
                 rating,
                 comment,
-              ) async {
-                final success = myReview != null
-                    ? await reviewsProvider.updateMyReview(
-                        reviewId: myReview.id,
-                        rating: rating,
-                        comment: comment,
-                      )
-                    : await reviewsProvider.submitReview(
-                        productId: widget.productId,
-                        rating: rating,
-                        comment: comment,
-                      );
-
-                if (!mounted) return success;
-
-                if (success) {
-                  setState(() {
-                    _showForm = false;
-                  });
-
-                  await _updateProductRating(
-                    reviewsProvider: reviewsProvider,
-                  );
-                }
-
-                return success;
+              ) {
+                return _handleSubmit(
+                  reviewsProvider: reviewsProvider,
+                  myReview: myReview,
+                  rating: rating,
+                  comment: comment,
+                );
               },
             ),
 
@@ -416,6 +399,7 @@ class _ReviewsSectionState extends State<ReviewsSection> {
                     ),
                     child: ReviewItemCard(
                       name: review.userName,
+                      profileImage: review.userProfileImage,
                       comment: review.comment,
                       date: _formatDate(
                         review.createdAt,

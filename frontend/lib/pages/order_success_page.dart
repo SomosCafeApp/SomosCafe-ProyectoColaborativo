@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/constants/app_colors.dart';
 import '../models/order.dart';
-import '../models/order_payment.dart';
 import 'main_navigation_screen.dart';
 
 import '../animations/animations.dart';

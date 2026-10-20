@@ -28,7 +28,7 @@ class SearchStateMessage extends StatelessWidget {
 
     final circleBg = isDark
         ? const Color(0xFF382921)
-        : const Color(0xFFE2CBB4).withOpacity(0.4);
+        : const Color(0xFFE2CBB4).withValues(alpha: 0.4);
 
     final iconColor = isDark
         ? const Color(0xFFD4BBA5)

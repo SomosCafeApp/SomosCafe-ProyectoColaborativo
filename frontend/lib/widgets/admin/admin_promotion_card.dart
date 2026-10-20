@@ -177,7 +177,7 @@ class AdminPromotionCard extends StatelessWidget {
                 children: [
                   Switch(
                     value: promotion.isActive,
-                    activeColor: AppColors.primary,
+                    activeThumbColor: AppColors.primary,
                     onChanged: onToggleActive,
                   ),
                   Text(promotion.isActive ? 'Habilitada' : 'Deshabilitada',

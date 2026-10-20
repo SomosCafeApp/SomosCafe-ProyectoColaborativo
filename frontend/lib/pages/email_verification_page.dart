@@ -89,7 +89,7 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
     final inputBorderColor = isDark ? AppColors.darkSurfaceSubtle : const Color(0xFFE5DDD5);
 
     final buttonBgColor =   AppColors.primary;
-    final buttonTextColor = isDark ? AppColors.darkBackground : Colors.white;
+    final buttonTextColor = Colors.white;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -169,7 +169,7 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
                   counterText: '',
                   hintText: 'Código de verificación',
                   hintStyle: TextStyle(
-                    color: subtitleColor.withOpacity(0.7),
+                    color: subtitleColor.withValues(alpha: 0.7),
                     fontSize: 14,
                   ),
                   filled: true,

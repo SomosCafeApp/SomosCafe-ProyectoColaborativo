@@ -49,7 +49,7 @@ class CustomTextField extends StatelessWidget {
           style: TextStyle(color: textColor, fontSize: 14),
           decoration: InputDecoration(
             hintText: hintText,
-            hintStyle: TextStyle(color: subtitleColor.withOpacity(0.5), fontSize: 14),
+            hintStyle: TextStyle(color: subtitleColor.withValues(alpha: 0.5), fontSize: 14),
             prefixIcon: const Icon(Icons.email_outlined, color: AppColors.primary, size: 20),
             suffixIcon: suffixIcon,
             filled: true,

@@ -32,7 +32,7 @@ class AdminOrderSearchBar extends StatelessWidget {
         hintText: 'Buscar por pedido, cliente, correo o teléfono...',
         hintStyle: TextStyle(
           fontSize: 13,
-          color: subtitleColor.withOpacity(0.6),
+          color: subtitleColor.withValues(alpha: 0.6),
         ),
         prefixIcon: Icon(Icons.search, color: subtitleColor, size: 20),
         suffixIcon: searchQuery.isEmpty

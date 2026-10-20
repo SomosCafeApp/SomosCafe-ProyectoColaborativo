@@ -21,9 +21,28 @@ class LoginFormCard extends StatefulWidget {
 }
 
 class _LoginFormCardState extends State<LoginFormCard> {
-  bool _rememberMe = false;
+  bool _rememberMe = true;
   bool _obscurePassword = true;
   bool _isGoogleLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRemembered();
+  }
+
+  /// Restaura la casilla "Recordarme" y el correo de la última vez.
+  Future<void> _loadRemembered() async {
+    final saved = await context.read<AuthProvider>().loadRememberedLogin();
+    if (!mounted) return;
+
+    setState(() {
+      _rememberMe = saved.rememberMe;
+      if (widget.emailController.text.isEmpty) {
+        widget.emailController.text = saved.email;
+      }
+    });
+  }
 
   Future<void> _handleLogin() async {
     final auth = context.read<AuthProvider>();
@@ -39,7 +58,7 @@ class _LoginFormCardState extends State<LoginFormCard> {
       return;
     }
 
-    final success = await auth.login(email, password);
+    final success = await auth.login(email, password, rememberMe: _rememberMe);
     if (!mounted) return;
 
     if (!success) {
@@ -110,7 +129,7 @@ class _LoginFormCardState extends State<LoginFormCard> {
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.3 : 0.06),
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.06),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -134,7 +153,7 @@ class _LoginFormCardState extends State<LoginFormCard> {
             style: TextStyle(color: textColor, fontSize: 14),
             decoration: InputDecoration(
               hintText: 'tu@email.com',
-              hintStyle: TextStyle(color: subtitleColor.withOpacity(0.5), fontSize: 14),
+              hintStyle: TextStyle(color: subtitleColor.withValues(alpha: 0.5), fontSize: 14),
               prefixIcon: const Icon(Icons.email_outlined, color: AppColors.primary, size: 20),
               filled: true,
               fillColor: inputBgColor,
@@ -161,7 +180,7 @@ class _LoginFormCardState extends State<LoginFormCard> {
             style: TextStyle(color: textColor, fontSize: 14),
             decoration: InputDecoration(
               hintText: '••••••••',
-              hintStyle: TextStyle(color: subtitleColor.withOpacity(0.5), fontSize: 14),
+              hintStyle: TextStyle(color: subtitleColor.withValues(alpha: 0.5), fontSize: 14),
               prefixIcon: const Icon(Icons.lock_outline, color: AppColors.primary, size: 20),
               suffixIcon: IconButton(
                 icon: Icon(
@@ -207,9 +226,12 @@ class _LoginFormCardState extends State<LoginFormCard> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Text(
-                    'Recordarme',
-                    style: TextStyle(fontSize: 13, color: subtitleColor),
+                  GestureDetector(
+                    onTap: () => setState(() => _rememberMe = !_rememberMe),
+                    child: Text(
+                      'Recordarme',
+                      style: TextStyle(fontSize: 13, color: subtitleColor),
+                    ),
                   ),
                 ],
               ),
@@ -270,7 +292,7 @@ class _LoginFormCardState extends State<LoginFormCard> {
           const SizedBox(height: 20),
           Row(
             children: [
-              Expanded(child: Divider(color: subtitleColor.withOpacity(0.2))),
+              Expanded(child: Divider(color: subtitleColor.withValues(alpha: 0.2))),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 child: Text(
@@ -278,7 +300,7 @@ class _LoginFormCardState extends State<LoginFormCard> {
                   style: TextStyle(fontSize: 12, color: subtitleColor),
                 ),
               ),
-              Expanded(child: Divider(color: subtitleColor.withOpacity(0.2))),
+              Expanded(child: Divider(color: subtitleColor.withValues(alpha: 0.2))),
             ],
           ),
           const SizedBox(height: 20),
@@ -286,7 +308,7 @@ class _LoginFormCardState extends State<LoginFormCard> {
             onPressed: _isGoogleLoading ? null : _handleGoogleLogin,
             style: OutlinedButton.styleFrom(
               backgroundColor: inputBgColor,
-              side: BorderSide(color: subtitleColor.withOpacity(0.2)),
+              side: BorderSide(color: subtitleColor.withValues(alpha: 0.2)),
               minimumSize: const Size(double.infinity, 50),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),

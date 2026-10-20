@@ -22,7 +22,7 @@ class MenuCategoryChips extends StatelessWidget {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: categories.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        separatorBuilder: (_, _) => const SizedBox(width: 10),
         itemBuilder: (context, index) {
           final isSelected = selectedIndex == index;
           return GestureDetector(
@@ -31,7 +31,7 @@ class MenuCategoryChips extends StatelessWidget {
               duration: const Duration(milliseconds: 200),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: isSelected ? Colors.white : Colors.white.withOpacity(0.25),
+                color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.25),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(

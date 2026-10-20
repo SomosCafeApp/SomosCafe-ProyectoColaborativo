@@ -163,3 +163,56 @@ export const uploadEventImage = (req, res, next) => {
     return res.status(400).json({ message });
   });
 };
+
+// ===================================
+// PROFILE PHOTO UPLOAD
+// ===================================
+// Foto de perfil del usuario. Carpeta propia; se recorta a un cuadrado
+// de 400x400 centrado en la cara (si no hay, en el centro), suficiente
+// para mostrarla como avatar sin gastar datos.
+
+const avatarStorage = new CloudinaryStorage({
+  cloudinary,
+
+  params: {
+    folder: "somoscafeapp/perfiles",
+
+    allowed_formats: ["jpg", "jpeg", "png", "avif", "webp"],
+
+    transformation: [
+      {
+        width: 400,
+        height: 400,
+        crop: "fill",
+        gravity: "face",
+      },
+    ],
+  },
+});
+
+const uploadAvatar = multer({
+  storage: avatarStorage,
+
+  fileFilter: imageFilter,
+
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+  },
+});
+
+// Igual que upload.single("imagen"), pero los errores de multer se
+// devuelven como JSON con un mensaje que la app sabe traducir.
+export const uploadAvatarImage = (req, res, next) => {
+  uploadAvatar.single("imagen")(req, res, (error) => {
+    if (!error) {
+      return next();
+    }
+
+    const message =
+      error.code === "LIMIT_FILE_SIZE"
+        ? "File too large (max 5MB)"
+        : error.message || "Invalid profile image";
+
+    return res.status(400).json({ message });
+  });
+};

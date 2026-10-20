@@ -23,7 +23,7 @@ export const getPaymentMethods = async (req, res) => {
         return res.status(200).json({
 
             message:
-                "Payment methods retrieved successfully",
+                "Métodos de pago obtenidos correctamente",
 
             paymentMethods
 
@@ -39,7 +39,7 @@ export const getPaymentMethods = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error retrieving payment methods",
+                "Error al obtener los métodos de pago",
 
             error: error.message
 
@@ -66,7 +66,7 @@ export const getPaymentMethodById = async (req, res) => {
             return res.status(404).json({
 
                 message:
-                    "Payment method not found"
+                    "Método de pago no encontrado"
 
             });
 
@@ -84,7 +84,7 @@ export const getPaymentMethodById = async (req, res) => {
             return res.status(403).json({
 
                 message:
-                    "You are not authorized to access this payment method"
+                    "No tienes autorización para acceder a este método de pago"
 
             });
 
@@ -93,7 +93,7 @@ export const getPaymentMethodById = async (req, res) => {
         return res.status(200).json({
 
             message:
-                "Payment method retrieved successfully",
+                "Método de pago obtenido correctamente",
 
             paymentMethod
 
@@ -109,7 +109,7 @@ export const getPaymentMethodById = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error retrieving payment method",
+                "Error al obtener el método de pago",
 
             error: error.message
 
@@ -157,7 +157,7 @@ export const createPaymentMethod = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Invalid payment method type"
+                    "Tipo de método de pago inválido"
 
             });
 
@@ -179,7 +179,7 @@ export const createPaymentMethod = async (req, res) => {
                 return res.status(400).json({
 
                     message:
-                        "Last four digits must contain exactly 4 numbers"
+                        "Los últimos cuatro dígitos deben ser exactamente 4 números"
 
                 });
 
@@ -193,7 +193,7 @@ export const createPaymentMethod = async (req, res) => {
                 return res.status(400).json({
 
                     message:
-                        "Card expiration date is required"
+                        "La fecha de vencimiento de la tarjeta es obligatoria"
 
                 });
 
@@ -277,7 +277,7 @@ export const createPaymentMethod = async (req, res) => {
         return res.status(201).json({
 
             message:
-                "Payment method created successfully",
+                "Método de pago creado correctamente",
 
             paymentMethod
 
@@ -293,7 +293,7 @@ export const createPaymentMethod = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error creating payment method",
+                "Error al crear el método de pago",
 
             error: error.message
 
@@ -320,7 +320,7 @@ export const updatePaymentMethod = async (req, res) => {
             return res.status(404).json({
 
                 message:
-                    "Payment method not found"
+                    "Método de pago no encontrado"
 
             });
 
@@ -338,7 +338,7 @@ export const updatePaymentMethod = async (req, res) => {
             return res.status(403).json({
 
                 message:
-                    "You are not authorized to update this payment method"
+                    "No tienes autorización para actualizar este método de pago"
 
             });
 
@@ -390,7 +390,7 @@ export const updatePaymentMethod = async (req, res) => {
                     return res.status(400).json({
 
                         message:
-                            "Last four digits must contain exactly 4 numbers"
+                            "Los últimos cuatro dígitos deben ser exactamente 4 números"
 
                     });
 
@@ -488,7 +488,7 @@ export const updatePaymentMethod = async (req, res) => {
         return res.status(200).json({
 
             message:
-                "Payment method updated successfully",
+                "Método de pago actualizado correctamente",
 
             paymentMethod
 
@@ -504,7 +504,7 @@ export const updatePaymentMethod = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error updating payment method",
+                "Error al actualizar el método de pago",
 
             error: error.message
 
@@ -531,7 +531,7 @@ export const deletePaymentMethod = async (req, res) => {
             return res.status(404).json({
 
                 message:
-                    "Payment method not found"
+                    "Método de pago no encontrado"
 
             });
 
@@ -549,7 +549,7 @@ export const deletePaymentMethod = async (req, res) => {
             return res.status(403).json({
 
                 message:
-                    "You are not authorized to delete this payment method"
+                    "No tienes autorización para eliminar este método de pago"
 
             });
 
@@ -570,7 +570,7 @@ export const deletePaymentMethod = async (req, res) => {
         return res.status(200).json({
 
             message:
-                "Payment method deleted successfully"
+                "Método de pago eliminado correctamente"
 
         });
 
@@ -584,7 +584,7 @@ export const deletePaymentMethod = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error deleting payment method",
+                "Error al eliminar el método de pago",
 
             error: error.message
 
@@ -611,7 +611,7 @@ export const setDefaultPaymentMethod = async (req, res) => {
             return res.status(404).json({
 
                 message:
-                    "Payment method not found"
+                    "Método de pago no encontrado"
 
             });
 
@@ -629,7 +629,7 @@ export const setDefaultPaymentMethod = async (req, res) => {
             return res.status(403).json({
 
                 message:
-                    "You are not authorized to modify this payment method"
+                    "No tienes autorización para modificar este método de pago"
 
             });
 
@@ -642,7 +642,7 @@ export const setDefaultPaymentMethod = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Inactive payment method cannot be set as default"
+                    "Un método de pago inactivo no se puede establecer como principal"
 
             });
 
@@ -686,7 +686,7 @@ export const setDefaultPaymentMethod = async (req, res) => {
         return res.status(200).json({
 
             message:
-                "Default payment method updated successfully",
+                "Método de pago principal actualizado correctamente",
 
             paymentMethod
 
@@ -702,7 +702,7 @@ export const setDefaultPaymentMethod = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error setting default payment method",
+                "Error al establecer el método de pago principal",
 
             error: error.message
 

@@ -98,7 +98,7 @@ class _RegisterFormCardState extends State<RegisterFormCard> {
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.3 : 0.06),
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.06),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -196,7 +196,7 @@ class _RegisterFormCardState extends State<RegisterFormCard> {
           const SizedBox(height: 20),
           Row(
             children: [
-              Expanded(child: Divider(color: subtitleColor.withOpacity(0.2))),
+              Expanded(child: Divider(color: subtitleColor.withValues(alpha: 0.2))),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 child: Text(
@@ -204,7 +204,7 @@ class _RegisterFormCardState extends State<RegisterFormCard> {
                   style: TextStyle(fontSize: 12, color: subtitleColor),
                 ),
               ),
-              Expanded(child: Divider(color: subtitleColor.withOpacity(0.2))),
+              Expanded(child: Divider(color: subtitleColor.withValues(alpha: 0.2))),
             ],
           ),
           const SizedBox(height: 20),
@@ -212,7 +212,7 @@ class _RegisterFormCardState extends State<RegisterFormCard> {
             onPressed: _isGoogleLoading ? null : _handleGoogleSignUp,
             style: OutlinedButton.styleFrom(
               backgroundColor: inputBgColor,
-              side: BorderSide(color: subtitleColor.withOpacity(0.2)),
+              side: BorderSide(color: subtitleColor.withValues(alpha: 0.2)),
               minimumSize: const Size(double.infinity, 50),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -230,7 +230,7 @@ class _RegisterFormCardState extends State<RegisterFormCard> {
                       Image.asset(
                         'assets/icons/google.png',
                         height: 18,
-                        errorBuilder: (_, __, ___) => const Icon(
+                        errorBuilder: (_, _, _) => const Icon(
                           Icons.g_mobiledata,
                           color: Colors.red,
                           size: 24,

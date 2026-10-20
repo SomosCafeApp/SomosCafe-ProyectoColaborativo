@@ -68,7 +68,7 @@ class NotificationChannelTile extends StatelessWidget {
           ),
           Switch(
             value: value,
-            activeColor: Colors.white,
+            activeThumbColor: Colors.white,
             activeTrackColor: const Color(0xFF8C6239),
             inactiveThumbColor: Colors.white,
             inactiveTrackColor: Colors.grey.shade300,

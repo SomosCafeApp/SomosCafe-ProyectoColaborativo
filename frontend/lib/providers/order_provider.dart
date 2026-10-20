@@ -108,7 +108,7 @@ class OrderProvider extends ChangeNotifier {
         'recipientPhone': recipientPhone.trim(),
         'paymentMethod': paymentMethod.apiValue,
         // Cupón de recompensas (UserCoupon): el servidor valida y calcula el descuento.
-        if (couponId != null) 'couponId': couponId,
+        'couponId': ?couponId,
         if (deliveryType == DeliveryType.delivery && addressId != null) 'addressId': addressId,
         'notes': notes.trim(),
         'items': lines

@@ -50,7 +50,7 @@ class OfferCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
+                  color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
                   blurRadius: 15,
                   offset: const Offset(0, 8),
                 ),
@@ -64,7 +64,7 @@ class OfferCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: isDark
                         ? AppColors.darkSurfaceSubtle
-                        : Colors.white.withOpacity(0.3),
+                        : Colors.white.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Row(
@@ -112,7 +112,7 @@ class OfferCard extends StatelessWidget {
                     fontSize: 12,
                     color: isDark
                         ? AppColors.darkTextSecondary
-                        : Colors.white.withOpacity(0.9),
+                        : Colors.white.withValues(alpha: 0.9),
                     height: 1.3,
                   ),
                 ),
@@ -159,7 +159,7 @@ class OfferCard extends StatelessWidget {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.15),
+                    color: Colors.black.withValues(alpha: 0.15),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),

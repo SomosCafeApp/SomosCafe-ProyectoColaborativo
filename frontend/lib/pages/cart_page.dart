@@ -41,7 +41,7 @@ class CartPage extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(Icons.inventory_2_outlined, color: Colors.white, size: 22),
@@ -59,7 +59,7 @@ class CartPage extends StatelessWidget {
                             '$totalItems ${totalItems == 1 ? "producto" : "productos"}',
                             style: TextStyle(
                               fontSize: 13,
-                              color: Colors.white.withOpacity(0.8),
+                              color: Colors.white.withValues(alpha: 0.8),
                             ),
                           ),
                         ],

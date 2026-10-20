@@ -60,10 +60,9 @@ class ChatProvider extends ChangeNotifier {
 
       _messages
         ..clear()
-        ..addAll(rawMessages.map((m) => ChatMessage(
-              role: m['role'] as String? ?? 'assistant',
-              content: m['content'] as String? ?? '',
-            )));
+        ..addAll(rawMessages
+            .whereType<Map<String, dynamic>>()
+            .map(ChatMessage.fromJson));
       _conversationId = data['conversationId'] as String?;
     } on ApiException {
       // Si falla la carga del historial no es crítico: el usuario
@@ -94,7 +93,11 @@ class ChatProvider extends ChangeNotifier {
       );
 
       _conversationId = data['conversationId'] as String?;
-      _messages.add(ChatMessage(role: 'assistant', content: data['response'] as String? ?? ''));
+      _messages.add(ChatMessage.fromJson({
+        'role': 'assistant',
+        'content': data['response'],
+        'products': data['products'],
+      }));
     } on ApiException catch (e) {
       _errorMessage = e.message;
       _messages.add(ChatMessage(

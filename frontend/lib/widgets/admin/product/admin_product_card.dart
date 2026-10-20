@@ -66,7 +66,7 @@ class AdminProductCard extends StatelessWidget {
                             // con cientos de productos, las imágenes completas
                             // consumían mucha memoria y tiempo.
                             cacheWidth: 160,
-                            errorBuilder: (_, __, ___) => Icon(Icons.local_cafe_outlined, color: subtitleColor),
+                            errorBuilder: (_, _, _) => Icon(Icons.local_cafe_outlined, color: subtitleColor),
                           )
                         : Icon(Icons.local_cafe_outlined, color: subtitleColor),
                   ),

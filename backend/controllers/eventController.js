@@ -86,7 +86,7 @@ export const getEvents = async (req, res) => {
         return res.status(200).json({
 
             message:
-                "Events retrieved successfully",
+                "Eventos obtenidos correctamente",
 
             events
 
@@ -102,7 +102,7 @@ export const getEvents = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error retrieving events",
+                "Error al obtener los eventos",
 
             error: error.message
 
@@ -129,7 +129,7 @@ export const getActiveEvent = async (req, res) => {
         return res.status(200).json({
 
             message:
-                "Active event retrieved successfully",
+                "Evento activo obtenido correctamente",
 
             event: event || null
 
@@ -145,7 +145,7 @@ export const getActiveEvent = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error retrieving active event",
+                "Error al obtener el evento activo",
 
             error: error.message
 
@@ -167,7 +167,7 @@ export const getEventById = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Invalid event id"
+                    "ID de evento inválido"
 
             });
 
@@ -183,7 +183,7 @@ export const getEventById = async (req, res) => {
             return res.status(404).json({
 
                 message:
-                    "Event not found"
+                    "Evento no encontrado"
 
             });
 
@@ -192,7 +192,7 @@ export const getEventById = async (req, res) => {
         return res.status(200).json({
 
             message:
-                "Event retrieved successfully",
+                "Evento obtenido correctamente",
 
             event
 
@@ -208,7 +208,7 @@ export const getEventById = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error retrieving event",
+                "Error al obtener el evento",
 
             error: error.message
 
@@ -247,7 +247,7 @@ export const createEvent = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Name, startDate and endDate are required"
+                    "Name, startDate y endDate son obligatorios"
 
             });
 
@@ -273,7 +273,7 @@ export const createEvent = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Invalid date format"
+                    "Formato de fecha inválido"
 
             });
 
@@ -289,7 +289,7 @@ export const createEvent = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "End date cannot be before start date"
+                    "La fecha de fin no puede ser anterior a la fecha de inicio"
 
             });
 
@@ -311,7 +311,7 @@ export const createEvent = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Event has already ended"
+                    "El evento ya finalizó"
 
             });
 
@@ -360,7 +360,7 @@ export const createEvent = async (req, res) => {
         return res.status(201).json({
 
             message:
-                "Event created successfully",
+                "Evento creado correctamente",
 
             event: newEvent
 
@@ -378,7 +378,7 @@ export const createEvent = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error creating event",
+                "Error al crear el evento",
 
             error: error.message
 
@@ -406,7 +406,7 @@ export const updateEvent = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Invalid event id"
+                    "ID de evento inválido"
 
             });
 
@@ -428,7 +428,7 @@ export const updateEvent = async (req, res) => {
             return res.status(404).json({
 
                 message:
-                    "Event not found"
+                    "Evento no encontrado"
 
             });
 
@@ -448,7 +448,7 @@ export const updateEvent = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Event name cannot be empty"
+                    "El nombre del evento no puede estar vacío"
 
             });
 
@@ -474,7 +474,7 @@ export const updateEvent = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Invalid date format"
+                    "Formato de fecha inválido"
 
             });
 
@@ -490,7 +490,7 @@ export const updateEvent = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "End date cannot be before start date"
+                    "La fecha de fin no puede ser anterior a la fecha de inicio"
 
             });
 
@@ -512,7 +512,7 @@ export const updateEvent = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Event has already ended"
+                    "El evento ya finalizó"
 
             });
 
@@ -569,7 +569,7 @@ export const updateEvent = async (req, res) => {
         return res.status(200).json({
 
             message:
-                "Event updated successfully",
+                "Evento actualizado correctamente",
 
             event
 
@@ -587,7 +587,7 @@ export const updateEvent = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error updating event",
+                "Error al actualizar el evento",
 
             error: error.message
 
@@ -612,7 +612,7 @@ export const setEventActive = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Invalid event id"
+                    "ID de evento inválido"
 
             });
 
@@ -623,7 +623,7 @@ export const setEventActive = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "isActive (boolean) is required"
+                    "isActive (booleano) es obligatorio"
 
             });
 
@@ -639,7 +639,7 @@ export const setEventActive = async (req, res) => {
             return res.status(404).json({
 
                 message:
-                    "Event not found"
+                    "Evento no encontrado"
 
             });
 
@@ -653,7 +653,7 @@ export const setEventActive = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Event has already ended"
+                    "El evento ya finalizó"
 
             });
 
@@ -679,8 +679,8 @@ export const setEventActive = async (req, res) => {
 
             message:
                 event.isActive
-                    ? "Event activated successfully"
-                    : "Event deactivated successfully",
+                    ? "Evento activado correctamente"
+                    : "Evento desactivado correctamente",
 
             event
 
@@ -696,7 +696,7 @@ export const setEventActive = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error updating event status",
+                "Error al actualizar el estado del evento",
 
             error: error.message
 
@@ -718,7 +718,7 @@ export const deleteEvent = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Invalid event id"
+                    "ID de evento inválido"
 
             });
 
@@ -734,7 +734,7 @@ export const deleteEvent = async (req, res) => {
             return res.status(404).json({
 
                 message:
-                    "Event not found"
+                    "Evento no encontrado"
 
             });
 
@@ -748,7 +748,7 @@ export const deleteEvent = async (req, res) => {
         return res.status(200).json({
 
             message:
-                "Event deleted successfully"
+                "Evento eliminado correctamente"
 
         });
 
@@ -762,7 +762,7 @@ export const deleteEvent = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error deleting event",
+                "Error al eliminar el evento",
 
             error: error.message
 

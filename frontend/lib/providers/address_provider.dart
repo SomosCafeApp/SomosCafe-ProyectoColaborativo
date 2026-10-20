@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/config/service_area.dart';
 import '../models/address_model.dart';
 import '../services/api_client.dart';
 import '../services/api_exception.dart';
@@ -54,7 +55,7 @@ class AddressProvider extends ChangeNotifier {
     required String recipientName,
     required String phone,
     required String address,
-    required String city,
+    String city = ServiceArea.city,
     String neighborhood = '',
     String additionalInfo = '',
     double? latitude,
@@ -72,8 +73,8 @@ class AddressProvider extends ChangeNotifier {
         'city': city,
         'neighborhood': neighborhood,
         'additionalInfo': additionalInfo,
-        if (latitude != null) 'latitude': latitude,
-        if (longitude != null) 'longitude': longitude,
+        'latitude': ?latitude,
+        'longitude': ?longitude,
       });
       _addresses.insert(0, AddressItem.fromJson(data['address'] as Map<String, dynamic>));
       notifyListeners();

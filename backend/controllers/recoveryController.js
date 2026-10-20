@@ -52,7 +52,7 @@ export const requestRecoveryCode = async (req, res) => {
         if (!email) {
             return res.status(400).json({
                 message:
-                    "Email is required"
+                    "El correo es obligatorio"
             });
         }
 
@@ -75,7 +75,7 @@ export const requestRecoveryCode = async (req, res) => {
         if (!emailRegex.test(normalizedEmail)) {
             return res.status(400).json({
                 message:
-                    "Invalid email format"
+                    "Formato de correo inválido"
             });
         }
 
@@ -92,7 +92,7 @@ export const requestRecoveryCode = async (req, res) => {
         if (!user) {
             return res.status(404).json({
                 message:
-                    "User not found"
+                    "Usuario no encontrado"
             });
         }
 
@@ -103,7 +103,7 @@ export const requestRecoveryCode = async (req, res) => {
         if (!user.isActive) {
             return res.status(403).json({
                 message:
-                    "User account is inactive"
+                    "La cuenta de usuario está inactiva"
             });
         }
 
@@ -139,7 +139,7 @@ export const requestRecoveryCode = async (req, res) => {
             to:
                 user.email,
             subject:
-                "Password Recovery Code - SomosCafeApp",
+                "Código de recuperación de contraseña - SomosCafeApp",
             html: `
 <div style="
     font-family: Arial, sans-serif;
@@ -169,7 +169,7 @@ export const requestRecoveryCode = async (req, res) => {
             margin-top: 10px;
             font-size: 15px;
         ">
-            Your coffee, your account, your security.
+            Tu café, tu cuenta, tu seguridad.
         </p>
     </div>
 
@@ -177,19 +177,19 @@ export const requestRecoveryCode = async (req, res) => {
         color: #5c4033;
         margin-bottom: 20px;
     ">
-        Password Recovery
+        Recuperación de contraseña
     </h2>
 
     <p style="font-size: 16px;">
-        Hello <strong>${user.name || "User"}</strong>,
+        Hola <strong>${user.name || "Usuario"}</strong>,
     </p>
 
     <p style="
         line-height: 1.7;
         color: #5f4637;
     ">
-        We received a request to reset your password.
-        Use the following code to continue:
+        Recibimos una solicitud para restablecer tu contraseña.
+        Usa el siguiente código para continuar:
     </p>
 
     <div style="
@@ -236,8 +236,8 @@ export const requestRecoveryCode = async (req, res) => {
             color: #6b4f3b;
             font-size: 14px;
         ">
-            ⏱️ This code expires in
-            <strong>15 minutes</strong>.
+            ⏱️ Este código vence en
+            <strong>15 minutos</strong>.
         </p>
     </div>
 
@@ -246,8 +246,8 @@ export const requestRecoveryCode = async (req, res) => {
         font-size: 14px;
         line-height: 1.6;
     ">
-        🔒 If you did not request this change,
-        you can safely ignore this email.
+        🔒 Si no solicitaste este cambio,
+        puedes ignorar este correo sin problema.
     </p>
 
     <hr style="
@@ -262,8 +262,8 @@ export const requestRecoveryCode = async (req, res) => {
         font-size: 12px;
         text-align: center;
     ">
-        © 2026 SomosCafeApp · Coffee,
-        technology and security ☕
+        © 2026 SomosCafeApp · Café,
+        tecnología y seguridad ☕
     </p>
 </div>
 `
@@ -296,7 +296,7 @@ export const requestRecoveryCode = async (req, res) => {
 
             return res.status(502).json({
                 message:
-                    "Could not send recovery email"
+                    "No se pudo enviar el correo de recuperación"
             });
         }
 
@@ -310,7 +310,7 @@ export const requestRecoveryCode = async (req, res) => {
 
         return res.status(200).json({
             message:
-                "Recovery email sent successfully"
+                "Correo de recuperación enviado correctamente"
         });
 
     } catch (error) {
@@ -322,7 +322,7 @@ export const requestRecoveryCode = async (req, res) => {
 
         return res.status(500).json({
             message:
-                "Error requesting password recovery",
+                "Error al solicitar la recuperación de contraseña",
             error:
                 error.message
         });
@@ -352,7 +352,7 @@ export const changePassword = async (req, res) => {
         ) {
             return res.status(400).json({
                 message:
-                    "All fields are required"
+                    "Todos los campos son obligatorios"
             });
         }
 
@@ -375,7 +375,7 @@ export const changePassword = async (req, res) => {
         if (!emailRegex.test(normalizedEmail)) {
             return res.status(400).json({
                 message:
-                    "Invalid email format"
+                    "Formato de correo inválido"
             });
         }
 
@@ -386,7 +386,7 @@ export const changePassword = async (req, res) => {
         if (newPassword.length < 6) {
             return res.status(400).json({
                 message:
-                    "Password must contain at least 6 characters"
+                    "La contraseña debe tener al menos 6 caracteres"
             });
         }
 
@@ -397,7 +397,7 @@ export const changePassword = async (req, res) => {
         if (!/[0-9]/.test(newPassword)) {
             return res.status(400).json({
                 message:
-                    "Password must contain at least one number"
+                    "La contraseña debe contener al menos un número"
             });
         }
 
@@ -408,7 +408,7 @@ export const changePassword = async (req, res) => {
         if (!/[A-Z]/.test(newPassword)) {
             return res.status(400).json({
                 message:
-                    "Password must contain at least one uppercase letter"
+                    "La contraseña debe contener al menos una letra mayúscula"
             });
         }
 
@@ -419,7 +419,7 @@ export const changePassword = async (req, res) => {
         if (!/[a-z]/.test(newPassword)) {
             return res.status(400).json({
                 message:
-                    "Password must contain at least one lowercase letter"
+                    "La contraseña debe contener al menos una letra minúscula"
             });
         }
 
@@ -434,7 +434,7 @@ export const changePassword = async (req, res) => {
         ) {
             return res.status(400).json({
                 message:
-                    "Password must contain at least one special character"
+                    "La contraseña debe contener al menos un carácter especial"
             });
         }
 
@@ -461,7 +461,7 @@ export const changePassword = async (req, res) => {
         if (!user) {
             return res.status(400).json({
                 message:
-                    "Invalid or expired recovery code"
+                    "Código de recuperación inválido o vencido"
             });
         }
 
@@ -499,7 +499,7 @@ export const changePassword = async (req, res) => {
             to:
                 user.email,
             subject:
-                "Password Updated - SomosCafeApp",
+                "Contraseña actualizada - SomosCafeApp",
             html: `
 <div style="
     font-family: Arial, sans-serif;
@@ -550,20 +550,20 @@ export const changePassword = async (req, res) => {
             color: #6f4e37;
             margin: 0;
         ">
-            Password Updated
+            Contraseña actualizada
         </h1>
     </div>
 
     <p style="font-size: 16px;">
-        Hello <strong>${user.name || "User"}</strong>,
+        Hola <strong>${user.name || "Usuario"}</strong>,
     </p>
 
     <p style="
         line-height: 1.7;
         color: #5f4637;
     ">
-        Your password has been successfully
-        updated in <strong>SomosCafeApp</strong>.
+        Tu contraseña se actualizó correctamente
+        en <strong>SomosCafeApp</strong>.
     </p>
 
     <div style="
@@ -577,8 +577,8 @@ export const changePassword = async (req, res) => {
             color: #6b4f3b;
             font-size: 15px;
         ">
-            ✅ You can now log in
-            with your new password.
+            ✅ Ya puedes iniciar sesión
+            con tu nueva contraseña.
         </p>
     </div>
 
@@ -586,8 +586,8 @@ export const changePassword = async (req, res) => {
         color: #7b5e57;
         font-size: 14px;
     ">
-        🔒 If you did not make this change,
-        contact support immediately.
+        🔒 Si no realizaste este cambio,
+        comunícate con soporte de inmediato.
     </p>
 
     <hr style="
@@ -602,8 +602,8 @@ export const changePassword = async (req, res) => {
         font-size: 12px;
         text-align: center;
     ">
-        © 2026 SomosCafeApp · Coffee,
-        technology and security ☕
+        © 2026 SomosCafeApp · Café,
+        tecnología y seguridad ☕
     </p>
 </div>
 `
@@ -637,7 +637,7 @@ export const changePassword = async (req, res) => {
 
         return res.status(200).json({
             message:
-                "Password updated successfully"
+                "Contraseña actualizada correctamente"
         });
 
     } catch (error) {
@@ -649,7 +649,7 @@ export const changePassword = async (req, res) => {
 
         return res.status(500).json({
             message:
-                "Error changing password",
+                "Error al cambiar la contraseña",
             error:
                 error.message
         });

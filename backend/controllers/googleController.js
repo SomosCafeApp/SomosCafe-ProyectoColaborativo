@@ -62,7 +62,7 @@ const getGoogleUserData = async (idToken) => {
         if (!payload) {
 
             throw new Error(
-                "Google token payload not found"
+                "No se encontró la información del token de Google"
             );
 
         }
@@ -110,7 +110,7 @@ const getGoogleUserData = async (idToken) => {
     if (!response.ok) {
 
         throw new Error(
-            "Invalid or expired Google access token"
+            "Token de acceso de Google inválido o vencido"
         );
 
     }
@@ -121,7 +121,7 @@ const getGoogleUserData = async (idToken) => {
     if (!userData.sub) {
 
         throw new Error(
-            "Google user ID was not provided"
+            "Google no proporcionó el ID de usuario"
         );
 
     }
@@ -176,7 +176,7 @@ export const loginWithGoogle =
                 return res.status(400).json({
 
                     message:
-                        "Google ID token is required"
+                        "El token de ID de Google es obligatorio"
 
                 });
 
@@ -197,7 +197,7 @@ export const loginWithGoogle =
                 return res.status(500).json({
 
                     message:
-                        "Google authentication is not configured"
+                        "La autenticación con Google no está configurada"
 
                 });
 
@@ -214,7 +214,7 @@ export const loginWithGoogle =
                 return res.status(500).json({
 
                     message:
-                        "Authentication service is not configured"
+                        "El servicio de autenticación no está configurado"
 
                 });
 
@@ -240,7 +240,7 @@ export const loginWithGoogle =
                 return res.status(400).json({
 
                     message:
-                        "Google did not provide a valid email"
+                        "Google no proporcionó un correo válido"
 
                 });
 
@@ -282,7 +282,7 @@ export const loginWithGoogle =
                     return res.status(403).json({
 
                         message:
-                            "User account is inactive"
+                            "La cuenta de usuario está inactiva"
 
                     });
 
@@ -301,7 +301,7 @@ export const loginWithGoogle =
                     return res.status(409).json({
 
                         message:
-                            "This email is already linked to another Google account"
+                            "Este correo ya está vinculado a otra cuenta de Google"
 
                     });
 
@@ -338,7 +338,8 @@ export const loginWithGoogle =
 
                 if (
                     googleUser.profileImage &&
-                    !user.profileImage
+                    !user.profileImage &&
+                    !user.profileImageRemoved
                 ) {
 
                     user.profileImage =
@@ -447,7 +448,7 @@ export const loginWithGoogle =
             return res.status(200).json({
 
                 message:
-                    "Google login successful",
+                    "Inicio de sesión con Google exitoso",
 
                 token,
 
@@ -522,7 +523,7 @@ export const loginWithGoogle =
                 return res.status(401).json({
 
                     message:
-                        "Invalid or expired Google token"
+                        "Token de Google inválido o vencido"
 
                 });
 
@@ -535,7 +536,7 @@ export const loginWithGoogle =
             return res.status(500).json({
 
                 message:
-                    "Error authenticating with Google"
+                    "Error al autenticar con Google"
 
             });
 

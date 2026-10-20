@@ -101,8 +101,8 @@ class _FlyingThumbState extends State<_FlyingThumb>
     Widget image = placeholder;
     if (url != null && url.isNotEmpty) {
       image = url.startsWith('http')
-          ? Image.network(url, fit: BoxFit.cover, errorBuilder: (_, __, ___) => placeholder)
-          : Image.asset(url, fit: BoxFit.cover, errorBuilder: (_, __, ___) => placeholder);
+          ? Image.network(url, fit: BoxFit.cover, errorBuilder: (_, _, _) => placeholder)
+          : Image.asset(url, fit: BoxFit.cover, errorBuilder: (_, _, _) => placeholder);
     }
 
     return DecoratedBox(

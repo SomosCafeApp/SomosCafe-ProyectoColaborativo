@@ -83,13 +83,13 @@ const checkCategory = async (categoryId) => {
     const category = await Category.findById(categoryId);
 
     if (!category) {
-        return { status: 404, message: "Category not found" };
+        return { status: 404, message: "Categoría no encontrada" };
     }
 
     if (!category.isActive) {
         return {
             status: 400,
-            message: "Selected category is inactive"
+            message: "La categoría seleccionada está inactiva"
         };
     }
 
@@ -115,7 +115,7 @@ export const getProducts = async (req, res) => {
         const resolver = await getDiscountResolver();
 
         return res.status(200).json({
-            message: "Products retrieved successfully",
+            message: "Productos obtenidos correctamente",
             products: products.map(
                 product => decorateProduct(product, resolver)
             )
@@ -126,7 +126,7 @@ export const getProducts = async (req, res) => {
         console.error("Get products error:", error);
 
         return res.status(500).json({
-            message: "Error retrieving products",
+            message: "Error al obtener los productos",
             error: error.message
         });
 
@@ -147,7 +147,7 @@ export const getAllProductsAdmin = async (req, res) => {
             .sort({ createdAt: -1 });
 
         return res.status(200).json({
-            message: "Products retrieved successfully",
+            message: "Productos obtenidos correctamente",
             products
         });
 
@@ -156,7 +156,7 @@ export const getAllProductsAdmin = async (req, res) => {
         console.error("Get admin products error:", error);
 
         return res.status(500).json({
-            message: "Error retrieving products",
+            message: "Error al obtener los productos",
             error: error.message
         });
 
@@ -178,14 +178,14 @@ export const getProductById = async (req, res) => {
 
         if (!product) {
             return res.status(404).json({
-                message: "Product not found"
+                message: "Producto no encontrado"
             });
         }
 
         const resolver = await getDiscountResolver();
 
         return res.status(200).json({
-            message: "Product retrieved successfully",
+            message: "Producto obtenido correctamente",
             product: decorateProduct(product, resolver)
         });
 
@@ -194,7 +194,7 @@ export const getProductById = async (req, res) => {
         console.error("Get product error:", error);
 
         return res.status(500).json({
-            message: "Error retrieving product",
+            message: "Error al obtener el producto",
             error: error.message
         });
 
@@ -234,13 +234,13 @@ export const createProduct = async (req, res) => {
             await discardUploadedImage(req);
 
             return res.status(400).json({
-                message: "A name and a valid price are required"
+                message: "El nombre y un precio válido son obligatorios"
             });
         }
 
         if (!req.file) {
             return res.status(400).json({
-                message: "Product image is required"
+                message: "La imagen del producto es obligatoria"
             });
         }
 
@@ -274,7 +274,7 @@ export const createProduct = async (req, res) => {
         await newProduct.populate("categoryId", CATEGORY_FIELDS);
 
         return res.status(201).json({
-            message: "Product created successfully",
+            message: "Producto creado correctamente",
             product: newProduct
         });
 
@@ -285,7 +285,7 @@ export const createProduct = async (req, res) => {
         await discardUploadedImage(req);
 
         return res.status(500).json({
-            message: "Error creating product",
+            message: "Error al crear el producto",
             error: error.message
         });
 
@@ -308,7 +308,7 @@ export const updateProduct = async (req, res) => {
             await discardUploadedImage(req);
 
             return res.status(404).json({
-                message: "Product not found"
+                message: "Producto no encontrado"
             });
         }
 
@@ -339,7 +339,7 @@ export const updateProduct = async (req, res) => {
                 await discardUploadedImage(req);
 
                 return res.status(400).json({
-                    message: "Product name cannot be empty"
+                    message: "El nombre del producto no puede estar vacío"
                 });
             }
 
@@ -358,7 +358,7 @@ export const updateProduct = async (req, res) => {
                 await discardUploadedImage(req);
 
                 return res.status(400).json({
-                    message: "Invalid price"
+                    message: "Precio inválido"
                 });
             }
 
@@ -401,7 +401,7 @@ export const updateProduct = async (req, res) => {
         await product.populate("categoryId", CATEGORY_FIELDS);
 
         return res.status(200).json({
-            message: "Product updated successfully",
+            message: "Producto actualizado correctamente",
             product
         });
 
@@ -412,7 +412,7 @@ export const updateProduct = async (req, res) => {
         await discardUploadedImage(req);
 
         return res.status(500).json({
-            message: "Error updating product",
+            message: "Error al actualizar el producto",
             error: error.message
         });
 
@@ -436,7 +436,7 @@ export const deleteProduct = async (req, res) => {
 
         if (!product) {
             return res.status(404).json({
-                message: "Product not found"
+                message: "Producto no encontrado"
             });
         }
 
@@ -471,7 +471,7 @@ export const deleteProduct = async (req, res) => {
         }
 
         return res.status(200).json({
-            message: "Product deleted successfully",
+            message: "Producto eliminado correctamente",
             removedFromCarts: cartResult.modifiedCount
         });
 
@@ -480,7 +480,7 @@ export const deleteProduct = async (req, res) => {
         console.error("Delete product error:", error);
 
         return res.status(500).json({
-            message: "Error deleting product",
+            message: "Error al eliminar el producto",
             error: error.message
         });
 

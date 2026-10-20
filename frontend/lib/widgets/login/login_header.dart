@@ -20,7 +20,7 @@ class LoginHeader extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: const Icon(
@@ -43,7 +43,7 @@ class LoginHeader extends StatelessWidget {
                   'Inicia sesión para disfrutar de tu café favorito',
                   style: TextStyle(
                     fontSize: 13,
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                   ),
                 ),
                 const SizedBox(height: 30),
@@ -55,7 +55,7 @@ class LoginHeader extends StatelessWidget {
           top: 50,
           left: 20,
           child: CircleAvatar(
-            backgroundColor: Colors.white.withOpacity(0.25),
+            backgroundColor: Colors.white.withValues(alpha: 0.25),
             radius: 18,
             child: IconButton(
               padding: EdgeInsets.zero,

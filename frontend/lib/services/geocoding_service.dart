@@ -1,7 +1,11 @@
 import 'dart:convert';
+
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:geocoding/geocoding.dart' as native;
 import 'package:http/http.dart' as http;
 
 import '../core/config/maps_config.dart';
+import '../core/config/service_area.dart';
 
 /// Resultado de geocodificar (o revertir) una dirección.
 class GeocodeResult {
@@ -29,11 +33,18 @@ class GeocodingException implements Exception {
   String toString() {
     switch (status) {
       case 'ZERO_RESULTS':
-        return 'No se encontró esa dirección';
+      case 'OUT_OF_AREA':
+        return 'No se encontró esa dirección en Garzón, Huila';
       case 'REQUEST_DENIED':
-        return 'La API key de Google Maps no es válida o le faltan '
-            'permisos (revisa MapsConfig.apiKey y que "Geocoding API" '
-            'esté habilitada)';
+        // Google explica el motivo exacto en `error_message` (Geocoding
+        // API sin habilitar, facturación inactiva, key restringida a
+        // apps Android, etc.). Lo mostramos en vez de ocultarlo.
+        final reason = (errorMessage ?? '').trim();
+        return reason.isEmpty
+            ? 'Google rechazó la petición (REQUEST_DENIED). Revisa la '
+                'API key, que "Geocoding API" esté habilitada y que la '
+                'facturación esté activa.'
+            : 'Google rechazó la petición: $reason';
       case 'OVER_QUERY_LIMIT':
         return 'Se superó el límite de peticiones a Google Maps (revisa '
             'la facturación/cuota en Google Cloud Console)';
@@ -45,32 +56,130 @@ class GeocodingException implements Exception {
   }
 }
 
-/// Usa la API HTTP de Google Geocoding directamente (en vez del
-/// paquete `geocoding`, que no soporta Flutter Web) para:
-///   - convertir un texto de dirección en coordenadas (forward)
-///   - convertir coordenadas en una dirección legible (reverse),
-///     útil cuando el usuario toca directamente sobre el mapa.
+/// Convierte texto <-> coordenadas, SIEMPRE dentro de Garzón, Huila:
+///   - A lo que escribe el usuario se le agrega "Garzón, Huila, Colombia",
+///     así que una dirección sin ciudad nunca salta a otra ciudad.
+///   - De los resultados posibles se elige el primero (el más parecido)
+///     que realmente caiga dentro de la zona de servicio.
+///
+/// En Android/iOS se usa PRIMERO el geocodificador nativo del teléfono
+/// (gratis, sin API key ni facturación). Google solo se consulta si el
+/// nativo no encuentra nada y hay una key configurada. En web no existe
+/// el nativo, así que ahí se usa Google directamente.
 class GeocodingService {
   static const _baseUrl = 'https://maps.googleapis.com/maps/api/geocode/json';
 
+  static bool get _googleConfigured =>
+      MapsConfig.apiKey.isNotEmpty &&
+      MapsConfig.apiKey != 'TU_GOOGLE_MAPS_API_KEY';
+
   static Future<GeocodeResult> fromAddress(String address) async {
-    final uri = Uri.parse(_baseUrl).replace(queryParameters: {
-      'address': address.trim(),
+    final query = ServiceArea.withCity(address);
+
+    if (!kIsWeb) {
+      final result = await _nativeFromAddress(query);
+      if (result != null) return result;
+      if (!_googleConfigured) throw GeocodingException('ZERO_RESULTS', null);
+    }
+
+    final results = await _fetchResults(Uri.parse(_baseUrl).replace(queryParameters: {
+      'address': query,
       'key': MapsConfig.apiKey,
-    });
-    return _fetchFirstResult(uri);
+      // Sesga la búsqueda a la zona de servicio, a Colombia y en español.
+      'bounds': ServiceArea.googleBounds,
+      'region': 'co',
+      'language': 'es',
+    }));
+
+    for (final r in results) {
+      if (ServiceArea.contains(r.latitude, r.longitude)) return r;
+    }
+    throw GeocodingException('OUT_OF_AREA', null);
   }
 
   static Future<GeocodeResult> fromCoordinates(double lat, double lng) async {
-    final uri = Uri.parse(_baseUrl).replace(queryParameters: {
+    if (!kIsWeb) {
+      final address = await _nativeAddressFor(lat, lng);
+      if (address != null) {
+        return GeocodeResult(
+          latitude: lat,
+          longitude: lng,
+          formattedAddress: address,
+        );
+      }
+      if (!_googleConfigured) throw GeocodingException('ZERO_RESULTS', null);
+    }
+
+    final results = await _fetchResults(Uri.parse(_baseUrl).replace(queryParameters: {
       'latlng': '$lat,$lng',
       'key': MapsConfig.apiKey,
-    });
-    return _fetchFirstResult(uri);
+      'language': 'es',
+    }));
+
+    if (results.isEmpty) throw GeocodingException('ZERO_RESULTS', null);
+    return results.first;
   }
 
-  static Future<GeocodeResult> _fetchFirstResult(Uri uri) async {
-    if (MapsConfig.apiKey.isEmpty || MapsConfig.apiKey == 'TU_GOOGLE_MAPS_API_KEY') {
+  // --------------------------------------------------
+  // Geocodificador nativo (Android / iOS). Gratis, sin API key.
+  // --------------------------------------------------
+
+  static Future<GeocodeResult?> _nativeFromAddress(String query) async {
+    try {
+      await native.setLocaleIdentifier('es_CO');
+      final locations = await native.locationFromAddress(query);
+
+      // Solo resultados dentro de Garzón; el primero es el más parecido.
+      final inArea = locations
+          .where((l) => ServiceArea.contains(l.latitude, l.longitude))
+          .toList();
+      if (inArea.isEmpty) return null;
+
+      final first = inArea.first;
+      final formatted =
+          await _nativeAddressFor(first.latitude, first.longitude) ??
+              ServiceArea.stripCity(query);
+
+      return GeocodeResult(
+        latitude: first.latitude,
+        longitude: first.longitude,
+        formattedAddress: formatted,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Future<String?> _nativeAddressFor(double lat, double lng) async {
+    try {
+      await native.setLocaleIdentifier('es_CO');
+      final marks = await native.placemarkFromCoordinates(lat, lng);
+      if (marks.isEmpty) return null;
+
+      final p = marks.first;
+      final parts = <String>[];
+      for (final part in [
+        p.street,
+        p.subLocality,
+        p.locality,
+        p.administrativeArea,
+      ]) {
+        final value = (part ?? '').trim();
+        if (value.isNotEmpty && !parts.contains(value)) parts.add(value);
+      }
+
+      return parts.isEmpty ? null : ServiceArea.stripCity(parts.join(', '));
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // --------------------------------------------------
+  // API HTTP de Google
+  // --------------------------------------------------
+
+  static Future<List<GeocodeResult>> _fetchResults(Uri uri) async {
+    if (!_googleConfigured) {
       throw GeocodingException(
         'NO_API_KEY',
         'Falta configurar tu API key en lib/core/config/maps_config.dart',
@@ -85,18 +194,15 @@ class GeocodingService {
       throw GeocodingException(status, data['error_message'] as String?);
     }
 
-    final results = data['results'] as List;
-    if (results.isEmpty) {
-      throw GeocodingException('ZERO_RESULTS', null);
-    }
-
-    final first = results.first as Map<String, dynamic>;
-    final location = first['geometry']['location'] as Map<String, dynamic>;
-
-    return GeocodeResult(
-      latitude: (location['lat'] as num).toDouble(),
-      longitude: (location['lng'] as num).toDouble(),
-      formattedAddress: first['formatted_address'] as String? ?? '',
-    );
+    return (data['results'] as List).map((raw) {
+      final item = raw as Map<String, dynamic>;
+      final location = item['geometry']['location'] as Map<String, dynamic>;
+      return GeocodeResult(
+        latitude: (location['lat'] as num).toDouble(),
+        longitude: (location['lng'] as num).toDouble(),
+        formattedAddress:
+            ServiceArea.stripCity(item['formatted_address'] as String? ?? ''),
+      );
+    }).toList();
   }
 }

@@ -31,7 +31,7 @@ export const registerUser = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Name, lastName, email and password are required"
+                    "Name, lastName, email y password son obligatorios"
 
             });
 
@@ -62,7 +62,7 @@ export const registerUser = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Invalid email format"
+                    "Formato de correo inválido"
 
             });
 
@@ -79,7 +79,7 @@ export const registerUser = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Name must contain at least 2 characters"
+                    "El nombre debe tener al menos 2 caracteres"
 
             });
 
@@ -96,7 +96,7 @@ export const registerUser = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Last name must contain at least 2 characters"
+                    "El apellido debe tener al menos 2 caracteres"
 
             });
 
@@ -113,7 +113,7 @@ export const registerUser = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Password must contain at least 6 characters"
+                    "La contraseña debe tener al menos 6 caracteres"
 
             });
 
@@ -130,7 +130,7 @@ export const registerUser = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Password must contain at least one number"
+                    "La contraseña debe contener al menos un número"
 
             });
 
@@ -147,7 +147,7 @@ export const registerUser = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Password must contain at least one uppercase letter"
+                    "La contraseña debe contener al menos una letra mayúscula"
 
             });
 
@@ -164,7 +164,7 @@ export const registerUser = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Password must contain at least one lowercase letter"
+                    "La contraseña debe contener al menos una letra minúscula"
 
             });
 
@@ -182,7 +182,7 @@ export const registerUser = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Password must contain at least one special character"
+                    "La contraseña debe contener al menos un carácter especial"
 
             });
 
@@ -211,7 +211,7 @@ export const registerUser = async (req, res) => {
                 return res.status(409).json({
 
                     message:
-                        "Email is already registered but not verified"
+                        "El correo ya está registrado pero no ha sido verificado"
 
                 });
 
@@ -220,7 +220,7 @@ export const registerUser = async (req, res) => {
             return res.status(409).json({
 
                 message:
-                    "Email is already registered"
+                    "El correo ya está registrado"
 
             });
 
@@ -324,7 +324,7 @@ export const registerUser = async (req, res) => {
         return res.status(201).json({
 
             message:
-                "User registered successfully. Please verify your email.",
+                "Usuario registrado correctamente. Verifica tu correo.",
 
             user:
                 userResponse
@@ -349,7 +349,7 @@ export const registerUser = async (req, res) => {
             return res.status(409).json({
 
                 message:
-                    "Email is already registered"
+                    "El correo ya está registrado"
 
             });
 
@@ -358,7 +358,7 @@ export const registerUser = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error registering user",
+                "Error al registrar el usuario",
 
             error:
                 error.message

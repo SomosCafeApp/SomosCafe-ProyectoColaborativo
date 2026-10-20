@@ -193,7 +193,7 @@ export const getUserOrders = async (req, res) => {
             .sort({ createdAt: -1 });
 
         return res.status(200).json({
-            message: "User orders retrieved successfully",
+            message: "Pedidos del usuario obtenidos correctamente",
             orders
         });
 
@@ -202,7 +202,7 @@ export const getUserOrders = async (req, res) => {
         console.error("Get user orders error:", error);
 
         return res.status(500).json({
-            message: "Error retrieving user orders",
+            message: "Error al obtener los pedidos del usuario",
             error: error.message
         });
 
@@ -219,7 +219,7 @@ export const getOrderById = async (req, res) => {
 
         if (!mongoose.isValidObjectId(req.params.id)) {
             return res.status(400).json({
-                message: "Invalid order id"
+                message: "ID de pedido inválido"
             });
         }
 
@@ -233,7 +233,7 @@ export const getOrderById = async (req, res) => {
 
         if (!order) {
             return res.status(404).json({
-                message: "Order not found"
+                message: "Pedido no encontrado"
             });
         }
 
@@ -244,12 +244,12 @@ export const getOrderById = async (req, res) => {
             req.user.id.toString()
         ) {
             return res.status(403).json({
-                message: "You are not authorized to access this order"
+                message: "No tienes autorización para acceder a este pedido"
             });
         }
 
         return res.status(200).json({
-            message: "Order retrieved successfully",
+            message: "Pedido obtenido correctamente",
             order
         });
 
@@ -258,7 +258,7 @@ export const getOrderById = async (req, res) => {
         console.error("Get order error:", error);
 
         return res.status(500).json({
-            message: "Error retrieving order",
+            message: "Error al obtener el pedido",
             error: error.message
         });
 
@@ -293,7 +293,7 @@ export const createOrder = async (req, res) => {
 
         if (!DELIVERY_TYPES.includes(deliveryType)) {
             return res.status(400).json({
-                message: "Delivery type must be PICKUP or DELIVERY"
+                message: "El tipo de entrega debe ser PICKUP o DELIVERY"
             });
         }
 
@@ -306,13 +306,13 @@ export const createOrder = async (req, res) => {
 
         if (!name) {
             return res.status(400).json({
-                message: "Recipient name is required"
+                message: "El nombre del destinatario es obligatorio"
             });
         }
 
         if (!PHONE_REGEX.test(phone)) {
             return res.status(400).json({
-                message: "A valid recipient phone is required"
+                message: "Se requiere un teléfono de destinatario válido"
             });
         }
 
@@ -325,7 +325,7 @@ export const createOrder = async (req, res) => {
         if (orderNotes.length > MAX_NOTES_LENGTH) {
             return res.status(400).json({
                 message:
-                    `Notes cannot exceed ${MAX_NOTES_LENGTH} characters`
+                    `Las notas no pueden superar los ${MAX_NOTES_LENGTH} caracteres`
             });
         }
 
@@ -342,7 +342,7 @@ export const createOrder = async (req, res) => {
                 !mongoose.isValidObjectId(addressId)
             ) {
                 return res.status(400).json({
-                    message: "Address is required for delivery"
+                    message: "La dirección es obligatoria para envíos a domicilio"
                 });
             }
 
@@ -353,7 +353,7 @@ export const createOrder = async (req, res) => {
 
             if (!address) {
                 return res.status(404).json({
-                    message: "Address not found"
+                    message: "Dirección no encontrada"
                 });
             }
         }
@@ -364,7 +364,7 @@ export const createOrder = async (req, res) => {
 
         if (!PAYMENT_METHODS.includes(paymentMethod)) {
             return res.status(400).json({
-                message: "Payment method must be CASH or TRANSFER"
+                message: "El método de pago debe ser CASH o TRANSFER"
             });
         }
 
@@ -378,7 +378,7 @@ export const createOrder = async (req, res) => {
             items.length === 0
         ) {
             return res.status(400).json({
-                message: "Order must contain at least one item"
+                message: "El pedido debe contener al menos un producto"
             });
         }
 
@@ -390,7 +390,7 @@ export const createOrder = async (req, res) => {
                 !mongoose.isValidObjectId(item.productId)
             ) {
                 return res.status(400).json({
-                    message: "Invalid product id"
+                    message: "ID de producto inválido"
                 });
             }
             productIds.push(item.productId.toString());
@@ -404,7 +404,7 @@ export const createOrder = async (req, res) => {
 
         if (products.length !== uniqueIds.length) {
             return res.status(404).json({
-                message: "One or more products were not found"
+                message: "Uno o más productos no fueron encontrados"
             });
         }
 
@@ -427,7 +427,7 @@ export const createOrder = async (req, res) => {
 
             if (!product.isAvailable) {
                 return res.status(400).json({
-                    message: `Product ${product.name} is not available`
+                    message: `El producto ${product.name} no está disponible`
                 });
             }
 
@@ -438,7 +438,7 @@ export const createOrder = async (req, res) => {
                 quantity < 1
             ) {
                 return res.status(400).json({
-                    message: "Product quantity must be at least 1"
+                    message: "La cantidad del producto debe ser al menos 1"
                 });
             }
 
@@ -509,7 +509,7 @@ export const createOrder = async (req, res) => {
 
             if (!mongoose.isValidObjectId(couponId)) {
                 return res.status(400).json({
-                    message: "Invalid coupon id"
+                    message: "ID de cupón inválido"
                 });
             }
 
@@ -620,7 +620,7 @@ export const createOrder = async (req, res) => {
         });
 
         return res.status(201).json({
-            message: "Order created successfully",
+            message: "Pedido creado correctamente",
             order
         });
 
@@ -629,7 +629,7 @@ export const createOrder = async (req, res) => {
         console.error("Create order error:", error);
 
         return res.status(500).json({
-            message: "Error creating order",
+            message: "Error al crear el pedido",
             error: error.message
         });
 
@@ -650,7 +650,7 @@ export const getAllOrders = async (req, res) => {
 
             if (!ORDER_STATUSES.includes(req.query.status)) {
                 return res.status(400).json({
-                    message: "Invalid order status"
+                    message: "Estado de pedido inválido"
                 });
             }
 
@@ -667,7 +667,7 @@ export const getAllOrders = async (req, res) => {
                 .sort({ createdAt: -1 });
 
         return res.status(200).json({
-            message: "All orders retrieved successfully",
+            message: "Todos los pedidos obtenidos correctamente",
             orders
         });
 
@@ -676,7 +676,7 @@ export const getAllOrders = async (req, res) => {
         console.error("Get all orders error:", error);
 
         return res.status(500).json({
-            message: "Error retrieving orders",
+            message: "Error al obtener los pedidos",
             error: error.message
         });
 
@@ -695,13 +695,13 @@ export const updateOrderStatus = async (req, res) => {
 
         if (!ORDER_STATUSES.includes(status)) {
             return res.status(400).json({
-                message: "Invalid order status"
+                message: "Estado de pedido inválido"
             });
         }
 
         if (!mongoose.isValidObjectId(req.params.id)) {
             return res.status(400).json({
-                message: "Invalid order id"
+                message: "ID de pedido inválido"
             });
         }
 
@@ -709,7 +709,7 @@ export const updateOrderStatus = async (req, res) => {
 
         if (!order) {
             return res.status(404).json({
-                message: "Order not found"
+                message: "Pedido no encontrado"
             });
         }
 
@@ -718,7 +718,7 @@ export const updateOrderStatus = async (req, res) => {
         if (!allowed.includes(status)) {
             return res.status(400).json({
                 message:
-                    `Cannot change order from ${order.status} to ${status}`,
+                    `No se puede cambiar el pedido de ${order.status} a ${status}`,
                 allowedStatuses: allowed
             });
         }
@@ -733,7 +733,7 @@ export const updateOrderStatus = async (req, res) => {
         ) {
             return res.status(400).json({
                 message:
-                    "The transfer payment must be validated before moving this order forward"
+                    "El pago por transferencia debe validarse antes de avanzar este pedido"
             });
         }
 
@@ -758,14 +758,14 @@ export const updateOrderStatus = async (req, res) => {
         if (!updated) {
             return res.status(409).json({
                 message:
-                    "The order status changed in the meantime. Reload and try again."
+                    "El estado del pedido cambió mientras tanto. Recarga e inténtalo de nuevo."
             });
         }
 
         await runStatusSideEffects(updated, status);
 
         return res.status(200).json({
-            message: "Order status updated successfully",
+            message: "Estado del pedido actualizado correctamente",
             order: updated
         });
 
@@ -774,7 +774,7 @@ export const updateOrderStatus = async (req, res) => {
         console.error("Update order status error:", error);
 
         return res.status(500).json({
-            message: "Error updating order status",
+            message: "Error al actualizar el estado del pedido",
             error: error.message
         });
 
@@ -796,7 +796,7 @@ export const cancelOrder = async (req, res) => {
 
         if (!mongoose.isValidObjectId(req.params.id)) {
             return res.status(400).json({
-                message: "Invalid order id"
+                message: "ID de pedido inválido"
             });
         }
 
@@ -804,7 +804,7 @@ export const cancelOrder = async (req, res) => {
 
         if (!order) {
             return res.status(404).json({
-                message: "Order not found"
+                message: "Pedido no encontrado"
             });
         }
 
@@ -813,13 +813,13 @@ export const cancelOrder = async (req, res) => {
             req.user.id.toString()
         ) {
             return res.status(403).json({
-                message: "You are not authorized to cancel this order"
+                message: "No tienes autorización para cancelar este pedido"
             });
         }
 
         if (!USER_CANCELLABLE_STATUSES.includes(order.status)) {
             return res.status(400).json({
-                message: "This order can no longer be cancelled"
+                message: "Este pedido ya no se puede cancelar"
             });
         }
 
@@ -830,7 +830,7 @@ export const cancelOrder = async (req, res) => {
         ) {
             return res.status(400).json({
                 message:
-                    "This order can no longer be cancelled because its payment is already in review"
+                    "Este pedido ya no se puede cancelar porque su pago ya está en revisión"
             });
         }
 
@@ -875,12 +875,12 @@ export const cancelOrder = async (req, res) => {
             ) {
                 return res.status(400).json({
                     message:
-                        `The ${CANCEL_WINDOW_MINUTES}-minute cancellation window has expired`
+                        `Ya venció el plazo de ${CANCEL_WINDOW_MINUTES} minutos para cancelar`
                 });
             }
 
             return res.status(400).json({
-                message: "This order can no longer be cancelled"
+                message: "Este pedido ya no se puede cancelar"
             });
         }
 
@@ -888,7 +888,7 @@ export const cancelOrder = async (req, res) => {
         await releaseCouponForOrder(cancelled._id);
 
         return res.status(200).json({
-            message: "Order cancelled successfully",
+            message: "Pedido cancelado correctamente",
             order: cancelled
         });
 
@@ -897,7 +897,7 @@ export const cancelOrder = async (req, res) => {
         console.error("Cancel order error:", error);
 
         return res.status(500).json({
-            message: "Error cancelling order",
+            message: "Error al cancelar el pedido",
             error: error.message
         });
 
@@ -916,7 +916,7 @@ export const deleteOrder = async (req, res) => {
 
         if (!mongoose.isValidObjectId(req.params.id)) {
             return res.status(400).json({
-                message: "Invalid order id"
+                message: "ID de pedido inválido"
             });
         }
 
@@ -924,13 +924,13 @@ export const deleteOrder = async (req, res) => {
 
         if (!order) {
             return res.status(404).json({
-                message: "Order not found"
+                message: "Pedido no encontrado"
             });
         }
 
         if (order.status !== "CANCELLED") {
             return res.status(400).json({
-                message: "Only cancelled orders can be deleted"
+                message: "Solo se pueden eliminar pedidos cancelados"
             });
         }
 
@@ -943,7 +943,7 @@ export const deleteOrder = async (req, res) => {
         await order.deleteOne();
 
         return res.status(200).json({
-            message: "Order deleted successfully"
+            message: "Pedido eliminado correctamente"
         });
 
     } catch (error) {
@@ -951,7 +951,7 @@ export const deleteOrder = async (req, res) => {
         console.error("Delete order error:", error);
 
         return res.status(500).json({
-            message: "Error deleting order",
+            message: "Error al eliminar el pedido",
             error: error.message
         });
 

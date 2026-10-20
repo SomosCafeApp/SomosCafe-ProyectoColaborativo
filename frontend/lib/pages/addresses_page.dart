@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../core/config/service_area.dart';
 import '../core/constants/app_colors.dart';
 import '../providers/address_provider.dart';
 import '../providers/auth_provider.dart';
@@ -23,7 +24,6 @@ class _AddressesPageState extends State<AddressesPage> {
   final _addressController = TextEditingController();
   final _recipientController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _cityController = TextEditingController();
   double? _pickedLat;
   double? _pickedLng;
 
@@ -71,9 +71,8 @@ class _AddressesPageState extends State<AddressesPage> {
     final address = _addressController.text.trim();
     final recipient = _recipientController.text.trim();
     final phone = _phoneController.text.trim();
-    final city = _cityController.text.trim();
 
-    if (name.isEmpty || address.isEmpty || recipient.isEmpty || phone.isEmpty || city.isEmpty) {
+    if (name.isEmpty || address.isEmpty || recipient.isEmpty || phone.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Por favor completa todos los campos')),
       );
@@ -85,7 +84,7 @@ class _AddressesPageState extends State<AddressesPage> {
           recipientName: recipient,
           phone: phone,
           address: address,
-          city: city,
+          city: ServiceArea.city,
           latitude: _pickedLat,
           longitude: _pickedLng,
         );
@@ -95,7 +94,6 @@ class _AddressesPageState extends State<AddressesPage> {
     if (success) {
       _nameController.clear();
       _addressController.clear();
-      _cityController.clear();
       setState(() {
         _pickedLat = null;
         _pickedLng = null;
@@ -115,7 +113,6 @@ class _AddressesPageState extends State<AddressesPage> {
     _addressController.dispose();
     _recipientController.dispose();
     _phoneController.dispose();
-    _cityController.dispose();
     super.dispose();
   }
 
@@ -173,7 +170,6 @@ class _AddressesPageState extends State<AddressesPage> {
                         addressController: _addressController,
                         recipientController: _recipientController,
                         phoneController: _phoneController,
-                        cityController: _cityController,
                         hasLocation: _pickedLat != null,
                         onPickOnMap: _openMapPicker,
                         onClose: () => setState(() {

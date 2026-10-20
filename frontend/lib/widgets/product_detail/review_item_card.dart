@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../common/user_avatar.dart';
+
 class ReviewItemCard extends StatelessWidget {
   final String name;
+
+  /// Foto de perfil del autor (vacía = se muestran sus iniciales).
+  final String profileImage;
   final String comment;
   final String date;
   final int stars;
@@ -12,6 +17,7 @@ class ReviewItemCard extends StatelessWidget {
   const ReviewItemCard({
     super.key,
     required this.name,
+    this.profileImage = '',
     required this.comment,
     required this.date,
     required this.stars,
@@ -35,18 +41,13 @@ class ReviewItemCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              // Avatar circular con la inicial
-              CircleAvatar(
-                radius: 18,
+              // Avatar circular: foto de perfil o, si no tiene, la inicial
+              UserAvatar(
+                imageUrl: profileImage,
+                initials: initial,
+                size: 36,
+                fontSize: 14,
                 backgroundColor: const Color(0xFF9E774E),
-                child: Text(
-                  initial,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
               ),
               const SizedBox(width: 12),
               // Nombre de usuario
@@ -65,7 +66,7 @@ class ReviewItemCard extends StatelessWidget {
                 children: List.generate(5, (index) {
                   return Icon(
                     index < stars ? Icons.star_rounded : Icons.star_outline_rounded,
-                    color: index < stars ? const Color(0xFFFFC107) : mutedColor.withOpacity(0.4),
+                    color: index < stars ? const Color(0xFFFFC107) : mutedColor.withValues(alpha: 0.4),
                     size: 16,
                   );
                 }),
@@ -78,7 +79,7 @@ class ReviewItemCard extends StatelessWidget {
             comment,
             style: TextStyle(
               fontSize: 13,
-              color: textColor.withOpacity(0.9),
+              color: textColor.withValues(alpha: 0.9),
               height: 1.3,
             ),
           ),

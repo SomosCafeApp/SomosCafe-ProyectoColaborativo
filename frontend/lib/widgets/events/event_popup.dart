@@ -77,7 +77,7 @@ class _Poster extends StatelessWidget {
           event.image,
           width: double.infinity,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _TextCard(event: event),
+          errorBuilder: (_, _, _) => _TextCard(event: event),
           loadingBuilder: (context, child, progress) => progress == null
               ? child
               : const SizedBox(height: 320, child: Center(child: CircularProgressIndicator())),

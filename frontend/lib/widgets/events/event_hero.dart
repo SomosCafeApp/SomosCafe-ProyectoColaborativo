@@ -37,7 +37,7 @@ class EventHero extends StatelessWidget {
                     event.image,
                     width: double.infinity,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => const _Banner(),
+                    errorBuilder: (_, _, _) => const _Banner(),
                     loadingBuilder: (context, child, progress) => progress == null
                         ? child
                         : const SizedBox(height: 240, child: Center(child: CircularProgressIndicator())),

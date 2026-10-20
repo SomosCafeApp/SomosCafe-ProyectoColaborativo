@@ -74,7 +74,7 @@ export const getPromotions = async (req, res) => {
         return res.status(200).json({
 
             message:
-                "Promotions retrieved successfully",
+                "Promociones obtenidas correctamente",
 
             promotions
 
@@ -90,7 +90,7 @@ export const getPromotions = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error retrieving promotions",
+                "Error al obtener las promociones",
 
             error: error.message
 
@@ -125,7 +125,7 @@ export const getPromotionById = async (req, res) => {
             return res.status(404).json({
 
                 message:
-                    "Promotion not found"
+                    "Promoción no encontrada"
 
             });
 
@@ -134,7 +134,7 @@ export const getPromotionById = async (req, res) => {
         return res.status(200).json({
 
             message:
-                "Promotion retrieved successfully",
+                "Promoción obtenida correctamente",
 
             promotion
 
@@ -150,7 +150,7 @@ export const getPromotionById = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error retrieving promotion",
+                "Error al obtener la promoción",
 
             error: error.message
 
@@ -199,7 +199,7 @@ export const createPromotion = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Code, name, discountType, discountValue, startDate and endDate are required"
+                    "Code, name, discountType, discountValue, startDate y endDate son obligatorios"
 
             });
 
@@ -219,7 +219,7 @@ export const createPromotion = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Invalid discount type"
+                    "Tipo de descuento inválido"
 
             });
 
@@ -237,7 +237,7 @@ export const createPromotion = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Percentage discount cannot exceed 100"
+                    "El descuento porcentual no puede superar 100"
 
             });
 
@@ -252,7 +252,7 @@ export const createPromotion = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Discount value must be greater than zero"
+                    "El valor del descuento debe ser mayor que cero"
 
             });
 
@@ -276,7 +276,7 @@ export const createPromotion = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Invalid promotion dates"
+                    "Fechas de la promoción inválidas"
 
             });
 
@@ -287,7 +287,7 @@ export const createPromotion = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "End date must be greater than start date"
+                    "La fecha de fin debe ser posterior a la fecha de inicio"
 
             });
 
@@ -316,7 +316,7 @@ export const createPromotion = async (req, res) => {
             return res.status(409).json({
 
                 message:
-                    "Promotion code already exists"
+                    "El código de la promoción ya existe"
 
             });
 
@@ -348,7 +348,7 @@ export const createPromotion = async (req, res) => {
                 return res.status(400).json({
 
                     message:
-                        "One or more products were not found"
+                        "Uno o más productos no fueron encontrados"
 
                 });
 
@@ -382,7 +382,7 @@ export const createPromotion = async (req, res) => {
                 return res.status(400).json({
 
                     message:
-                        "One or more users were not found"
+                        "Uno o más usuarios no fueron encontrados"
 
                 });
 
@@ -447,7 +447,7 @@ export const createPromotion = async (req, res) => {
         return res.status(201).json({
 
             message:
-                "Promotion created successfully",
+                "Promoción creada correctamente",
 
             promotion: newPromotion
 
@@ -463,7 +463,7 @@ export const createPromotion = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error creating promotion",
+                "Error al crear la promoción",
 
             error: error.message
 
@@ -510,7 +510,7 @@ export const updatePromotion = async (req, res) => {
             return res.status(404).json({
 
                 message:
-                    "Promotion not found"
+                    "Promoción no encontrada"
 
             });
 
@@ -531,7 +531,7 @@ export const updatePromotion = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Invalid discount type"
+                    "Tipo de descuento inválido"
 
             });
 
@@ -557,7 +557,7 @@ export const updatePromotion = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Discount value must be greater than zero"
+                    "El valor del descuento debe ser mayor que cero"
 
             });
 
@@ -572,7 +572,7 @@ export const updatePromotion = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Percentage discount cannot exceed 100"
+                    "El descuento porcentual no puede superar 100"
 
             });
 
@@ -604,7 +604,7 @@ export const updatePromotion = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Invalid promotion dates"
+                    "Fechas de la promoción inválidas"
 
             });
 
@@ -618,7 +618,7 @@ export const updatePromotion = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "End date must be greater than start date"
+                    "La fecha de fin debe ser posterior a la fecha de inicio"
 
             });
 
@@ -640,7 +640,7 @@ export const updatePromotion = async (req, res) => {
             if (found !== productIds.length) {
                 return res.status(400).json({
                     message:
-                        "One or more products were not found"
+                        "Uno o más productos no fueron encontrados"
                 });
             }
         }
@@ -670,7 +670,7 @@ export const updatePromotion = async (req, res) => {
                 return res.status(409).json({
 
                     message:
-                        "Promotion code already exists"
+                        "El código de la promoción ya existe"
 
                 });
 
@@ -751,7 +751,7 @@ export const updatePromotion = async (req, res) => {
         return res.status(200).json({
 
             message:
-                "Promotion updated successfully",
+                "Promoción actualizada correctamente",
 
             promotion
 
@@ -767,7 +767,7 @@ export const updatePromotion = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error updating promotion",
+                "Error al actualizar la promoción",
 
             error: error.message
 
@@ -794,7 +794,7 @@ export const deletePromotion = async (req, res) => {
             return res.status(404).json({
 
                 message:
-                    "Promotion not found"
+                    "Promoción no encontrada"
 
             });
 
@@ -803,7 +803,7 @@ export const deletePromotion = async (req, res) => {
         return res.status(200).json({
 
             message:
-                "Promotion deleted successfully"
+                "Promoción eliminada correctamente"
 
         });
 
@@ -817,7 +817,7 @@ export const deletePromotion = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error deleting promotion",
+                "Error al eliminar la promoción",
 
             error: error.message
 
@@ -853,7 +853,7 @@ export const validatePromotion = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Code, userId and subtotal are required"
+                    "Code, userId y subtotal son obligatorios"
 
             });
 
@@ -878,7 +878,7 @@ export const validatePromotion = async (req, res) => {
             return res.status(404).json({
 
                 message:
-                    "Promotion not found or inactive"
+                    "Promoción no encontrada o inactiva"
 
             });
 
@@ -897,7 +897,7 @@ export const validatePromotion = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Promotion has not started yet"
+                    "La promoción aún no ha comenzado"
 
             });
 
@@ -910,7 +910,7 @@ export const validatePromotion = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Promotion has expired"
+                    "La promoción ya venció"
 
             });
 
@@ -929,7 +929,7 @@ export const validatePromotion = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Promotion usage limit reached"
+                    "Se alcanzó el límite de uso de la promoción"
 
             });
 
@@ -947,7 +947,7 @@ export const validatePromotion = async (req, res) => {
             return res.status(404).json({
 
                 message:
-                    "User not found"
+                    "Usuario no encontrado"
 
             });
 
@@ -969,7 +969,7 @@ export const validatePromotion = async (req, res) => {
             return res.status(403).json({
 
                 message:
-                    "Promotion is not available for this user"
+                    "La promoción no está disponible para este usuario"
 
             });
 
@@ -987,7 +987,7 @@ export const validatePromotion = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    `Minimum purchase required: ${promotion.minimumPurchase}`
+                    `Compra mínima requerida: ${promotion.minimumPurchase}`
 
             });
 
@@ -1050,7 +1050,7 @@ export const validatePromotion = async (req, res) => {
         return res.status(200).json({
 
             message:
-                "Promotion is valid",
+                "La promoción es válida",
 
             promotion: {
 
@@ -1086,7 +1086,7 @@ export const validatePromotion = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error validating promotion",
+                "Error al validar la promoción",
 
             error: error.message
 
@@ -1121,7 +1121,7 @@ export const getPromoOfTheDay = async (req, res) => {
 
         if (!promotion) {
             return res.status(200).json({
-                message: "No promo of the day",
+                message: "No hay promoción del día",
                 promotion: null
             });
         }
@@ -1146,7 +1146,7 @@ export const getPromoOfTheDay = async (req, res) => {
             });
 
         return res.status(200).json({
-            message: "Promo of the day retrieved successfully",
+            message: "Promoción del día obtenida correctamente",
             promotion: {
                 _id: promotion._id,
                 code: promotion.code,
@@ -1165,7 +1165,7 @@ export const getPromoOfTheDay = async (req, res) => {
         console.error("Get promo of the day error:", error);
 
         return res.status(500).json({
-            message: "Error retrieving promo of the day",
+            message: "Error al obtener la promoción del día",
             error: error.message
         });
 
@@ -1186,7 +1186,7 @@ export const setPromoOfTheDay = async (req, res) => {
 
         if (typeof isPromoOfTheDay !== "boolean") {
             return res.status(400).json({
-                message: "isPromoOfTheDay must be true or false"
+                message: "isPromoOfTheDay debe ser true o false"
             });
         }
 
@@ -1195,7 +1195,7 @@ export const setPromoOfTheDay = async (req, res) => {
 
         if (!promotion) {
             return res.status(404).json({
-                message: "Promotion not found"
+                message: "Promoción no encontrada"
             });
         }
 
@@ -1204,7 +1204,7 @@ export const setPromoOfTheDay = async (req, res) => {
             if (!promotion.isActive) {
                 return res.status(400).json({
                     message:
-                        "Enable the promotion before making it the promo of the day"
+                        "Activa la promoción antes de convertirla en la promoción del día"
                 });
             }
 
@@ -1225,8 +1225,8 @@ export const setPromoOfTheDay = async (req, res) => {
 
         return res.status(200).json({
             message: isPromoOfTheDay
-                ? "Promotion set as promo of the day"
-                : "Promotion is no longer the promo of the day",
+                ? "Promoción establecida como promoción del día"
+                : "La promoción ya no es la promoción del día",
             promotion
         });
 
@@ -1235,7 +1235,7 @@ export const setPromoOfTheDay = async (req, res) => {
         console.error("Set promo of the day error:", error);
 
         return res.status(500).json({
-            message: "Error updating promo of the day",
+            message: "Error al actualizar la promoción del día",
             error: error.message
         });
 

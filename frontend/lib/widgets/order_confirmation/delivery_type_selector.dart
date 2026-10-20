@@ -74,7 +74,7 @@ class _Option extends StatelessWidget {
             width: selected ? 2 : 1,
           ),
           color: selected
-              ? (isDark ? const Color(0xFF332B1E).withOpacity(0.5) : const Color(0xFFFDF6E2).withOpacity(0.5))
+              ? (isDark ? const Color(0xFF332B1E).withValues(alpha: 0.5) : const Color(0xFFFDF6E2).withValues(alpha: 0.5))
               : Colors.transparent,
         ),
         child: Column(

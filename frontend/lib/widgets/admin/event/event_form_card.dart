@@ -199,7 +199,7 @@ class _EventFormCardState extends State<EventFormCard> {
               const SizedBox(height: 8),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                activeColor: AppColors.primary,
+                activeThumbColor: AppColors.primary,
                 title: Text('Activar ahora (pop-up al abrir la app)',
                     style: TextStyle(fontSize: 14, color: style.textColor)),
                 subtitle: const Text('Desactiva el evento activo actual', style: TextStyle(fontSize: 11)),

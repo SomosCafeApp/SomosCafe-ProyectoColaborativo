@@ -52,6 +52,7 @@ class ProfilePage extends StatelessWidget {
               userName: auth.userName ?? 'Usuario',
               userLastName: auth.user?.lastName ?? '',
               userEmail: auth.user?.email ?? '',
+              profileImage: auth.user?.profileImage ?? '',
             ),
 
             Padding(

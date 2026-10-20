@@ -72,60 +72,60 @@ const parseCouponBody = (body, forcedKind = null) => {
     const validDays = toNumberOrNull(body.validDays);
 
     if (!name) {
-        return { error: "Name is required" };
+        return { error: "El nombre es obligatorio" };
     }
 
     if (name.length > 60) {
-        return { error: "Name cannot exceed 60 characters" };
+        return { error: "El nombre no puede superar los 60 caracteres" };
     }
 
     if (description.length > 140) {
-        return { error: "Description cannot exceed 140 characters" };
+        return { error: "La descripción no puede superar los 140 caracteres" };
     }
 
     if (!COUPON_KINDS.includes(kind)) {
-        return { error: "Invalid coupon kind" };
+        return { error: "Tipo de cupón inválido" };
     }
 
     if (!COUPON_DISCOUNT_TYPES.includes(discountType)) {
-        return { error: "Invalid discount type" };
+        return { error: "Tipo de descuento inválido" };
     }
 
     if (!Number.isFinite(discountValue) || discountValue <= 0) {
-        return { error: "Discount value must be greater than zero" };
+        return { error: "El valor del descuento debe ser mayor que cero" };
     }
 
     if (discountType === "percentage" && discountValue > 100) {
-        return { error: "Percentage discount cannot exceed 100" };
+        return { error: "El descuento porcentual no puede superar 100" };
     }
 
     if (!isAuto && (!Number.isInteger(pointsCost) || pointsCost < 1)) {
-        return { error: "Points cost must be a whole number greater than zero" };
+        return { error: "El costo en puntos debe ser un número entero mayor que cero" };
     }
 
     if (!Number.isFinite(minimumPurchase) || minimumPurchase < 0) {
-        return { error: "Minimum purchase cannot be negative" };
+        return { error: "La compra mínima no puede ser negativa" };
     }
 
     if (
         maximumDiscount !== null &&
         (!Number.isFinite(maximumDiscount) || maximumDiscount <= 0)
     ) {
-        return { error: "Maximum discount must be greater than zero" };
+        return { error: "El descuento máximo debe ser mayor que cero" };
     }
 
     if (
         redeemLimit !== null &&
         (!Number.isInteger(redeemLimit) || redeemLimit < 1)
     ) {
-        return { error: "Redeem limit must be a whole number greater than zero" };
+        return { error: "El límite de canjes debe ser un número entero mayor que cero" };
     }
 
     if (
         validDays !== null &&
         (!Number.isInteger(validDays) || validDays < 1 || validDays > 365)
     ) {
-        return { error: "Valid days must be between 1 and 365" };
+        return { error: "Los días de vigencia deben estar entre 1 y 365" };
     }
 
     return {
@@ -210,7 +210,7 @@ export const getCouponCatalog = async (req, res) => {
         );
 
         return res.status(200).json({
-            message: "Coupons retrieved successfully",
+            message: "Cupones obtenidos correctamente",
             coupons: coupons.map(coupon =>
                 catalogItem(
                     coupon,
@@ -224,7 +224,7 @@ export const getCouponCatalog = async (req, res) => {
         console.error("Get coupon catalog error:", error);
 
         return res.status(500).json({
-            message: "Error retrieving coupons",
+            message: "Error al obtener los cupones",
             error: error.message
         });
 
@@ -244,7 +244,7 @@ export const getMyCoupons = async (req, res) => {
         }).sort({ createdAt: -1 });
 
         return res.status(200).json({
-            message: "User coupons retrieved successfully",
+            message: "Cupones del usuario obtenidos correctamente",
             coupons: userCoupons.map(userCouponItem)
         });
 
@@ -253,7 +253,7 @@ export const getMyCoupons = async (req, res) => {
         console.error("Get my coupons error:", error);
 
         return res.status(500).json({
-            message: "Error retrieving user coupons",
+            message: "Error al obtener los cupones del usuario",
             error: error.message
         });
 
@@ -279,7 +279,7 @@ export const redeemCoupon = async (req, res) => {
 
         if (!mongoose.isValidObjectId(id)) {
             return res.status(400).json({
-                message: "Invalid coupon id"
+                message: "ID de cupón inválido"
             });
         }
 
@@ -293,7 +293,7 @@ export const redeemCoupon = async (req, res) => {
             AUTO_COUPON_KINDS.includes(coupon.kind)
         ) {
             return res.status(404).json({
-                message: "Coupon not available"
+                message: "Cupón no disponible"
             });
         }
 
@@ -305,7 +305,7 @@ export const redeemCoupon = async (req, res) => {
 
         if (alreadyRedeemed) {
             return res.status(409).json({
-                message: "You already redeemed this coupon"
+                message: "Ya canjeaste este cupón"
             });
         }
 
@@ -313,13 +313,13 @@ export const redeemCoupon = async (req, res) => {
 
         if (!user) {
             return res.status(404).json({
-                message: "User not found"
+                message: "Usuario no encontrado"
             });
         }
 
         if (user.points < coupon.pointsCost) {
             return res.status(400).json({
-                message: "Insufficient points"
+                message: "Puntos insuficientes"
             });
         }
 
@@ -340,7 +340,7 @@ export const redeemCoupon = async (req, res) => {
 
         if (!reserved) {
             return res.status(409).json({
-                message: "Coupon sold out"
+                message: "Cupón agotado"
             });
         }
 
@@ -361,7 +361,7 @@ export const redeemCoupon = async (req, res) => {
             await releaseSlot();
 
             return res.status(400).json({
-                message: "Insufficient points"
+                message: "Puntos insuficientes"
             });
         }
 
@@ -400,7 +400,7 @@ export const redeemCoupon = async (req, res) => {
 
             if (createError.code === 11000) {
                 return res.status(409).json({
-                    message: "You already redeemed this coupon"
+                    message: "Ya canjeaste este cupón"
                 });
             }
 
@@ -428,7 +428,7 @@ export const redeemCoupon = async (req, res) => {
         }
 
         return res.status(201).json({
-            message: "Coupon redeemed successfully",
+            message: "Cupón canjeado correctamente",
             currentBalance: charged.points,
             coupon: userCouponItem(userCoupon)
         });
@@ -438,7 +438,7 @@ export const redeemCoupon = async (req, res) => {
         console.error("Redeem coupon error:", error);
 
         return res.status(500).json({
-            message: "Error redeeming coupon",
+            message: "Error al canjear el cupón",
             error: error.message
         });
 
@@ -456,7 +456,7 @@ export const getAllCoupons = async (req, res) => {
         const coupons = await Coupon.find().sort({ createdAt: -1 });
 
         return res.status(200).json({
-            message: "Coupons retrieved successfully",
+            message: "Cupones obtenidos correctamente",
             coupons: coupons.map(coupon => ({
                 ...coupon.toObject(),
                 soldOut: isExhausted(coupon)
@@ -468,7 +468,7 @@ export const getAllCoupons = async (req, res) => {
         console.error("Get all coupons error:", error);
 
         return res.status(500).json({
-            message: "Error retrieving coupons",
+            message: "Error al obtener los cupones",
             error: error.message
         });
 
@@ -500,7 +500,7 @@ export const createCoupon = async (req, res) => {
             if (existing) {
                 return res.status(409).json({
                     message:
-                        "There is already an active coupon of this type"
+                        "Ya existe un cupón activo de este tipo"
                 });
             }
 
@@ -518,7 +518,7 @@ export const createCoupon = async (req, res) => {
         }
 
         return res.status(201).json({
-            message: "Coupon created successfully",
+            message: "Cupón creado correctamente",
             coupon
         });
 
@@ -527,7 +527,7 @@ export const createCoupon = async (req, res) => {
         console.error("Create coupon error:", error);
 
         return res.status(500).json({
-            message: "Error creating coupon",
+            message: "Error al crear el cupón",
             error: error.message
         });
 
@@ -546,7 +546,7 @@ export const updateCoupon = async (req, res) => {
 
         if (!mongoose.isValidObjectId(req.params.id)) {
             return res.status(400).json({
-                message: "Invalid coupon id"
+                message: "ID de cupón inválido"
             });
         }
 
@@ -554,7 +554,7 @@ export const updateCoupon = async (req, res) => {
 
         if (!coupon) {
             return res.status(404).json({
-                message: "Coupon not found"
+                message: "Cupón no encontrado"
             });
         }
 
@@ -571,7 +571,7 @@ export const updateCoupon = async (req, res) => {
         ) {
             return res.status(400).json({
                 message:
-                    "Redeem limit cannot be lower than the number already redeemed"
+                    "El límite de canjes no puede ser menor que los canjes ya realizados"
             });
         }
 
@@ -580,7 +580,7 @@ export const updateCoupon = async (req, res) => {
         await coupon.save();
 
         return res.status(200).json({
-            message: "Coupon updated successfully",
+            message: "Cupón actualizado correctamente",
             coupon
         });
 
@@ -589,7 +589,7 @@ export const updateCoupon = async (req, res) => {
         console.error("Update coupon error:", error);
 
         return res.status(500).json({
-            message: "Error updating coupon",
+            message: "Error al actualizar el cupón",
             error: error.message
         });
 
@@ -611,7 +611,7 @@ export const setCouponStatus = async (req, res) => {
 
         if (!mongoose.isValidObjectId(req.params.id)) {
             return res.status(400).json({
-                message: "Invalid coupon id"
+                message: "ID de cupón inválido"
             });
         }
 
@@ -619,7 +619,7 @@ export const setCouponStatus = async (req, res) => {
 
         if (typeof isActive !== "boolean") {
             return res.status(400).json({
-                message: "isActive must be true or false"
+                message: "isActive debe ser true o false"
             });
         }
 
@@ -627,7 +627,7 @@ export const setCouponStatus = async (req, res) => {
 
         if (!coupon) {
             return res.status(404).json({
-                message: "Coupon not found"
+                message: "Cupón no encontrado"
             });
         }
 
@@ -637,7 +637,7 @@ export const setCouponStatus = async (req, res) => {
             await coupon.save();
 
             return res.status(200).json({
-                message: "Coupon disabled successfully",
+                message: "Cupón desactivado correctamente",
                 coupon
             });
 
@@ -657,7 +657,7 @@ export const setCouponStatus = async (req, res) => {
             if (other) {
                 return res.status(409).json({
                     message:
-                        "There is already an active coupon of this type"
+                        "Ya existe un cupón activo de este tipo"
                 });
             }
 
@@ -684,8 +684,8 @@ export const setCouponStatus = async (req, res) => {
 
         return res.status(200).json({
             message: reactivating
-                ? "Coupon reactivated successfully"
-                : "Coupon is already active",
+                ? "Cupón reactivado correctamente"
+                : "El cupón ya está activo",
             coupon
         });
 
@@ -694,7 +694,7 @@ export const setCouponStatus = async (req, res) => {
         console.error("Set coupon status error:", error);
 
         return res.status(500).json({
-            message: "Error updating coupon status",
+            message: "Error al actualizar el estado del cupón",
             error: error.message
         });
 
@@ -712,7 +712,7 @@ export const deleteCoupon = async (req, res) => {
 
         if (!mongoose.isValidObjectId(req.params.id)) {
             return res.status(400).json({
-                message: "Invalid coupon id"
+                message: "ID de cupón inválido"
             });
         }
 
@@ -720,12 +720,12 @@ export const deleteCoupon = async (req, res) => {
 
         if (!coupon) {
             return res.status(404).json({
-                message: "Coupon not found"
+                message: "Cupón no encontrado"
             });
         }
 
         return res.status(200).json({
-            message: "Coupon deleted successfully"
+            message: "Cupón eliminado correctamente"
         });
 
     } catch (error) {
@@ -733,7 +733,7 @@ export const deleteCoupon = async (req, res) => {
         console.error("Delete coupon error:", error);
 
         return res.status(500).json({
-            message: "Error deleting coupon",
+            message: "Error al eliminar el cupón",
             error: error.message
         });
 

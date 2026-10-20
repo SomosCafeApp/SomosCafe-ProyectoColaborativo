@@ -9,7 +9,7 @@ class PromotionProductPickerSheet extends StatefulWidget {
   final List<Product> products;
   final Set<String> selected;
 
-  const PromotionProductPickerSheet({required this.products, required this.selected});
+  const PromotionProductPickerSheet({super.key, required this.products, required this.selected});
 
   @override
   State<PromotionProductPickerSheet> createState() => _PromotionProductPickerSheetState();

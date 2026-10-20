@@ -77,7 +77,7 @@ export const requestEmailVerification =
                 return res.status(400).json({
 
                     message:
-                        "Email is required"
+                        "El correo es obligatorio"
 
                 });
 
@@ -95,7 +95,7 @@ export const requestEmailVerification =
                 return res.status(400).json({
 
                     message:
-                        "Invalid email format"
+                        "Formato de correo inválido"
 
                 });
 
@@ -118,7 +118,7 @@ export const requestEmailVerification =
                 return res.status(404).json({
 
                     message:
-                        "User not found. Please register first."
+                        "Usuario no encontrado. Regístrate primero."
 
                 });
 
@@ -135,7 +135,7 @@ export const requestEmailVerification =
                 return res.status(409).json({
 
                     message:
-                        "Email is already verified"
+                        "El correo ya está verificado"
 
                 });
 
@@ -225,7 +225,7 @@ export const requestEmailVerification =
                 return res.status(502).json({
 
                     message:
-                        "Could not send verification email"
+                        "No se pudo enviar el correo de verificación"
 
                 });
 
@@ -238,7 +238,7 @@ export const requestEmailVerification =
             return res.status(200).json({
 
                 message:
-                    "Verification code sent successfully",
+                    "Código de verificación enviado correctamente",
 
                 email:
                     normalizedEmail
@@ -258,7 +258,7 @@ export const requestEmailVerification =
             return res.status(500).json({
 
                 message:
-                    "Error requesting email verification",
+                    "Error al solicitar la verificación del correo",
 
                 error:
                     error.message
@@ -295,7 +295,7 @@ export const verifyEmail =
                 return res.status(400).json({
 
                     message:
-                        "Email and verification code are required"
+                        "El correo y el código de verificación son obligatorios"
 
                 });
 
@@ -313,7 +313,7 @@ export const verifyEmail =
                 return res.status(400).json({
 
                     message:
-                        "Invalid email format"
+                        "Formato de correo inválido"
 
                 });
 
@@ -336,7 +336,7 @@ export const verifyEmail =
                 return res.status(404).json({
 
                     message:
-                        "User not found. Please register first."
+                        "Usuario no encontrado. Regístrate primero."
 
                 });
 
@@ -353,7 +353,7 @@ export const verifyEmail =
                 return res.status(409).json({
 
                     message:
-                        "Email is already verified"
+                        "El correo ya está verificado"
 
                 });
 
@@ -392,7 +392,7 @@ export const verifyEmail =
                 return res.status(400).json({
 
                     message:
-                        "Invalid or expired verification code"
+                        "Código de verificación inválido o vencido"
 
                 });
 
@@ -429,7 +429,7 @@ export const verifyEmail =
             return res.status(200).json({
 
                 message:
-                    "Email verified successfully",
+                    "Correo verificado correctamente",
 
                 email:
                     user.email
@@ -449,7 +449,7 @@ export const verifyEmail =
             return res.status(500).json({
 
                 message:
-                    "Error verifying email",
+                    "Error al verificar el correo",
 
                 error:
                     error.message
@@ -482,7 +482,7 @@ export const resendVerificationCode =
                 return res.status(400).json({
 
                     message:
-                        "Email is required"
+                        "El correo es obligatorio"
 
                 });
 
@@ -500,7 +500,7 @@ export const resendVerificationCode =
                 return res.status(400).json({
 
                     message:
-                        "Invalid email format"
+                        "Formato de correo inválido"
 
                 });
 
@@ -523,7 +523,7 @@ export const resendVerificationCode =
                 return res.status(404).json({
 
                     message:
-                        "User not found. Please register first."
+                        "Usuario no encontrado. Regístrate primero."
 
                 });
 
@@ -540,7 +540,7 @@ export const resendVerificationCode =
                 return res.status(409).json({
 
                     message:
-                        "Email is already verified"
+                        "El correo ya está verificado"
 
                 });
 
@@ -630,7 +630,7 @@ export const resendVerificationCode =
                 return res.status(502).json({
 
                     message:
-                        "Could not send verification email"
+                        "No se pudo enviar el correo de verificación"
 
                 });
 
@@ -643,7 +643,7 @@ export const resendVerificationCode =
             return res.status(200).json({
 
                 message:
-                    "New verification code sent successfully",
+                    "Nuevo código de verificación enviado correctamente",
 
                 email:
                     normalizedEmail
@@ -663,7 +663,7 @@ export const resendVerificationCode =
             return res.status(500).json({
 
                 message:
-                    "Error resending verification code",
+                    "Error al reenviar el código de verificación",
 
                 error:
                     error.message

@@ -24,7 +24,7 @@ export const getUserPoints = async (req, res) => {
             return res.status(403).json({
 
                 message:
-                    "You are not authorized to view these points"
+                    "No tienes autorización para ver estos puntos"
 
             });
 
@@ -41,7 +41,7 @@ export const getUserPoints = async (req, res) => {
 
             return res.status(404).json({
 
-                message: "User not found"
+                message: "Usuario no encontrado"
 
             });
 
@@ -50,7 +50,7 @@ export const getUserPoints = async (req, res) => {
         return res.status(200).json({
 
             message:
-                "User points retrieved successfully",
+                "Puntos del usuario obtenidos correctamente",
 
             points: user.points
 
@@ -66,7 +66,7 @@ export const getUserPoints = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error retrieving user points",
+                "Error al obtener los puntos del usuario",
 
             error: error.message
 
@@ -97,7 +97,7 @@ export const getPointHistory = async (req, res) => {
             return res.status(403).json({
 
                 message:
-                    "You are not authorized to view this history"
+                    "No tienes autorización para ver este historial"
 
             });
 
@@ -112,7 +112,7 @@ export const getPointHistory = async (req, res) => {
 
             return res.status(404).json({
 
-                message: "User not found"
+                message: "Usuario no encontrado"
 
             });
 
@@ -135,7 +135,7 @@ export const getPointHistory = async (req, res) => {
         return res.status(200).json({
 
             message:
-                "Point history retrieved successfully",
+                "Historial de puntos obtenido correctamente",
 
             points
 
@@ -151,7 +151,7 @@ export const getPointHistory = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error retrieving point history",
+                "Error al obtener el historial de puntos",
 
             error: error.message
 
@@ -185,7 +185,7 @@ export const addPoints = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "userId and amount are required"
+                    "userId y amount son obligatorios"
 
             });
 
@@ -197,7 +197,7 @@ export const addPoints = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Points amount must be greater than zero"
+                    "La cantidad de puntos debe ser mayor que cero"
 
             });
 
@@ -221,7 +221,7 @@ export const addPoints = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Invalid point type"
+                    "Tipo de puntos inválido"
 
             });
 
@@ -236,7 +236,7 @@ export const addPoints = async (req, res) => {
 
             return res.status(404).json({
 
-                message: "User not found"
+                message: "Usuario no encontrado"
 
             });
 
@@ -269,7 +269,7 @@ export const addPoints = async (req, res) => {
         return res.status(201).json({
 
             message:
-                "Points added successfully",
+                "Puntos agregados correctamente",
 
             pointsAdded: amount,
 
@@ -290,7 +290,7 @@ export const addPoints = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error adding points",
+                "Error al agregar los puntos",
 
             error: error.message
 
@@ -322,7 +322,7 @@ export const adjustPoints = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "userId and amount are required"
+                    "userId y amount son obligatorios"
 
             });
 
@@ -337,7 +337,7 @@ export const adjustPoints = async (req, res) => {
 
             return res.status(404).json({
 
-                message: "User not found"
+                message: "Usuario no encontrado"
 
             });
 
@@ -353,7 +353,7 @@ export const adjustPoints = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "User points cannot be negative"
+                    "Los puntos del usuario no pueden ser negativos"
 
             });
 
@@ -376,7 +376,7 @@ export const adjustPoints = async (req, res) => {
 
             description:
                 description ||
-                "Points balance adjustment"
+                "Ajuste de saldo de puntos"
 
         });
 
@@ -385,7 +385,7 @@ export const adjustPoints = async (req, res) => {
         return res.status(201).json({
 
             message:
-                "Points adjusted successfully",
+                "Puntos ajustados correctamente",
 
             adjustment: amount,
 
@@ -406,7 +406,7 @@ export const adjustPoints = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error adjusting points",
+                "Error al ajustar los puntos",
 
             error: error.message
 

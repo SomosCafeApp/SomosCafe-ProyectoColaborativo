@@ -131,7 +131,7 @@ class _MenuPageState extends State<MenuPage> {
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withValues(alpha: 0.2),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(Icons.coffee_rounded, color: Colors.white, size: 22),
@@ -152,7 +152,7 @@ class _MenuPageState extends State<MenuPage> {
                             'Directo desde nuestra cocina',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.white.withOpacity(0.85),
+                              color: Colors.white.withValues(alpha: 0.85),
                             ),
                           ),
                         ],
@@ -224,7 +224,7 @@ class _MenuPageState extends State<MenuPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.wifi_off_rounded, size: 42, color: AppColors.primary.withOpacity(0.6)),
+              Icon(Icons.wifi_off_rounded, size: 42, color: AppColors.primary.withValues(alpha: 0.6)),
               const SizedBox(height: 12),
               Text(
                 productProvider.errorMessage!,

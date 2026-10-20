@@ -37,7 +37,7 @@ export const sendVerificationEmail = async (
                 ],
 
                 subject:
-                    "Email Verification Code - SomosCafeApp",
+                    "Código de verificación de correo - SomosCafeApp",
 
                 htmlContent: `
 <div style="
@@ -70,7 +70,7 @@ export const sendVerificationEmail = async (
             margin-top: 10px;
             font-size: 15px;
         ">
-            Your coffee, your account, your security.
+            Tu café, tu cuenta, tu seguridad.
         </p>
 
     </div>
@@ -79,19 +79,19 @@ export const sendVerificationEmail = async (
         color: #5c4033;
         margin-bottom: 20px;
     ">
-        Email Verification
+        Verificación de correo
     </h2>
 
     <p style="font-size: 16px;">
-        Welcome to <strong>SomosCafeApp</strong>.
+        Te damos la bienvenida a <strong>SomosCafeApp</strong>.
     </p>
 
     <p style="
         line-height: 1.7;
         color: #5f4637;
     ">
-        Use the following code to verify
-        your email address:
+        Usa el siguiente código para verificar
+        tu dirección de correo electrónico:
     </p>
 
     <div style="
@@ -135,8 +135,8 @@ export const sendVerificationEmail = async (
             color: #6b4f3b;
             font-size: 14px;
         ">
-            ⏱️ This code expires in
-            <strong>15 minutes</strong>.
+            ⏱️ Este código vence en
+            <strong>15 minutos</strong>.
         </p>
 
     </div>
@@ -146,8 +146,8 @@ export const sendVerificationEmail = async (
         font-size: 14px;
         margin-top: 25px;
     ">
-        🔒 If you did not request this verification,
-        you can safely ignore this email.
+        🔒 Si no solicitaste esta verificación,
+        puedes ignorar este correo sin problema.
     </p>
 
     <hr style="
@@ -161,8 +161,8 @@ export const sendVerificationEmail = async (
         font-size: 12px;
         text-align: center;
     ">
-        © 2026 SomosCafeApp · Coffee,
-        technology and security ☕
+        © 2026 SomosCafeApp · Café,
+        tecnología y seguridad ☕
     </p>
 
 </div>
@@ -217,7 +217,7 @@ export const sendRecoveryEmail = async (
                 ],
 
                 subject:
-                    "Password Recovery Code - SomosCafeApp",
+                    "Código de recuperación de contraseña - SomosCafeApp",
 
                 htmlContent: `
 <div style="
@@ -242,16 +242,8 @@ export const sendRecoveryEmail = async (
             font-size: 34px;
             letter-spacing: 1px;
         ">
-            ☕ SomosCafeApp ☕
+             SomosCafeApp ☕
         </h1>
-
-        <p style="
-            color: #8b5e3c;
-            margin-top: 10px;
-            font-size: 15px;
-        ">
-            Your coffee, your account, your security.
-        </p>
 
     </div>
 
@@ -259,19 +251,19 @@ export const sendRecoveryEmail = async (
         color: #5c4033;
         margin-bottom: 20px;
     ">
-        Password Recovery
+        Recuperación de contraseña
     </h2>
 
     <p style="font-size: 16px;">
-        Hello <strong>${name || "User"}</strong>,
+        Hola <strong>${name || "Usuario"}</strong>,
     </p>
 
     <p style="
         line-height: 1.7;
         color: #5f4637;
     ">
-        We received a request to reset your password.
-        Use the following code to continue:
+        Recibimos una solicitud para restablecer tu contraseña.
+        Usa el siguiente código para continuar:
     </p>
 
     <div style="
@@ -316,8 +308,8 @@ export const sendRecoveryEmail = async (
             color: #6b4f3b;
             font-size: 14px;
         ">
-            ⏱️ This code expires in
-            <strong>15 minutes</strong>.
+            ⏱️ Este código vence en
+            <strong>15 minutos</strong>.
         </p>
 
     </div>
@@ -327,8 +319,8 @@ export const sendRecoveryEmail = async (
         font-size: 14px;
         line-height: 1.6;
     ">
-        🔒 If you did not request this change,
-        you can safely ignore this email.
+        🔒 Si no solicitaste este cambio,
+        puedes ignorar este correo sin problema.
     </p>
 
     <hr style="
@@ -342,8 +334,7 @@ export const sendRecoveryEmail = async (
         font-size: 12px;
         text-align: center;
     ">
-        © 2026 SomosCafeApp · Coffee,
-        technology and security ☕
+        © 2026 SomosCafeApp ☕
     </p>
 
 </div>
@@ -397,7 +388,7 @@ export const sendPasswordUpdatedEmail = async (
                 ],
 
                 subject:
-                    "Password Updated - SomosCafeApp",
+                    "Contraseña actualizada - SomosCafeApp",
 
                 htmlContent: `
 <div style="
@@ -446,21 +437,21 @@ export const sendPasswordUpdatedEmail = async (
             color: #6f4e37;
             margin: 0;
         ">
-            Password Updated
+            Contraseña actualizada
         </h1>
 
     </div>
 
     <p style="font-size: 16px;">
-        Hello <strong>${name || "User"}</strong>,
+        Hola <strong>${name || "Usuario"}</strong>,
     </p>
 
     <p style="
         line-height: 1.7;
         color: #5f4637;
     ">
-        Your password has been successfully
-        updated in <strong>SomosCafeApp</strong>.
+        Tu contraseña se actualizó correctamente
+        en <strong>SomosCafeApp</strong>.
     </p>
 
     <div style="
@@ -475,8 +466,8 @@ export const sendPasswordUpdatedEmail = async (
             color: #6b4f3b;
             font-size: 15px;
         ">
-            ✅ You can now log in
-            with your new password.
+            ✅ Ya puedes iniciar sesión
+            con tu nueva contraseña.
         </p>
 
     </div>
@@ -485,8 +476,8 @@ export const sendPasswordUpdatedEmail = async (
         color: #7b5e57;
         font-size: 14px;
     ">
-        🔒 If you did not make this change,
-        contact support immediately.
+        🔒 Si no realizaste este cambio,
+        comunícate con soporte de inmediato.
     </p>
 
     <hr style="
@@ -500,8 +491,7 @@ export const sendPasswordUpdatedEmail = async (
         font-size: 12px;
         text-align: center;
     ">
-        © 2026 SomosCafeApp · Coffee,
-        technology and security ☕
+        © 2026 SomosCafeApp ☕
     </p>
 
 </div>

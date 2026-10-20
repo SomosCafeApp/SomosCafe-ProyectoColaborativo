@@ -88,7 +88,7 @@ class _OrdersPageState extends State<OrdersPage> {
       cancelLabel: 'No',
     );
 
-    if (!confirmed) return;
+    if (!confirmed || !mounted) return;
 
     setState(() {
       _cancellingOrderId = order.id;

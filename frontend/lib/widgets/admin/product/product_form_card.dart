@@ -171,7 +171,8 @@ class _ProductFormCardState extends State<ProductFormCard> {
             const SizedBox(height: 16),
             const AdminFieldLabel('Categoría'),
             DropdownButtonFormField<String?>(
-              value: validCategory,
+              key: ValueKey(validCategory),
+              initialValue: validCategory,
               isExpanded: true,
               style: TextStyle(color: style.textColor, fontSize: 14),
               decoration: style.decoration('Sin categoría'),
@@ -195,7 +196,7 @@ class _ProductFormCardState extends State<ProductFormCard> {
             if (!_isEditing)
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                activeColor: AppColors.primary,
+                activeThumbColor: AppColors.primary,
                 title: Text('Visible en el menú', style: TextStyle(fontSize: 14, color: style.textColor)),
                 value: _isAvailable,
                 onChanged: (v) => setState(() => _isAvailable = v),

@@ -29,7 +29,7 @@ export const loginUser = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Email and password are required"
+                    "El correo y la contraseña son obligatorios"
 
             });
 
@@ -61,7 +61,7 @@ export const loginUser = async (req, res) => {
             return res.status(404).json({
 
                 message:
-                    "User not found"
+                    "Usuario no encontrado"
 
             });
 
@@ -78,7 +78,7 @@ export const loginUser = async (req, res) => {
             return res.status(403).json({
 
                 message:
-                    "User account is inactive"
+                    "La cuenta de usuario está inactiva"
 
             });
 
@@ -99,7 +99,7 @@ export const loginUser = async (req, res) => {
             return res.status(403).json({
 
                 message:
-                    "Please verify your email before logging in"
+                    "Verifica tu correo antes de iniciar sesión"
 
             });
 
@@ -116,7 +116,7 @@ export const loginUser = async (req, res) => {
             return res.status(401).json({
 
                 message:
-                    "This account does not have a password. Please use Google login."
+                    "Esta cuenta no tiene contraseña. Inicia sesión con Google."
 
             });
 
@@ -140,7 +140,7 @@ export const loginUser = async (req, res) => {
             return res.status(401).json({
 
                 message:
-                    "Invalid password"
+                    "Contraseña incorrecta"
 
             });
 
@@ -183,7 +183,7 @@ export const loginUser = async (req, res) => {
         return res.status(200).json({
 
             message:
-                "Login successful",
+                "Inicio de sesión exitoso",
 
             token,
 
@@ -242,7 +242,7 @@ export const loginUser = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error during login",
+                "Error durante el inicio de sesión",
 
             error:
                 error.message

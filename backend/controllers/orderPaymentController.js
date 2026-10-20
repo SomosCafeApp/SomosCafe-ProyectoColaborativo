@@ -106,13 +106,13 @@ export const uploadPaymentProof = async (req, res) => {
 
         if (!mongoose.isValidObjectId(req.params.id)) {
             return rejectUpload(
-                req, res, 400, "Invalid order id"
+                req, res, 400, "ID de pedido inválido"
             );
         }
 
         if (!req.file?.path) {
             return res.status(400).json({
-                message: "Payment proof image is required"
+                message: "La imagen del comprobante de pago es obligatoria"
             });
         }
 
@@ -120,35 +120,35 @@ export const uploadPaymentProof = async (req, res) => {
 
         if (!order) {
             return rejectUpload(
-                req, res, 404, "Order not found"
+                req, res, 404, "Pedido no encontrado"
             );
         }
 
         if (order.userId.toString() !== req.user.id.toString()) {
             return rejectUpload(
                 req, res, 403,
-                "You are not authorized to update this order"
+                "No tienes autorización para actualizar este pedido"
             );
         }
 
         if (order.paymentMethod !== "TRANSFER") {
             return rejectUpload(
                 req, res, 400,
-                "This order is not paid by transfer"
+                "Este pedido no se paga por transferencia"
             );
         }
 
         if (order.status === "CANCELLED") {
             return rejectUpload(
                 req, res, 400,
-                "This order was cancelled"
+                "Este pedido fue cancelado"
             );
         }
 
         if (!PROOF_EDITABLE_STATUSES.includes(order.paymentStatus)) {
             return rejectUpload(
                 req, res, 400,
-                "The payment proof can no longer be changed"
+                "El comprobante de pago ya no se puede cambiar"
             );
         }
 
@@ -179,7 +179,7 @@ export const uploadPaymentProof = async (req, res) => {
         if (!updated) {
             return rejectUpload(
                 req, res, 409,
-                "The order changed in the meantime. Reload and try again."
+                "El pedido cambió mientras tanto. Recarga e inténtalo de nuevo."
             );
         }
 
@@ -191,7 +191,7 @@ export const uploadPaymentProof = async (req, res) => {
         await notifyAdmins(updated);
 
         return res.status(200).json({
-            message: "Payment proof uploaded successfully",
+            message: "Comprobante de pago subido correctamente",
             order: updated
         });
 
@@ -204,7 +204,7 @@ export const uploadPaymentProof = async (req, res) => {
         }
 
         return res.status(500).json({
-            message: "Error uploading payment proof",
+            message: "Error al subir el comprobante de pago",
             error: error.message
         });
 
@@ -221,7 +221,7 @@ export const validatePayment = async (req, res) => {
 
         if (!mongoose.isValidObjectId(req.params.id)) {
             return res.status(400).json({
-                message: "Invalid order id"
+                message: "ID de pedido inválido"
             });
         }
 
@@ -229,25 +229,25 @@ export const validatePayment = async (req, res) => {
 
         if (!order) {
             return res.status(404).json({
-                message: "Order not found"
+                message: "Pedido no encontrado"
             });
         }
 
         if (order.paymentMethod !== "TRANSFER") {
             return res.status(400).json({
-                message: "Only transfer payments can be validated"
+                message: "Solo se pueden validar pagos por transferencia"
             });
         }
 
         if (order.status === "CANCELLED") {
             return res.status(400).json({
-                message: "This order was cancelled"
+                message: "Este pedido fue cancelado"
             });
         }
 
         if (order.paymentStatus !== "PROOF_SUBMITTED") {
             return res.status(400).json({
-                message: "There is no payment proof waiting for validation"
+                message: "No hay un comprobante de pago esperando validación"
             });
         }
 
@@ -275,7 +275,7 @@ export const validatePayment = async (req, res) => {
         if (!updated) {
             return res.status(409).json({
                 message:
-                    "The order changed in the meantime. Reload and try again."
+                    "El pedido cambió mientras tanto. Recarga e inténtalo de nuevo."
             });
         }
 
@@ -289,7 +289,7 @@ export const validatePayment = async (req, res) => {
         });
 
         return res.status(200).json({
-            message: "Payment validated successfully",
+            message: "Pago validado correctamente",
             order: updated
         });
 
@@ -298,7 +298,7 @@ export const validatePayment = async (req, res) => {
         console.error("Validate payment error:", error);
 
         return res.status(500).json({
-            message: "Error validating payment",
+            message: "Error al validar el pago",
             error: error.message
         });
 
@@ -317,7 +317,7 @@ export const invalidatePayment = async (req, res) => {
 
         if (!mongoose.isValidObjectId(req.params.id)) {
             return res.status(400).json({
-                message: "Invalid order id"
+                message: "ID de pedido inválido"
             });
         }
 
@@ -325,19 +325,19 @@ export const invalidatePayment = async (req, res) => {
 
         if (!order) {
             return res.status(404).json({
-                message: "Order not found"
+                message: "Pedido no encontrado"
             });
         }
 
         if (order.paymentMethod !== "TRANSFER") {
             return res.status(400).json({
-                message: "Only transfer payments can be invalidated"
+                message: "Solo se pueden invalidar pagos por transferencia"
             });
         }
 
         if (!INVALIDATABLE_STATUSES.includes(order.paymentStatus)) {
             return res.status(400).json({
-                message: "There is no payment proof to invalidate"
+                message: "No hay un comprobante de pago para invalidar"
             });
         }
 
@@ -347,7 +347,7 @@ export const invalidatePayment = async (req, res) => {
         ) {
             return res.status(400).json({
                 message:
-                    "This order is already closed and cannot be modified"
+                    "Este pedido ya está cerrado y no se puede modificar"
             });
         }
 
@@ -373,7 +373,7 @@ export const invalidatePayment = async (req, res) => {
         if (!updated) {
             return res.status(409).json({
                 message:
-                    "The order changed in the meantime. Reload and try again."
+                    "El pedido cambió mientras tanto. Recarga e inténtalo de nuevo."
             });
         }
 
@@ -391,7 +391,7 @@ export const invalidatePayment = async (req, res) => {
         });
 
         return res.status(200).json({
-            message: "Payment invalidated and order cancelled",
+            message: "Pago invalidado y pedido cancelado",
             order: updated
         });
 
@@ -400,7 +400,7 @@ export const invalidatePayment = async (req, res) => {
         console.error("Invalidate payment error:", error);
 
         return res.status(500).json({
-            message: "Error invalidating payment",
+            message: "Error al invalidar el pago",
             error: error.message
         });
 

@@ -31,7 +31,7 @@ class PaymentProofViewer extends StatelessWidget {
             fit: BoxFit.contain,
             loadingBuilder: (context, child, progress) =>
                 progress == null ? child : const Center(child: CircularProgressIndicator()),
-            errorBuilder: (_, __, ___) => const Padding(
+            errorBuilder: (_, _, _) => const Padding(
               padding: EdgeInsets.all(24),
               child: Text(
                 'No se pudo cargar el comprobante',

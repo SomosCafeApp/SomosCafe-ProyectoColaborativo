@@ -24,7 +24,7 @@ class CartSummaryPanel extends StatelessWidget {
 
     final boxBgColor = isDark
         ? AppColors.darkSurfaceSubtle
-        : Colors.white.withOpacity(0.6);
+        : Colors.white.withValues(alpha: 0.6);
 
     final textColor = theme.colorScheme.onSurface;
 

@@ -28,7 +28,7 @@ export const getUserNotifications = async (
         return res.status(200).json({
 
             message:
-                "Notifications retrieved successfully",
+                "Notificaciones obtenidas correctamente",
 
             notifications
 
@@ -44,7 +44,7 @@ export const getUserNotifications = async (
         return res.status(500).json({
 
             message:
-                "Error retrieving notifications",
+                "Error al obtener las notificaciones",
 
             error: error.message
 
@@ -82,7 +82,7 @@ export const getUnreadNotifications = async (
         return res.status(200).json({
 
             message:
-                "Unread notifications retrieved successfully",
+                "Notificaciones sin leer obtenidas correctamente",
 
             notifications,
 
@@ -101,7 +101,7 @@ export const getUnreadNotifications = async (
         return res.status(500).json({
 
             message:
-                "Error retrieving unread notifications",
+                "Error al obtener las notificaciones sin leer",
 
             error: error.message
 
@@ -134,7 +134,7 @@ export const getUnreadCount = async (
         return res.status(200).json({
 
             message:
-                "Unread notification count retrieved successfully",
+                "Cantidad de notificaciones sin leer obtenida correctamente",
 
             count
 
@@ -150,7 +150,7 @@ export const getUnreadCount = async (
         return res.status(500).json({
 
             message:
-                "Error retrieving unread notification count",
+                "Error al obtener la cantidad de notificaciones sin leer",
 
             error: error.message
 
@@ -192,7 +192,7 @@ export const createNotification = async (
             return res.status(400).json({
 
                 message:
-                    "User ID, title and message are required"
+                    "El ID de usuario, el título y el mensaje son obligatorios"
 
             });
 
@@ -210,7 +210,7 @@ export const createNotification = async (
             return res.status(404).json({
 
                 message:
-                    "User not found"
+                    "Usuario no encontrado"
 
             });
 
@@ -246,7 +246,7 @@ export const createNotification = async (
         return res.status(201).json({
 
             message:
-                "Notification created successfully",
+                "Notificación creada correctamente",
 
             notification:
                 newNotification
@@ -263,7 +263,7 @@ export const createNotification = async (
         return res.status(500).json({
 
             message:
-                "Error creating notification",
+                "Error al crear la notificación",
 
             error: error.message
 
@@ -298,7 +298,7 @@ export const markNotificationAsRead = async (
             return res.status(404).json({
 
                 message:
-                    "Notification not found"
+                    "Notificación no encontrada"
 
             });
 
@@ -315,7 +315,7 @@ export const markNotificationAsRead = async (
         return res.status(200).json({
 
             message:
-                "Notification marked as read",
+                "Notificación marcada como leída",
 
             notification
 
@@ -331,7 +331,7 @@ export const markNotificationAsRead = async (
         return res.status(500).json({
 
             message:
-                "Error marking notification as read",
+                "Error al marcar la notificación como leída",
 
             error: error.message
 
@@ -377,7 +377,7 @@ export const markAllNotificationsAsRead = async (
         return res.status(200).json({
 
             message:
-                "All notifications marked as read"
+                "Todas las notificaciones se marcaron como leídas"
 
         });
 
@@ -391,7 +391,7 @@ export const markAllNotificationsAsRead = async (
         return res.status(500).json({
 
             message:
-                "Error marking notifications as read",
+                "Error al marcar las notificaciones como leídas",
 
             error: error.message
 
@@ -426,7 +426,7 @@ export const deleteNotification = async (
             return res.status(404).json({
 
                 message:
-                    "Notification not found"
+                    "Notificación no encontrada"
 
             });
 
@@ -435,7 +435,7 @@ export const deleteNotification = async (
         return res.status(200).json({
 
             message:
-                "Notification deleted successfully"
+                "Notificación eliminada correctamente"
 
         });
 
@@ -449,7 +449,7 @@ export const deleteNotification = async (
         return res.status(500).json({
 
             message:
-                "Error deleting notification",
+                "Error al eliminar la notificación",
 
             error: error.message
 
@@ -487,7 +487,7 @@ export const registerDeviceToken = async (
             return res.status(400).json({
 
                 message:
-                    "Device token is required"
+                    "El token del dispositivo es obligatorio"
 
             });
 
@@ -542,7 +542,7 @@ export const registerDeviceToken = async (
         return res.status(200).json({
 
             message:
-                "Device registered successfully",
+                "Dispositivo registrado correctamente",
 
             pushEnabled:
                 device.pushEnabled
@@ -559,7 +559,7 @@ export const registerDeviceToken = async (
         return res.status(500).json({
 
             message:
-                "Error registering device",
+                "Error al registrar el dispositivo",
 
             error: error.message
 
@@ -590,7 +590,7 @@ export const unregisterDeviceToken = async (
             return res.status(400).json({
 
                 message:
-                    "Device token is required"
+                    "El token del dispositivo es obligatorio"
 
             });
 
@@ -608,7 +608,7 @@ export const unregisterDeviceToken = async (
         return res.status(200).json({
 
             message:
-                "Device unregistered successfully"
+                "Dispositivo desregistrado correctamente"
 
         });
 
@@ -622,7 +622,7 @@ export const unregisterDeviceToken = async (
         return res.status(500).json({
 
             message:
-                "Error unregistering device",
+                "Error al desregistrar el dispositivo",
 
             error: error.message
 
@@ -657,7 +657,7 @@ export const setPushPreference = async (
             return res.status(400).json({
 
                 message:
-                    "Device token and pushEnabled (boolean) are required"
+                    "El token del dispositivo y pushEnabled (booleano) son obligatorios"
 
             });
 
@@ -684,7 +684,7 @@ export const setPushPreference = async (
             return res.status(404).json({
 
                 message:
-                    "Device not registered"
+                    "Dispositivo no registrado"
 
             });
 
@@ -693,7 +693,7 @@ export const setPushPreference = async (
         return res.status(200).json({
 
             message:
-                "Push preference updated",
+                "Preferencia de notificaciones actualizada",
 
             pushEnabled:
                 device.pushEnabled
@@ -710,7 +710,7 @@ export const setPushPreference = async (
         return res.status(500).json({
 
             message:
-                "Error updating push preference",
+                "Error al actualizar la preferencia de notificaciones",
 
             error: error.message
 

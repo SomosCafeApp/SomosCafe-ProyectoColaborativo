@@ -70,7 +70,7 @@ class AdminEventCard extends StatelessWidget {
                       ? Image.network(
                           event.image,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Icon(Icons.celebration_outlined, color: subtitleColor),
+                          errorBuilder: (_, _, _) => Icon(Icons.celebration_outlined, color: subtitleColor),
                         )
                       : Icon(Icons.celebration_outlined, color: subtitleColor),
                 ),
@@ -118,7 +118,7 @@ class AdminEventCard extends StatelessWidget {
               children: [
                 Switch(
                   value: event.isActive && !event.hasEnded,
-                  activeColor: AppColors.primary,
+                  activeThumbColor: AppColors.primary,
                   // Un evento que ya terminó no se puede activar.
                   onChanged: event.hasEnded ? null : onToggleActive,
                 ),

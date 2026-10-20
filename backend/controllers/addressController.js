@@ -1,5 +1,8 @@
 import Address from "../models/addressModel.js";
 
+// La app solo opera en Garzón, Huila.
+const DEFAULT_CITY = "Garzón";
+
 // ===================================
 // CREATE ADDRESS
 // ===================================
@@ -29,14 +32,13 @@ export const createAddress = async (req, res) => {
             !label ||
             !recipientName ||
             !phone ||
-            !address ||
-            !city
+            !address
         ) {
 
             return res.status(400).json({
 
                 message:
-                    "Label, recipientName, phone, address and city are required"
+                    "Label, recipientName, phone y address son obligatorios"
 
             });
 
@@ -109,8 +111,11 @@ export const createAddress = async (req, res) => {
             address:
                 address.trim(),
 
+            // Si el cliente no envía ciudad se usa la predeterminada.
             city:
-                city.trim(),
+                (typeof city === "string" && city.trim())
+                    ? city.trim()
+                    : DEFAULT_CITY,
 
             neighborhood:
                 neighborhood
@@ -150,7 +155,7 @@ export const createAddress = async (req, res) => {
         return res.status(201).json({
 
             message:
-                "Address created successfully",
+                "Dirección creada correctamente",
 
             address:
                 newAddress
@@ -167,7 +172,7 @@ export const createAddress = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error creating address",
+                "Error al crear la dirección",
 
             error:
                 error.message
@@ -203,7 +208,7 @@ export const getAddresses = async (req, res) => {
         return res.status(200).json({
 
             message:
-                "Addresses retrieved successfully",
+                "Direcciones obtenidas correctamente",
 
             addresses
 
@@ -219,7 +224,7 @@ export const getAddresses = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error retrieving addresses",
+                "Error al obtener las direcciones",
 
             error:
                 error.message
@@ -253,7 +258,7 @@ export const getAddressById = async (req, res) => {
             return res.status(404).json({
 
                 message:
-                    "Address not found"
+                    "Dirección no encontrada"
 
             });
 
@@ -262,7 +267,7 @@ export const getAddressById = async (req, res) => {
         return res.status(200).json({
 
             message:
-                "Address retrieved successfully",
+                "Dirección obtenida correctamente",
 
             address
 
@@ -278,7 +283,7 @@ export const getAddressById = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error retrieving address",
+                "Error al obtener la dirección",
 
             error:
                 error.message
@@ -329,7 +334,7 @@ export const updateAddress = async (req, res) => {
             return res.status(404).json({
 
                 message:
-                    "Address not found"
+                    "Dirección no encontrada"
 
             });
 
@@ -347,7 +352,7 @@ export const updateAddress = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Label cannot be empty"
+                    "La etiqueta no puede estar vacía"
 
             });
 
@@ -361,7 +366,7 @@ export const updateAddress = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Recipient name cannot be empty"
+                    "El nombre del destinatario no puede estar vacío"
 
             });
 
@@ -375,7 +380,7 @@ export const updateAddress = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Phone cannot be empty"
+                    "El teléfono no puede estar vacío"
 
             });
 
@@ -389,7 +394,7 @@ export const updateAddress = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Address cannot be empty"
+                    "La dirección no puede estar vacía"
 
             });
 
@@ -403,7 +408,7 @@ export const updateAddress = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "City cannot be empty"
+                    "La ciudad no puede estar vacía"
 
             });
 
@@ -518,7 +523,7 @@ export const updateAddress = async (req, res) => {
         return res.status(200).json({
 
             message:
-                "Address updated successfully",
+                "Dirección actualizada correctamente",
 
             address:
                 existingAddress
@@ -535,7 +540,7 @@ export const updateAddress = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error updating address",
+                "Error al actualizar la dirección",
 
             error:
                 error.message
@@ -569,7 +574,7 @@ export const deleteAddress = async (req, res) => {
             return res.status(404).json({
 
                 message:
-                    "Address not found"
+                    "Dirección no encontrada"
 
             });
 
@@ -616,7 +621,7 @@ export const deleteAddress = async (req, res) => {
         return res.status(200).json({
 
             message:
-                "Address deleted successfully"
+                "Dirección eliminada correctamente"
 
         });
 
@@ -630,7 +635,7 @@ export const deleteAddress = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error deleting address",
+                "Error al eliminar la dirección",
 
             error:
                 error.message
@@ -668,7 +673,7 @@ export const setDefaultAddress = async (req, res) => {
             return res.status(404).json({
 
                 message:
-                    "Address not found"
+                    "Dirección no encontrada"
 
             });
 
@@ -703,7 +708,7 @@ export const setDefaultAddress = async (req, res) => {
         return res.status(200).json({
 
             message:
-                "Default address updated successfully",
+                "Dirección principal actualizada correctamente",
 
             address
 
@@ -719,7 +724,7 @@ export const setDefaultAddress = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error setting default address",
+                "Error al establecer la dirección principal",
 
             error:
                 error.message

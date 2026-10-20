@@ -7,8 +7,12 @@ import {
     changePasswordWithCurrent,
     requestOwnPasswordCode,
     changePasswordWithCode,
-    deleteAccount
+    deleteAccount,
+    updateProfileImage,
+    deleteProfileImage
 } from "../controllers/accountController.js";
+
+import { uploadAvatarImage } from "../middlewares/uploadMiddleware.js";
 
 const router = express.Router();
 
@@ -16,6 +20,11 @@ const router = express.Router();
 
 // DATOS PERSONALES
 router.patch("/profile", verifyToken, updateProfile);
+
+// FOTO DE PERFIL (cambiar / eliminar). verifyToken va antes de la
+// subida para que nadie sin sesión pueda subir archivos.
+router.put("/profile-image", verifyToken, uploadAvatarImage, updateProfileImage);
+router.delete("/profile-image", verifyToken, deleteProfileImage);
 
 // CONTRASEÑA - método 1: contraseña actual + nueva
 router.post("/password", verifyToken, changePasswordWithCurrent);

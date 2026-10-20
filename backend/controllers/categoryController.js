@@ -16,7 +16,7 @@ export const getCategories = async (req, res) => {
         return res.status(200).json({
 
             message:
-                "Categories retrieved successfully",
+                "Categorías obtenidas correctamente",
 
             categories
 
@@ -32,7 +32,7 @@ export const getCategories = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error retrieving categories",
+                "Error al obtener las categorías",
 
             error: error.message
 
@@ -59,7 +59,7 @@ export const getCategoryById = async (req, res) => {
             return res.status(404).json({
 
                 message:
-                    "Category not found"
+                    "Categoría no encontrada"
 
             });
 
@@ -68,7 +68,7 @@ export const getCategoryById = async (req, res) => {
         return res.status(200).json({
 
             message:
-                "Category retrieved successfully",
+                "Categoría obtenida correctamente",
 
             category
 
@@ -84,7 +84,7 @@ export const getCategoryById = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error retrieving category",
+                "Error al obtener la categoría",
 
             error: error.message
 
@@ -117,7 +117,7 @@ export const createCategory = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Category name is required"
+                    "El nombre de la categoría es obligatorio"
 
             });
 
@@ -146,7 +146,7 @@ export const createCategory = async (req, res) => {
             return res.status(409).json({
 
                 message:
-                    "Category already exists"
+                    "La categoría ya existe"
 
             });
 
@@ -187,7 +187,7 @@ export const createCategory = async (req, res) => {
         return res.status(201).json({
 
             message:
-                "Category created successfully",
+                "Categoría creada correctamente",
 
             category:
                 newCategory
@@ -204,7 +204,7 @@ export const createCategory = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error creating category",
+                "Error al crear la categoría",
 
             error: error.message
 
@@ -240,7 +240,7 @@ export const updateCategory = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Category name cannot be empty"
+                    "El nombre de la categoría no puede estar vacío"
 
             });
 
@@ -272,7 +272,7 @@ export const updateCategory = async (req, res) => {
                 return res.status(409).json({
 
                     message:
-                        "Category name is already in use"
+                        "El nombre de la categoría ya está en uso"
 
                 });
 
@@ -337,7 +337,7 @@ export const updateCategory = async (req, res) => {
             return res.status(404).json({
 
                 message:
-                    "Category not found"
+                    "Categoría no encontrada"
 
             });
 
@@ -346,7 +346,7 @@ export const updateCategory = async (req, res) => {
         return res.status(200).json({
 
             message:
-                "Category updated successfully",
+                "Categoría actualizada correctamente",
 
             category:
                 updatedCategory
@@ -363,7 +363,7 @@ export const updateCategory = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error updating category",
+                "Error al actualizar la categoría",
 
             error: error.message
 
@@ -394,7 +394,7 @@ export const deleteCategory = async (req, res) => {
             return res.status(404).json({
 
                 message:
-                    "Category not found"
+                    "Categoría no encontrada"
 
             });
 
@@ -417,7 +417,7 @@ export const deleteCategory = async (req, res) => {
             return res.status(409).json({
 
                 message:
-                    "Category cannot be deleted because it is being used by products",
+                    "La categoría no se puede eliminar porque está siendo usada por productos",
 
                 productsCount:
                     productsUsingCategory
@@ -437,7 +437,7 @@ export const deleteCategory = async (req, res) => {
         return res.status(200).json({
 
             message:
-                "Category deleted successfully"
+                "Categoría eliminada correctamente"
 
         });
 
@@ -451,7 +451,7 @@ export const deleteCategory = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error deleting category",
+                "Error al eliminar la categoría",
 
             error: error.message
 

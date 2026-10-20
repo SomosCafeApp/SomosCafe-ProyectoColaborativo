@@ -66,7 +66,7 @@ class SettingsPage extends StatefulWidget {
                     trailing: Switch(
                       // Evaluamos el brillo real del contexto para que refleje si el sistema o la app lo tienen activo
                       value: Theme.of(context).brightness == Brightness.dark,
-                      activeColor: Colors.white,
+                      activeThumbColor: Colors.white,
                       activeTrackColor: primaryBrown,
                       onChanged: (value) {
                         // Al hacer clic, cambia el estado en el provider (apaga o enciende el modo oscuro)

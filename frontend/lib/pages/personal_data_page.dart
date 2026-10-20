@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
 import '../core/utils/app_date_picker.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/profile/profile_photo_editor.dart';
 import '../widgets/profile/profile_sub_page_header.dart';
 import '../widgets/settings/delete_account_sheet.dart';
 import '../widgets/settings/settings_input_field.dart';
@@ -152,6 +153,8 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const ProfilePhotoEditor(),
+                  const SizedBox(height: 20),
                   SettingsInputField(
                     label: 'Nombre',
                     controller: _name,

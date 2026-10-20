@@ -7,7 +7,6 @@ class AddressFormCard extends StatelessWidget {
   final TextEditingController addressController;
   final TextEditingController recipientController;
   final TextEditingController phoneController;
-  final TextEditingController cityController;
   final bool hasLocation;
   final VoidCallback onClose;
   final VoidCallback onSave;
@@ -20,7 +19,6 @@ class AddressFormCard extends StatelessWidget {
     required this.addressController,
     required this.recipientController,
     required this.phoneController,
-    required this.cityController,
     required this.onClose,
     required this.onSave,
     required this.onPickOnMap,
@@ -140,15 +138,6 @@ class AddressFormCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          _LabeledField(
-            label: 'Ciudad',
-            controller: cityController,
-            hint: 'Ej: Garzón, Huila',
-            textColor: textColor,
-            subtitleColor: subtitleColor,
-            inputFillColor: inputFillColor,
-          ),
-          const SizedBox(height: 16),
           Text(
             'Buscar dirección',
             style: TextStyle(
@@ -163,7 +152,7 @@ class AddressFormCard extends StatelessWidget {
             style: TextStyle(color: textColor),
             decoration: InputDecoration(
               prefixIcon: Icon(Icons.search, color: subtitleColor),
-              hintText: 'Ingresa la dirección o ubicación',
+              hintText: 'Ingresa la dirección (Garzón, Huila)',
               hintStyle: TextStyle(color: subtitleColor.withAlpha(180), fontSize: 14),
               filled: true,
               fillColor: inputFillColor,

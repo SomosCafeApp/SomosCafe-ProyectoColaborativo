@@ -25,7 +25,7 @@ class SearchHeader extends StatelessWidget {
     // Campo de texto según las capturas de Figma
     final searchFieldBg = isDark ? const Color(0xFF281C16) : Colors.white;
     final searchTextColor = isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
-    final searchHintColor = isDark ? AppColors.darkTextSecondary.withOpacity(0.6) : Colors.grey.shade500;
+    final searchHintColor = isDark ? AppColors.darkTextSecondary.withValues(alpha: 0.6) : Colors.grey.shade500;
 
     return Container(
       color: headerBgColor,

@@ -33,7 +33,7 @@ class PopularProductsSection extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: isDark
                       ? AppColors.darkSurfaceSubtle
-                      : primaryBrown.withOpacity(0.15),
+                      : primaryBrown.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(

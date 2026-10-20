@@ -22,7 +22,7 @@ export const getInventory = async (req, res) => {
         return res.status(200).json({
 
             message:
-                "Inventory retrieved successfully",
+                "Inventario obtenido correctamente",
 
             inventory
 
@@ -38,7 +38,7 @@ export const getInventory = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error retrieving inventory",
+                "Error al obtener el inventario",
 
             error: error.message
 
@@ -76,7 +76,7 @@ export const getInventoryByProduct = async (
             return res.status(404).json({
 
                 message:
-                    "Inventory record not found"
+                    "Registro de inventario no encontrado"
 
             });
 
@@ -85,7 +85,7 @@ export const getInventoryByProduct = async (
         return res.status(200).json({
 
             message:
-                "Inventory retrieved successfully",
+                "Inventario obtenido correctamente",
 
             inventory
 
@@ -101,7 +101,7 @@ export const getInventoryByProduct = async (
         return res.status(500).json({
 
             message:
-                "Error retrieving inventory",
+                "Error al obtener el inventario",
 
             error: error.message
 
@@ -138,7 +138,7 @@ export const createInventory = async (
             return res.status(400).json({
 
                 message:
-                    "Product ID is required"
+                    "El ID del producto es obligatorio"
 
             });
 
@@ -156,7 +156,7 @@ export const createInventory = async (
             return res.status(404).json({
 
                 message:
-                    "Product not found"
+                    "Producto no encontrado"
 
             });
 
@@ -178,7 +178,7 @@ export const createInventory = async (
             return res.status(409).json({
 
                 message:
-                    "Inventory already exists for this product"
+                    "Ya existe un inventario para este producto"
 
             });
 
@@ -196,7 +196,7 @@ export const createInventory = async (
             return res.status(400).json({
 
                 message:
-                    "Stock cannot be negative"
+                    "El stock no puede ser negativo"
 
             });
 
@@ -214,7 +214,7 @@ export const createInventory = async (
             return res.status(400).json({
 
                 message:
-                    "Minimum stock cannot be negative"
+                    "El stock mínimo no puede ser negativo"
 
             });
 
@@ -232,7 +232,7 @@ export const createInventory = async (
             return res.status(400).json({
 
                 message:
-                    "Maximum stock cannot be negative"
+                    "El stock máximo no puede ser negativo"
 
             });
 
@@ -262,7 +262,7 @@ export const createInventory = async (
             return res.status(400).json({
 
                 message:
-                    "Minimum stock cannot be greater than maximum stock"
+                    "El stock mínimo no puede ser mayor que el stock máximo"
 
             });
 
@@ -273,7 +273,7 @@ export const createInventory = async (
             return res.status(400).json({
 
                 message:
-                    "Stock cannot be greater than maximum stock"
+                    "El stock no puede ser mayor que el stock máximo"
 
             });
 
@@ -316,7 +316,7 @@ export const createInventory = async (
         return res.status(201).json({
 
             message:
-                "Inventory created successfully",
+                "Inventario creado correctamente",
 
             inventory:
                 newInventory
@@ -333,7 +333,7 @@ export const createInventory = async (
         return res.status(500).json({
 
             message:
-                "Error creating inventory",
+                "Error al crear el inventario",
 
             error: error.message
 
@@ -377,7 +377,7 @@ export const updateInventory = async (
             return res.status(404).json({
 
                 message:
-                    "Inventory record not found"
+                    "Registro de inventario no encontrado"
 
             });
 
@@ -394,7 +394,7 @@ export const updateInventory = async (
                 return res.status(400).json({
 
                     message:
-                        "Stock cannot be negative"
+                        "El stock no puede ser negativo"
 
                 });
 
@@ -411,7 +411,7 @@ export const updateInventory = async (
                 return res.status(400).json({
 
                     message:
-                        "Minimum stock cannot be negative"
+                        "El stock mínimo no puede ser negativo"
 
                 });
 
@@ -429,7 +429,7 @@ export const updateInventory = async (
                 return res.status(400).json({
 
                     message:
-                        "Maximum stock cannot be negative"
+                        "El stock máximo no puede ser negativo"
 
                 });
 
@@ -452,7 +452,7 @@ export const updateInventory = async (
             return res.status(400).json({
 
                 message:
-                    "Minimum stock cannot be greater than maximum stock"
+                    "El stock mínimo no puede ser mayor que el stock máximo"
 
             });
 
@@ -466,7 +466,7 @@ export const updateInventory = async (
             return res.status(400).json({
 
                 message:
-                    "Stock cannot be greater than maximum stock"
+                    "El stock no puede ser mayor que el stock máximo"
 
             });
 
@@ -486,7 +486,7 @@ export const updateInventory = async (
         return res.status(200).json({
 
             message:
-                "Inventory updated successfully",
+                "Inventario actualizado correctamente",
 
             inventory
 
@@ -502,7 +502,7 @@ export const updateInventory = async (
         return res.status(500).json({
 
             message:
-                "Error updating inventory",
+                "Error al actualizar el inventario",
 
             error: error.message
 
@@ -540,7 +540,7 @@ export const updateStock = async (
             return res.status(400).json({
 
                 message:
-                    "Quantity and operation are required"
+                    "La cantidad y la operación son obligatorias"
 
             });
 
@@ -551,7 +551,7 @@ export const updateStock = async (
             return res.status(400).json({
 
                 message:
-                    "Quantity must be greater than zero"
+                    "La cantidad debe ser mayor que cero"
 
             });
 
@@ -565,7 +565,7 @@ export const updateStock = async (
             return res.status(400).json({
 
                 message:
-                    "Operation must be ADD or REMOVE"
+                    "La operación debe ser ADD o REMOVE"
 
             });
 
@@ -588,7 +588,7 @@ export const updateStock = async (
             return res.status(404).json({
 
                 message:
-                    "Inventory record not found"
+                    "Registro de inventario no encontrado"
 
             });
 
@@ -621,7 +621,7 @@ export const updateStock = async (
             return res.status(400).json({
 
                 message:
-                    "Insufficient stock"
+                    "Stock insuficiente"
 
             });
 
@@ -639,7 +639,7 @@ export const updateStock = async (
             return res.status(400).json({
 
                 message:
-                    "Stock cannot exceed maximum stock"
+                    "El stock no puede superar el stock máximo"
 
             });
 
@@ -662,8 +662,8 @@ export const updateStock = async (
 
             message:
                 operation === "ADD"
-                    ? "Stock increased successfully"
-                    : "Stock decreased successfully",
+                    ? "Stock aumentado correctamente"
+                    : "Stock disminuido correctamente",
 
             inventory
 
@@ -679,7 +679,7 @@ export const updateStock = async (
         return res.status(500).json({
 
             message:
-                "Error updating stock",
+                "Error al actualizar el stock",
 
             error: error.message
 
@@ -713,7 +713,7 @@ export const deleteInventory = async (
             return res.status(404).json({
 
                 message:
-                    "Inventory record not found"
+                    "Registro de inventario no encontrado"
 
             });
 
@@ -722,7 +722,7 @@ export const deleteInventory = async (
         return res.status(200).json({
 
             message:
-                "Inventory deleted successfully"
+                "Inventario eliminado correctamente"
 
         });
 
@@ -736,7 +736,7 @@ export const deleteInventory = async (
         return res.status(500).json({
 
             message:
-                "Error deleting inventory",
+                "Error al eliminar el inventario",
 
             error: error.message
 

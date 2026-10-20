@@ -105,7 +105,7 @@ export const getProductReviews = async (req, res) => {
 
             return res.status(404).json({
 
-                message: "Product not found"
+                message: "Producto no encontrado"
 
             });
 
@@ -153,7 +153,7 @@ export const getProductReviews = async (req, res) => {
         return res.status(200).json({
 
             message:
-                "Product reviews retrieved successfully",
+                "Reseñas del producto obtenidas correctamente",
 
             productId,
 
@@ -178,7 +178,7 @@ export const getProductReviews = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error retrieving product reviews",
+                "Error al obtener las reseñas del producto",
 
             error: error.message
 
@@ -211,7 +211,7 @@ export const getUserReviews = async (req, res) => {
 
             return res.status(404).json({
 
-                message: "User not found"
+                message: "Usuario no encontrado"
 
             });
 
@@ -239,7 +239,7 @@ export const getUserReviews = async (req, res) => {
         return res.status(200).json({
 
             message:
-                "User reviews retrieved successfully",
+                "Reseñas del usuario obtenidas correctamente",
 
             reviews
 
@@ -255,7 +255,7 @@ export const getUserReviews = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error retrieving user reviews",
+                "Error al obtener las reseñas del usuario",
 
             error: error.message
 
@@ -296,7 +296,7 @@ export const createReview = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "productId and rating are required"
+                    "productId y rating son obligatorios"
 
             });
 
@@ -314,7 +314,7 @@ export const createReview = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Rating must be between 1 and 5"
+                    "La calificación debe estar entre 1 y 5"
 
             });
 
@@ -348,7 +348,7 @@ export const createReview = async (req, res) => {
 
             return res.status(404).json({
 
-                message: "User not found"
+                message: "Usuario no encontrado"
 
             });
 
@@ -366,7 +366,7 @@ export const createReview = async (req, res) => {
 
             return res.status(404).json({
 
-                message: "Product not found"
+                message: "Producto no encontrado"
 
             });
 
@@ -390,7 +390,7 @@ export const createReview = async (req, res) => {
             return res.status(409).json({
 
                 message:
-                    "You have already reviewed this product"
+                    "Ya reseñaste este producto"
 
             });
 
@@ -442,7 +442,7 @@ export const createReview = async (req, res) => {
         return res.status(201).json({
 
             message:
-                "Review created successfully",
+                "Reseña creada correctamente",
 
             review: newReview
 
@@ -466,7 +466,7 @@ export const createReview = async (req, res) => {
             return res.status(409).json({
 
                 message:
-                    "You have already reviewed this product"
+                    "Ya reseñaste este producto"
 
             });
 
@@ -475,7 +475,7 @@ export const createReview = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error creating review",
+                "Error al crear la reseña",
 
             error: error.message
 
@@ -516,7 +516,7 @@ export const updateReview = async (req, res) => {
             return res.status(400).json({
 
                 message:
-                    "Rating must be between 1 and 5"
+                    "La calificación debe estar entre 1 y 5"
 
             });
 
@@ -553,7 +553,7 @@ export const updateReview = async (req, res) => {
 
             return res.status(404).json({
 
-                message: "Review not found"
+                message: "Reseña no encontrada"
 
             });
 
@@ -575,7 +575,7 @@ export const updateReview = async (req, res) => {
             return res.status(403).json({
 
                 message:
-                    "You are not allowed to edit this review"
+                    "No tienes permiso para editar esta reseña"
 
             });
 
@@ -623,7 +623,7 @@ export const updateReview = async (req, res) => {
         return res.status(200).json({
 
             message:
-                "Review updated successfully",
+                "Reseña actualizada correctamente",
 
             review
 
@@ -639,7 +639,7 @@ export const updateReview = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error updating review",
+                "Error al actualizar la reseña",
 
             error: error.message
 
@@ -671,7 +671,7 @@ export const deleteReview = async (req, res) => {
 
             return res.status(404).json({
 
-                message: "Review not found"
+                message: "Reseña no encontrada"
 
             });
 
@@ -693,7 +693,7 @@ export const deleteReview = async (req, res) => {
             return res.status(403).json({
 
                 message:
-                    "You are not allowed to delete this review"
+                    "No tienes permiso para eliminar esta reseña"
 
             });
 
@@ -716,7 +716,7 @@ export const deleteReview = async (req, res) => {
         return res.status(200).json({
 
             message:
-                "Review deleted successfully"
+                "Reseña eliminada correctamente"
 
         });
 
@@ -730,7 +730,7 @@ export const deleteReview = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error deleting review",
+                "Error al eliminar la reseña",
 
             error: error.message
 
@@ -762,7 +762,7 @@ export const toggleReviewVisibility = async (req, res) => {
 
             return res.status(404).json({
 
-                message: "Review not found"
+                message: "Reseña no encontrada"
 
             });
 
@@ -788,9 +788,9 @@ export const toggleReviewVisibility = async (req, res) => {
             message:
                 review.isVisible
 
-                    ? "Review is now visible"
+                    ? "La reseña ahora es visible"
 
-                    : "Review is now hidden",
+                    : "La reseña ahora está oculta",
 
             isVisible:
                 review.isVisible
@@ -807,7 +807,7 @@ export const toggleReviewVisibility = async (req, res) => {
         return res.status(500).json({
 
             message:
-                "Error changing review visibility",
+                "Error al cambiar la visibilidad de la reseña",
 
             error: error.message
 

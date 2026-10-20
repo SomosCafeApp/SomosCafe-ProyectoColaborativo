@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
+import '../common/user_avatar.dart';
 
 class ProfileHeader extends StatelessWidget {
   final String userName;
   final String userLastName;
   final String userEmail;
-
+  final String profileImage;
 
   const ProfileHeader({
     super.key,
     required this.userName,
     required this.userEmail,
     required this.userLastName,
+    this.profileImage = '',
   });
 
   @override
@@ -44,27 +46,17 @@ class ProfileHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Avatar con las iniciales (Ej: "JD")
-          Container(
-            width: 72,
-            height: 72,
-            decoration: BoxDecoration(
-              color: Colors.white.withAlpha(35),
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(
-                color: Colors.white.withAlpha(80),
-                width: 2,
-              ),
-            ),
-            child: Center(
-              child: Text(
-                initials,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+          // Foto de perfil, o las iniciales (Ej: "JD") si no tiene
+          UserAvatar(
+            imageUrl: profileImage,
+            initials: initials,
+            size: 72,
+            borderRadius: 22,
+            fontSize: 24,
+            backgroundColor: Colors.white.withAlpha(35),
+            border: Border.all(
+              color: Colors.white.withAlpha(80),
+              width: 2,
             ),
           ),
           const SizedBox(width: 16),

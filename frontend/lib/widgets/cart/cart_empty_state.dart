@@ -25,7 +25,7 @@ class CartEmptyState extends StatelessWidget {
     // círculo más claro que el fondo y ícono beige en modo oscuro.
     final circleBg = isDark
         ? AppColors.darkSurfaceSubtle
-        : primaryBrown.withOpacity(0.15);
+        : primaryBrown.withValues(alpha: 0.15);
     final iconColor = isDark ? const Color(0xFFD4BBA5) : primaryBrown;
     final subtitleColor = isDark
         ? AppColors.darkTextSecondary

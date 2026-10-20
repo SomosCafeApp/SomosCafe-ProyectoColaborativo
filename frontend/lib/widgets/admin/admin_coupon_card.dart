@@ -136,7 +136,7 @@ class AdminCouponCard extends StatelessWidget {
                 children: [
                   Switch(
                     value: coupon.isActive,
-                    activeColor: AppColors.primary,
+                    activeThumbColor: AppColors.primary,
                     onChanged: onToggleActive,
                   ),
                   Text(coupon.isActive ? 'Habilitado' : 'Deshabilitado',

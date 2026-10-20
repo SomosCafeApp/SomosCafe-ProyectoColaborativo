@@ -24,7 +24,7 @@ class ChatEmptyState extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 36,
-              backgroundColor: AppColors.primary.withOpacity(0.15),
+              backgroundColor: AppColors.primary.withValues(alpha: 0.15),
               child: Icon(Icons.forum_rounded, size: 36, color: AppColors.primary),
             ),
             const SizedBox(height: 16),
