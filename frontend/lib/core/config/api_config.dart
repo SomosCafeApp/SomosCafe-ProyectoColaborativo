@@ -5,7 +5,7 @@ class ApiConfig {
   static const String _webUrl = 'http://localhost:3000/api';
 
   // Android físico conectado a la misma red que el PC
-  static const String _androidUrl = 'http://192.168.137.1:3000/api';
+  static const String _androidUrl = 'http://10.0.2.2:3000/api';
 
   // Android Emulator: si lo necesitas, usa 'http://10.0.2.2:3000/api'
   // como _androidUrl.

@@ -1,3 +1,4 @@
+
 import "dotenv/config";
 
 import express from "express";
@@ -72,6 +73,14 @@ app.get(
         });
     }
 );
+
+// ===============================
+// Montando las rutas de la API
+// ===============================
+
+app.get("/health", (req, res) => {
+    res.status(200).send("OK");
+});
 
 // ===============================
 // ROUTES
