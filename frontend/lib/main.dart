@@ -7,6 +7,8 @@ import 'core/theme/app_theme.dart';
 import 'core/utils/push_router.dart';
 import 'services/push_service.dart';
 import 'pages/main_navigation_screen.dart';
+import 'pages/splash_page.dart';
+import 'widgets/admin/admin_order_alert_gate.dart';
 import 'widgets/events/event_popup_gate.dart';
 
 // Providers
@@ -30,6 +32,7 @@ import 'providers/reviews_provider.dart';
 import 'providers/notification_provider.dart';
 import 'providers/coupons_provider.dart';
 import 'providers/points_provider.dart';
+import 'providers/recipes_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -127,6 +130,12 @@ Future<void> main() async {
           create: (_) => ProductProvider(),
         ),
 
+        // Recetas del estudio de bebidas (recientes y guardadas).
+        ChangeNotifierProxyProvider<AuthProvider, RecipesProvider>(
+          create: (_) => RecipesProvider(),
+          update: (_, auth, recipes) => (recipes ?? RecipesProvider())..updateAuth(auth.token),
+        ),
+
         // Tema
         ChangeNotifierProvider(
           create: (_) => ThemeProvider(),
@@ -156,10 +165,14 @@ class _SessionBootstrap extends StatefulWidget {
 class _SessionBootstrapState extends State<_SessionBootstrap> {
   bool _ready = false;
 
+  // La splash se ve al menos este tiempo para que la animación termine.
+  static const Duration _minSplash = Duration(milliseconds: 2400);
+
   @override
   void initState() {
     super.initState();
-    context.read<AuthProvider>().tryAutoLogin().whenComplete(() {
+    final minimum = Future<void>.delayed(_minSplash);
+    context.read<AuthProvider>().tryAutoLogin().then((_) => minimum).whenComplete(() {
       if (mounted) setState(() => _ready = true);
       // Si la app se abrió tocando una push, ahora que la sesión está
       // restaurada se navega a la pantalla correspondiente.
@@ -171,16 +184,12 @@ class _SessionBootstrapState extends State<_SessionBootstrap> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_ready) {
-      return const Directionality(
-        textDirection: TextDirection.ltr,
-        child: ColoredBox(
-          color: Colors.white,
-          child: Center(child: CircularProgressIndicator()),
-        ),
-      );
-    }
-    return widget.child;
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 500),
+      child: _ready
+          ? KeyedSubtree(key: const ValueKey('app'), child: widget.child)
+          : const SplashPage(key: ValueKey('splash')),
+    );
   }
 }
 
@@ -235,7 +244,9 @@ class MyApp extends StatelessWidget {
 
       // El pop-up de evento sale después de restaurar/renovar la sesión.
       home: const _SessionBootstrap(
-        child: EventPopupGate(child: MainNavigationScreen()),
+        child: EventPopupGate(
+          child: AdminOrderAlertGate(child: MainNavigationScreen()),
+        ),
       ),
     );
   }

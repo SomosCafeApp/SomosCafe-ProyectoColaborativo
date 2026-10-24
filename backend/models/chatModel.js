@@ -20,6 +20,13 @@ const chatMessageSchema = new mongoose.Schema(
       type: [mongoose.Schema.Types.ObjectId],
       ref: "Product",
       default: []
+    },
+
+    // true cuando el asistente ofreció pasar a WhatsApp (la app
+    // muestra el botón en ese mensaje).
+    whatsapp: {
+      type: Boolean,
+      default: false
     }
   },
   {

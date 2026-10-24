@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../models/chat_message.dart'; // Ajusta a tu modelo de mensaje
+import '../support/whatsapp_button.dart';
 import 'chat_product_card.dart';
 import 'typing_indicator.dart';
 
@@ -91,6 +92,11 @@ class ChatMessageBubble extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 bubble,
+                if (message.whatsapp)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 6),
+                    child: WhatsAppButton(),
+                  ),
                 // Tarjetas de los productos recomendados: al tocarlas
                 // se abre el detalle del producto.
                 for (final product in message.products)

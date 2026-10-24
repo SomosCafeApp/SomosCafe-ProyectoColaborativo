@@ -27,6 +27,9 @@ import promotionRoutes from "./routes/promotionRoutes.js";
 import reviewsRoutes from "./routes/reviewsRoutes.js";
 import emailVerificationRoutes from "./routes/emailVerificationRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
+import customizationRoutes from "./routes/customizationRoutes.js";
+import supportRoutes from "./routes/supportRoutes.js";
+import recipeRoutes from "./routes/recipeRoutes.js";
 
 // ===============================
 // DATABASE CONNECTION
@@ -183,6 +186,29 @@ app.use(
 app.use(
     "/api/chat",
     chatRoutes
+);
+
+// ===============================
+// DRINK CUSTOMIZATION OPTIONS
+// ===============================
+
+app.use(
+    "/api/customization",
+    customizationRoutes
+);
+
+// ===============================
+// SUPPORT (WhatsApp) & DRINK RECIPES
+// ===============================
+
+app.use(
+    "/api/support",
+    supportRoutes
+);
+
+app.use(
+    "/api/recipes",
+    recipeRoutes
 );
 
 // ===============================

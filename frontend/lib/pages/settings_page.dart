@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/support/whatsapp_button.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
@@ -165,6 +166,20 @@ class SettingsPage extends StatefulWidget {
                       context,
                       MaterialPageRoute(builder: (_) => const ChatPage()),
                     ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  SettingsCardTile(
+                    icon: Icons.chat_rounded,
+                    title: 'Escríbenos por WhatsApp',
+                    subtitle: 'Habla con nuestro equipo',
+                    trailing: Icon(
+                      Icons.arrow_forward_rounded,
+                      color: primaryBrown,
+                      size: 20,
+                    ),
+                    onTap: () => openSupportWhatsApp(context),
                   ),
 
                   const SizedBox(height: 12),

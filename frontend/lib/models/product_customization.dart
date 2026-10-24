@@ -1,5 +1,6 @@
-/// Personalización elegida en ProductDetailPage: tamaño, tipo, leche,
-/// shots extra y toppings. Viaja en todo el flujo
+/// Personalización elegida en ProductDetailPage o en el estudio de
+/// bebidas: tamaño, tipo, leche, shots extra, toppings, jarabes,
+/// endulzantes y latte art. Viaja en todo el flujo
 /// (ProductDetail → Cart → Order → OrdersPage) y es lo que el backend
 /// valida y recalcula (utils/customization.js: mismos nombres y precios).
 ///
@@ -32,11 +33,22 @@ class ProductCustomization {
     'Caramelo': 1500,
   };
 
+  /// Jarabes y endulzantes: el catálogo real lo manda el backend y se
+  /// registra aquí con `DrinkOptions.register()` al abrir el estudio.
+  /// Mientras no exista (lista vacía) no suman nada.
+  static Map<String, double> syrupPrices = {};
+  static Map<String, double> sweetenerPrices = {};
+
   final String size;
   final String type;
   final String milk;
   final int extraShots;
   final Set<String> toppings;
+  final Set<String> syrups;
+  final Set<String> sweeteners;
+
+  /// Diseño de latte art: 'Corazón', 'Hoja', 'Cisne' o '' (ninguno).
+  final String latteArt;
 
   ProductCustomization({
     this.size = defaultSize,
@@ -44,7 +56,14 @@ class ProductCustomization {
     this.milk = defaultMilk,
     this.extraShots = 0,
     Set<String>? toppings,
-  }) : toppings = toppings ?? <String>{};
+    Set<String>? syrups,
+    Set<String>? sweeteners,
+    this.latteArt = '',
+  })  : toppings = toppings ?? <String>{},
+        syrups = syrups ?? <String>{},
+        sweeteners = sweeteners ?? <String>{};
+
+  bool get hasLatteArt => latteArt.isNotEmpty;
 
   /// Sin ninguna opción distinta de las de por defecto.
   bool get isDefault =>
@@ -52,7 +71,10 @@ class ProductCustomization {
       type == defaultType &&
       milk == defaultMilk &&
       extraShots == 0 &&
-      toppings.isEmpty;
+      toppings.isEmpty &&
+      syrups.isEmpty &&
+      sweeteners.isEmpty &&
+      latteArt.isEmpty;
 
   /// Extra por unidad que suman las opciones (sin el precio base).
   double get extraPrice {
@@ -63,17 +85,49 @@ class ProductCustomization {
     for (final topping in toppings) {
       extra += toppingPrices[topping] ?? 0;
     }
+    for (final syrup in syrups) {
+      extra += syrupPrices[syrup] ?? 0;
+    }
+    for (final sweetener in sweeteners) {
+      extra += sweetenerPrices[sweetener] ?? 0;
+    }
     return extra;
   }
 
   double calculateTotalPrice(double basePrice, int quantity) =>
       (basePrice + extraPrice) * quantity;
 
-  /// Clave estable para comparar personalizaciones (toppings ordenados),
-  /// igual que `customizationKey` del backend.
+  ProductCustomization copyWith({
+    String? size,
+    String? type,
+    String? milk,
+    int? extraShots,
+    Set<String>? toppings,
+    Set<String>? syrups,
+    Set<String>? sweeteners,
+    String? latteArt,
+  }) =>
+      ProductCustomization(
+        size: size ?? this.size,
+        type: type ?? this.type,
+        milk: milk ?? this.milk,
+        extraShots: extraShots ?? this.extraShots,
+        toppings: toppings ?? Set<String>.from(this.toppings),
+        syrups: syrups ?? Set<String>.from(this.syrups),
+        sweeteners: sweeteners ?? Set<String>.from(this.sweeteners),
+        latteArt: latteArt ?? this.latteArt,
+      );
+
+  /// Clave estable para comparar personalizaciones (listas ordenadas),
+  /// igual que `customizationKey` del backend (los campos nuevos solo
+  /// se agregan cuando traen algo).
   String get key {
     final sorted = toppings.toList()..sort();
-    return [size, type, milk, extraShots, sorted.join(',')].join('|');
+    final parts = <Object>[size, type, milk, extraShots, sorted.join(',')];
+    if (syrups.isNotEmpty) parts.add('s:${(syrups.toList()..sort()).join(',')}');
+    if (sweeteners.isNotEmpty) parts.add('w:${(sweeteners.toList()..sort()).join(',')}');
+    if (latteArt.isNotEmpty) parts.add('a:$latteArt');
+    return parts.join('|');
   }
 
   /// Líneas cortas para mostrar en carrito/pedidos. Solo aparece lo que
@@ -87,11 +141,16 @@ class ProductCustomization {
       if (extraShots > 0) '+$extraShots ${extraShots == 1 ? 'shot' : 'shots'}',
     ];
 
-    final sortedToppings = toppings.toList()..sort();
+    final extras = <String>[
+      ...(syrups.toList()..sort()),
+      ...(sweeteners.toList()..sort()),
+      ...(toppings.toList()..sort()),
+      if (latteArt.isNotEmpty) 'Latte art: $latteArt',
+    ];
 
     return [
       if (options.isNotEmpty) options.join(' · '),
-      if (sortedToppings.isNotEmpty) sortedToppings.join(' · '),
+      if (extras.isNotEmpty) extras.join(' · '),
     ];
   }
 
@@ -101,16 +160,25 @@ class ProductCustomization {
         'milk': milk,
         'extraShots': extraShots,
         'toppings': (toppings.toList()..sort()),
+        'syrups': (syrups.toList()..sort()),
+        'sweeteners': (sweeteners.toList()..sort()),
+        'latteArt': latteArt,
       };
 
   factory ProductCustomization.fromJson(Map<String, dynamic>? json) {
     if (json == null) return ProductCustomization();
+    Set<String> names(String field) =>
+        (json[field] as List?)?.map((e) => e.toString()).toSet() ?? <String>{};
+
     return ProductCustomization(
       size: json['size'] as String? ?? defaultSize,
       type: json['type'] as String? ?? defaultType,
       milk: json['milk'] as String? ?? defaultMilk,
       extraShots: (json['extraShots'] as num?)?.toInt() ?? 0,
-      toppings: (json['toppings'] as List?)?.map((e) => e.toString()).toSet() ?? <String>{},
+      toppings: names('toppings'),
+      syrups: names('syrups'),
+      sweeteners: names('sweeteners'),
+      latteArt: json['latteArt'] is String ? json['latteArt'] as String : '',
     );
   }
 }

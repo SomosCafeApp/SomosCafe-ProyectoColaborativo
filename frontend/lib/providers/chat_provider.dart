@@ -97,6 +97,7 @@ class ChatProvider extends ChangeNotifier {
         'role': 'assistant',
         'content': data['response'],
         'products': data['products'],
+        'whatsapp': data['whatsapp'],
       }));
     } on ApiException catch (e) {
       _errorMessage = e.message;

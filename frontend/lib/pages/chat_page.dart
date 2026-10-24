@@ -8,6 +8,7 @@ import '../widgets/profile/profile_sub_page_header.dart';
 import '../widgets/chat/chat_message_bubble.dart';
 import '../widgets/chat/chat_input_bar.dart';
 import '../widgets/chat/chat_empty_state.dart';
+import '../widgets/chat/chat_quick_replies.dart';
 
 import '../animations/animations.dart';
 class ChatPage extends StatefulWidget {
@@ -122,6 +123,17 @@ class _ChatPageState extends State<ChatPage> {
                     },
                   ),
           ),
+
+          if (!chat.isSending && !chat.isLoadingHistory)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: ChatQuickReplies(
+                onPick: (text) {
+                  _inputController.text = text;
+                  _send();
+                },
+              ),
+            ),
 
           ChatInputBar(
             controller: _inputController,

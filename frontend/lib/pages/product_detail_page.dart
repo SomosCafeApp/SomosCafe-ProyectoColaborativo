@@ -6,6 +6,7 @@ import '../core/utils/cart_guard.dart';
 import '../models/product_customization.dart';
 import '../models/product_model.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/drink_studio/drink_studio_entry.dart';
 import '../widgets/product_detail/product_bottom_bar.dart';
 import '../widgets/product_detail/product_customization_section.dart';
 import '../widgets/product_detail/product_detail_header.dart';
@@ -151,6 +152,11 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       },
                     ),
                     const SizedBox(height: 16),
+                    // Minijuego opcional (solo bebidas); la compra normal sigue igual.
+                    if (_product.isDrink && _product.isAvailable) ...[
+                      DrinkStudioCta(product: _product),
+                      const SizedBox(height: 16),
+                    ],
                     // Postres: sin menú de personalización.
                     if (_product.isCustomizable)
                       ProductCustomizationSection(

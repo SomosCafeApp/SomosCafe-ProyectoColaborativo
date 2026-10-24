@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../models/app_notification.dart';
@@ -14,6 +16,19 @@ class NotificationProvider extends ChangeNotifier {
   String? _token;
   bool _isLoading = false;
   String? _errorMessage;
+
+  // ----- Tiempo real -----
+  // Además de la push, se consulta el backend cada cierto tiempo para
+  // que el administrador vea los pedidos nuevos aunque FCM no esté
+  // configurado o la push no llegue con la app abierta.
+  static const Duration _pollEvery = Duration(seconds: 30);
+  Timer? _poll;
+  final Set<String> _knownIds = {};
+  bool _primed = false;
+
+  /// Se llama con las notificaciones NO leídas que aparecieron desde
+  /// la consulta anterior (nunca en la primera carga).
+  void Function(List<AppNotification> fresh)? onFreshNotifications;
 
   // ----- Push -----
   // Preferencia guardada en el backend para ESTE dispositivo.
@@ -43,11 +58,13 @@ class NotificationProvider extends ChangeNotifier {
     if (token != null && !wasLoggedIn) {
       fetchNotifications();
       _registerDevice();
+      _startPolling();
     } else if (token != null && _pushStatus == PushStatus.failed) {
       // El registro falló antes (p. ej. token vencido): se reintenta
       // cuando la sesión se renueva.
       _registerDevice();
     } else if (token == null && wasLoggedIn) {
+      _stopPolling();
       _notifications = [];
       _pushStatus = null;
       _pushEnabled = true;
@@ -124,10 +141,33 @@ class NotificationProvider extends ChangeNotifier {
     return dateB.compareTo(dateA);
   }
 
-  Future<void> fetchNotifications() async {
+  void _startPolling() {
+    _poll?.cancel();
+    _poll = Timer.periodic(_pollEvery, (_) => fetchNotifications(silent: true));
+  }
+
+  void _stopPolling() {
+    _poll?.cancel();
+    _poll = null;
+    _knownIds.clear();
+    _primed = false;
+  }
+
+  @override
+  void dispose() {
+    _poll?.cancel();
+    super.dispose();
+  }
+
+  /// [silent]: consulta en segundo plano, sin mostrar el indicador de carga.
+  Future<void> fetchNotifications({bool silent = false}) async {
     if (_token == null) return;
-    _isLoading = true;
-    notifyListeners();
+    if (!silent) {
+      _isLoading = true;
+      notifyListeners();
+    }
+
+    List<AppNotification> fresh = const [];
 
     try {
       final data = await ApiClient.get('/notifications', token: _token);
@@ -135,12 +175,20 @@ class NotificationProvider extends ChangeNotifier {
       _notifications = raw.map((e) => AppNotification.fromJson(e as Map<String, dynamic>)).toList()
         ..sort(_newestFirst);
       _errorMessage = null;
+
+      if (_primed) {
+        fresh = _notifications.where((n) => !n.isRead && !_knownIds.contains(n.id)).toList();
+      }
+      _knownIds.addAll(_notifications.map((n) => n.id));
+      _primed = true;
     } on ApiException catch (e) {
       _errorMessage = e.message;
     } finally {
       _isLoading = false;
       notifyListeners();
     }
+
+    if (fresh.isNotEmpty) onFreshNotifications?.call(fresh);
   }
 
   Future<void> markAsRead(String id) async {

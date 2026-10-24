@@ -9,10 +9,14 @@ class ChatMessage {
   /// muestran como tarjetas que llevan al detalle del producto.
   final List<Product> products;
 
+  /// El asistente ofreció pasar a WhatsApp: se muestra el botón.
+  final bool whatsapp;
+
   ChatMessage({
     required this.role,
     required this.content,
     this.products = const [],
+    this.whatsapp = false,
   });
 
   bool get isUser => role == 'user';
@@ -24,6 +28,7 @@ class ChatMessage {
     return ChatMessage(
       role: json['role'] as String? ?? 'assistant',
       content: (json['content'] ?? json['response'] ?? '') as String,
+      whatsapp: json['whatsapp'] == true,
       products: rawProducts is List
           ? rawProducts
               .whereType<Map<String, dynamic>>()

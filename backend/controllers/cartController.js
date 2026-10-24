@@ -40,7 +40,10 @@ const buildCartResponse = (cart, resolver) => {
                         type: item.customization.type,
                         milk: item.customization.milk,
                         extraShots: item.customization.extraShots || 0,
-                        toppings: [...(item.customization.toppings || [])]
+                        toppings: [...(item.customization.toppings || [])],
+                        syrups: [...(item.customization.syrups || [])],
+                        sweeteners: [...(item.customization.sweeteners || [])],
+                        latteArt: item.customization.latteArt || ""
                     }
                     : { ...DEFAULT_CUSTOMIZATION };
 

@@ -6,7 +6,11 @@ const customizationSchema = new mongoose.Schema(
         type: { type: String, required: true },
         milk: { type: String, required: true },
         extraShots: { type: Number, default: 0, min: 0 },
-        toppings: { type: [String], default: [] }
+        toppings: { type: [String], default: [] },
+        syrups: { type: [String], default: [] },
+        sweeteners: { type: [String], default: [] },
+        // Diseño de latte art ("" = ninguno): Corazón, Hoja o Cisne.
+        latteArt: { type: String, default: "" }
     },
     {
         _id: false

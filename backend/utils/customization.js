@@ -34,12 +34,91 @@ export const TOPPING_PRICES = {
     "Caramelo": 1500
 };
 
+// Jarabes y endulzantes: hoy NO existen en la base de datos ni en el
+// menú, así que los catálogos arrancan vacíos a propósito (no se
+// inventan sabores ni precios). Cuando el negocio defina los suyos,
+// basta con agregarlos aquí, ej.  "Vainilla": 1500  — el minijuego,
+// el carrito y los pedidos los validan y cobran sin más cambios.
+export const SYRUP_PRICES = {};
+export const SWEETENER_PRICES = {};
+export const MAX_SYRUPS = 3;
+export const MAX_SWEETENERS = 2;
+
+// Latte art: solo tres diseños predefinidos (decoración, no cuesta).
+export const LATTE_ART_DESIGNS = ["Corazón", "Hoja", "Cisne"];
+
+// Onzas de cada tamaño. OJO: el menú no guarda onzas; estos valores
+// son los típicos de cafetería y deben confirmarse con el negocio.
+// Solo afectan el tamaño visual del vaso en el estudio de bebidas.
+export const SIZE_OUNCES = {
+    "Pequeño": 8,
+    "Mediano": 12,
+    "Grande": 16
+};
+
+// Bebidas con espuma de leche donde tiene sentido dibujar latte art.
+export const LATTE_ART_KEYWORDS = [
+    "latte", "capuch", "cappuc", "moca", "mocha",
+    "macchiato", "flat white", "cortado", "con leche"
+];
+
+// Bebidas a base de café (habilitan la etapa de shots).
+export const COFFEE_KEYWORDS = [
+    "café", "cafe", "coffee", "espresso", "americano",
+    ...LATTE_ART_KEYWORDS
+];
+
 export const DEFAULT_CUSTOMIZATION = {
     size: "Mediano",
     type: "Caliente",
     milk: "Entera",
     extraShots: 0,
-    toppings: []
+    toppings: [],
+    syrups: [],
+    sweeteners: [],
+    latteArt: ""
+};
+
+// Lista de nombres que deben existir en un catálogo de precios.
+// Devuelve { list } (sin duplicados, ordenada) o { error }.
+const normalizeNamedList = (raw, catalog, max, label) => {
+
+    if (raw === undefined || raw === null) return { list: [] };
+
+    if (!Array.isArray(raw)) {
+        return { error: `La lista de ${label}s no es válida` };
+    }
+
+    for (const name of raw) {
+        if (
+            typeof name !== "string" ||
+            !Object.prototype.hasOwnProperty.call(catalog, name)
+        ) {
+            return { error: `${label} no disponible: ${String(name)}` };
+        }
+    }
+
+    const list = [...new Set(raw)].sort();
+
+    if (list.length > max) {
+        return { error: `Máximo ${max} ${label}s por bebida` };
+    }
+
+    return { list };
+};
+
+// Valida el diseño de latte art. Devuelve { design } ("" = ninguno).
+const normalizeLatteArt = (raw) => {
+
+    if (raw === undefined || raw === null || raw === "") {
+        return { design: "" };
+    }
+
+    if (typeof raw !== "string" || !LATTE_ART_DESIGNS.includes(raw)) {
+        return { error: `Diseño de latte art no disponible: ${String(raw)}` };
+    }
+
+    return { design: raw };
 };
 
 // Devuelve { customization } con valores validados y normalizados,
@@ -107,13 +186,29 @@ export const normalizeCustomization = (raw) => {
     // "Caramelo+Canela" producen la misma clave de línea.
     const uniqueToppings = [...new Set(toppings)].sort();
 
+    const syrupsResult = normalizeNamedList(
+        input.syrups, SYRUP_PRICES, MAX_SYRUPS, "jarabe"
+    );
+    if (syrupsResult.error) return { error: syrupsResult.error };
+
+    const sweetenersResult = normalizeNamedList(
+        input.sweeteners, SWEETENER_PRICES, MAX_SWEETENERS, "endulzante"
+    );
+    if (sweetenersResult.error) return { error: sweetenersResult.error };
+
+    const artResult = normalizeLatteArt(input.latteArt);
+    if (artResult.error) return { error: artResult.error };
+
     return {
         customization: {
             size,
             type,
             milk,
             extraShots,
-            toppings: uniqueToppings
+            toppings: uniqueToppings,
+            syrups: syrupsResult.list,
+            sweeteners: sweetenersResult.list,
+            latteArt: artResult.design
         }
     };
 };
@@ -133,6 +228,14 @@ export const customizationPrice = (customization) => {
         extra += TOPPING_PRICES[topping] || 0;
     }
 
+    for (const syrup of (c.syrups || [])) {
+        extra += SYRUP_PRICES[syrup] || 0;
+    }
+
+    for (const sweetener of (c.sweeteners || [])) {
+        extra += SWEETENER_PRICES[sweetener] || 0;
+    }
+
     return extra;
 };
 
@@ -142,14 +245,32 @@ export const customizationKey = (customization) => {
 
     const c = customization || DEFAULT_CUSTOMIZATION;
 
-    return [
+    const parts = [
         c.size,
         c.type,
         c.milk,
         c.extraShots || 0,
         (c.toppings || []).join(",")
-    ].join("|");
+    ];
+
+    // Los campos nuevos solo se agregan cuando traen algo: así las
+    // líneas de carritos anteriores siguen teniendo la misma clave.
+    if ((c.syrups || []).length) {
+        parts.push(`s:${c.syrups.join(",")}`);
+    }
+
+    if ((c.sweeteners || []).length) {
+        parts.push(`w:${c.sweeteners.join(",")}`);
+    }
+
+    if (c.latteArt) {
+        parts.push(`a:${c.latteArt}`);
+    }
+
+    return parts.join("|");
 };
+
+
 
 // ===================================
 // PRODUCTS THAT CANNOT BE CUSTOMIZED
@@ -181,6 +302,19 @@ export const isCustomizableProduct = (product) => {
 
 };
 
+// Texto (nombre + categoría) usado para saber qué tipo de bebida es.
+const productText = (product) =>
+    `${product?.name || ""} ${product?.categoryId?.name || ""}`
+        .toLowerCase();
+
+// El latte art solo aplica a bebidas calientes con espuma de leche.
+export const supportsLatteArt = (product) => {
+
+    const text = productText(product);
+
+    return LATTE_ART_KEYWORDS.some(k => text.includes(k));
+};
+
 // Igual que normalizeCustomization, pero para productos no
 // personalizables ignora lo que mande el cliente y deja los valores
 // por defecto (sin extras de precio).
@@ -190,11 +324,52 @@ export const resolveCustomization = (product, raw) => {
         return {
             customization: {
                 ...DEFAULT_CUSTOMIZATION,
-                toppings: []
+                toppings: [],
+                syrups: [],
+                sweeteners: [],
+                latteArt: ""
             }
         };
     }
 
-    return normalizeCustomization(raw);
+    const result = normalizeCustomization(raw);
+
+    if (result.error) return result;
+
+    const { customization } = result;
+
+    if (
+        customization.latteArt !== "" &&
+        (customization.type !== "Caliente" || !supportsLatteArt(product))
+    ) {
+        return {
+            error: "Este producto no admite latte art"
+        };
+    }
+
+    return result;
 
 };
+
+// Opciones reales que el cliente puede mostrar (GET /customization/options).
+// Es la misma fuente que usa la validación: nada se inventa en la app.
+export const getCustomizationOptions = () => ({
+    sizes: { ...SIZE_PRICES },
+    types: [...TYPE_OPTIONS],
+    milks: { ...MILK_PRICES },
+    extraShot: { price: EXTRA_SHOT_PRICE, max: MAX_EXTRA_SHOTS },
+    toppings: { ...TOPPING_PRICES },
+    syrups: { prices: { ...SYRUP_PRICES }, max: MAX_SYRUPS },
+    sweeteners: { prices: { ...SWEETENER_PRICES }, max: MAX_SWEETENERS },
+    sizeOunces: { ...SIZE_OUNCES },
+    latteArt: {
+        keywords: [...LATTE_ART_KEYWORDS],
+        designs: [...LATTE_ART_DESIGNS]
+    },
+    coffeeKeywords: [...COFFEE_KEYWORDS],
+    defaults: {
+        size: DEFAULT_CUSTOMIZATION.size,
+        type: DEFAULT_CUSTOMIZATION.type,
+        milk: DEFAULT_CUSTOMIZATION.milk
+    }
+});

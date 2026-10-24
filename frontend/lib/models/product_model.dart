@@ -68,6 +68,23 @@ class Product {
     return !_nonCustomizableKeywords.any(name.contains);
   }
 
+  // Categorías de bebidas (mismas palabras que usa el filtro del Menú).
+  // Solo estas muestran el acceso al estudio de bebidas.
+  static const List<String> _drinkKeywords = [
+    'bebida', 'drink', 'beverage', 'caliente', 'hot', 'café', 'cafe',
+    'coffee', 'fría', 'fria', 'cold', 'helad', 'frappe', 'frappé',
+    'té', 'tea', 'chocolate', 'batido', 'smoothie', 'jugo', 'limonada',
+    'malteada', 'latte', 'espresso', 'capuch',
+  ];
+
+  /// Es una bebida personalizable (nunca un postre) según su categoría.
+  /// Sin categoría no se considera bebida: no se inventa el dato.
+  bool get isDrink {
+    final name = (categoryName ?? '').toLowerCase();
+    if (name.isEmpty || !isCustomizable) return false;
+    return _drinkKeywords.any(name.contains);
+  }
+
   /// Ingredientes como texto libre separado por comas (para el formulario).
   String get ingredientsText => ingredients.join(', ');
 

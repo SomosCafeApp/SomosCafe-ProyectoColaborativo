@@ -76,6 +76,12 @@ class CartProvider extends ChangeNotifier {
   String? _token;
   bool _isLoading = false;
   String? _errorMessage;
+  String? _lastAddError;
+
+  /// Mensaje del servidor si la última alta al carrito fue rechazada
+  /// (null si salió bien). Lo usa el estudio de bebidas, que necesita
+  /// saber si la configuración fue aceptada.
+  String? get lastAddError => _lastAddError;
 
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
@@ -208,6 +214,7 @@ class CartProvider extends ChangeNotifier {
     ProductCustomization custom,
   ) async {
     var failed = false;
+    _lastAddError = null;
     try {
       final data = await ApiClient.post('/cart/items', token: _token, body: {
         'productId': product.id,
@@ -220,6 +227,7 @@ class CartProvider extends ChangeNotifier {
       }
     } on ApiException catch (e) {
       _errorMessage = e.message;
+      _lastAddError = e.message;
       failed = true;
     } finally {
       _pendingAdds--;
