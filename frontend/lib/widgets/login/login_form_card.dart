@@ -103,8 +103,12 @@ class _LoginFormCardState extends State<LoginFormCard> {
       }
     } catch (e) {
       if (!mounted) return;
+      debugPrint('[GoogleLogin] $e');
+      final msg = e is GoogleAuthException
+          ? e.message
+          : 'Error al conectar con Google';
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error al conectar con Google')),
+        SnackBar(content: Text(msg)),
       );
     } finally {
       if (mounted) setState(() => _isGoogleLoading = false);

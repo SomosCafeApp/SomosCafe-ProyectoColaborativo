@@ -67,10 +67,14 @@ class _RegisterFormCardState extends State<RegisterFormCard> {
           SnackBar(content: Text(auth.errorMessage ?? 'No se pudo continuar con Google')),
         );
       }
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
+      debugPrint('[GoogleLogin] $e');
+      final msg = e is GoogleAuthException
+          ? e.message
+          : 'Error al conectar con Google';
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error al conectar con Google')),
+        SnackBar(content: Text(msg)),
       );
     } finally {
       if (mounted) setState(() => _isGoogleLoading = false);
