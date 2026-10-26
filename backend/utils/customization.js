@@ -48,7 +48,7 @@ export const MAX_SYRUPS = 3;
 export const MAX_SWEETENERS = 2;
 
 // Latte art: solo tres diseños predefinidos (decoración, no cuesta).
-export const LATTE_ART_DESIGNS = ["Corazón", "Hoja", "Cisne", "Tulipán", "Rosetta", "Estrella"];
+export const LATTE_ART_DESIGNS = ["Corazón", "Hoja", "Cisne"];
 
 // Onzas de cada tamaño. OJO: el menú no guarda onzas; estos valores
 // son los típicos de cafetería y deben confirmarse con el negocio.
