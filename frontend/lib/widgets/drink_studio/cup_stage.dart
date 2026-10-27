@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart' show PointerDeviceKind;
 import 'package:flutter/scheduler.dart';
@@ -32,6 +34,7 @@ class CupStage extends StatefulWidget {
     this.lidOn = false,
     this.pour,
     this.interactive = false,
+    this.bumpTick = 0,
   });
 
   final CupSnapshot snapshot;
@@ -55,6 +58,9 @@ class CupStage extends StatefulWidget {
   /// true mientras el usuario puede verter con el dedo (etapa de arte).
   final bool interactive;
 
+  /// Sube cada vez que el usuario completa una etapa: el vaso da un saltito.
+  final int bumpTick;
+
   @override
   State<CupStage> createState() => _CupStageState();
 }
@@ -64,7 +70,20 @@ class _CupStageState extends State<CupStage> with TickerProviderStateMixin {
   /// no tape lo que se está rellenando). Solo con pantallas táctiles.
   static const double _fingerLift = 34;
 
-  late final AnimationController _loop = AnimationController(vsync: this, duration: const Duration(seconds: 10));
+  /// Reloj ambiental (vapor, ondas, condensación): corre a 30 fps, que
+  /// para movimientos lentos se ve igual y cuesta la mitad de pintado.
+  /// Mientras se vierte, el vaso se repinta a 60 fps por el propio vertido.
+  final _Clock _clock = _Clock();
+  late final Ticker _clockTicker = createTicker(_onClockTick);
+  static const double _clockStep = 1 / 30;
+
+  void _onClockTick(Duration elapsed) {
+    final t = elapsed.inMicroseconds / 1e6;
+    if (t - _clock.seconds >= _clockStep) _clock.set(t);
+  }
+
+  /// Saltito del vaso al completar una etapa.
+  late final AnimationController _bump = AnimationController(vsync: this, duration: const Duration(milliseconds: 520));
   late final AnimationController _fx = AnimationController(vsync: this, duration: const Duration(milliseconds: 950));
   late final AnimationController _temp = AnimationController(vsync: this, duration: const Duration(milliseconds: 2400));
   late final AnimationController _jug = AnimationController(vsync: this, duration: const Duration(milliseconds: 450));
@@ -102,9 +121,10 @@ class _CupStageState extends State<CupStage> with TickerProviderStateMixin {
 
   void _syncLoop() {
     if (_reduced) {
-      _loop.stop();
-    } else if (!_loop.isAnimating) {
-      _loop.repeat();
+      if (_clockTicker.isActive) _clockTicker.stop();
+    } else if (!_clockTicker.isActive) {
+      _clock.seconds = 0;
+      _clockTicker.start();
     }
   }
 
@@ -190,6 +210,7 @@ class _CupStageState extends State<CupStage> with TickerProviderStateMixin {
       _fx.forward(from: 0);
     }
     _syncLoop();
+    if (old.bumpTick != widget.bumpTick && !_reduced) _bump.forward(from: 0);
     if ((old.snapshot.sizeFactor - s.sizeFactor).abs() > 1e-6) {
       _sizeFrom = _factor;
       _sizeTo = s.sizeFactor;
@@ -243,7 +264,9 @@ class _CupStageState extends State<CupStage> with TickerProviderStateMixin {
   void dispose() {
     widget.pour?.removeListener(_onSession);
     _pourTicker.dispose();
-    for (final c in [_loop, _fx, _temp, _jug, _slide, _tilt, _top, _lid, _done, _size]) {
+    _clockTicker.dispose();
+    _clock.dispose();
+    for (final c in [_bump, _fx, _temp, _jug, _slide, _tilt, _top, _lid, _done, _size]) {
       c.dispose();
     }
     super.dispose();
@@ -298,10 +321,12 @@ class _CupStageState extends State<CupStage> with TickerProviderStateMixin {
             onPointerUp: _up,
             onPointerCancel: _up,
             child: AnimatedBuilder(
-              animation: Listenable.merge(<Listenable>[_loop, _fx, _temp, _jug, _slide, _tilt, _top, _lid, _done, _size, if (pr != null) pr]),
+              animation: Listenable.merge(<Listenable>[_clock, _bump, _fx, _temp, _jug, _slide, _tilt, _top, _lid, _done, _size, if (pr != null) pr]),
               builder: (context, _) {
                 final s = _snap;
-                final time = _loop.value * 10;
+                final time = _clock.seconds;
+                // Saltito al completar una etapa: sube, se estira un poco y vuelve.
+                final hop = _bump.isAnimating ? math.sin(math.pi * _bump.value) : 0.0;
                 final cold = Curves.easeInOut.transform(_temp.value);
                 final slide = Curves.easeOutCubic.transform(_slide.value);
                 final dx = (1 - slide) * -widget.transitionDir * box.maxWidth * 0.55;
@@ -318,8 +343,12 @@ class _CupStageState extends State<CupStage> with TickerProviderStateMixin {
                       Opacity(
                         opacity: 1 - topT,
                         child: Transform.translate(
-                          offset: Offset(dx, 0),
-                          child: CustomPaint(
+                          offset: Offset(dx, -hop * 10),
+                          child: Transform.scale(
+                            scaleX: 1 + 0.025 * hop,
+                            scaleY: 1 - 0.02 * hop,
+                            alignment: Alignment.bottomCenter,
+                            child: CustomPaint(
                             painter: TakeawayCupPainter(
                               snap: s,
                               time: time,
@@ -335,6 +364,7 @@ class _CupStageState extends State<CupStage> with TickerProviderStateMixin {
                               tilt: Curves.easeInOut.transform(_tilt.value),
                               dark: dark,
                             ),
+                          ),
                           ),
                         ),
                       ),
@@ -369,5 +399,15 @@ class _CupStageState extends State<CupStage> with TickerProviderStateMixin {
         },
       ),
     );
+  }
+}
+
+/// Reloj simple: guarda los segundos y avisa a quien lo escuche.
+class _Clock extends ChangeNotifier {
+  double seconds = 0;
+
+  void set(double v) {
+    seconds = v;
+    notifyListeners();
   }
 }

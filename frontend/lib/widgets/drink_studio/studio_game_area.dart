@@ -37,6 +37,7 @@ class StudioGameArea extends StatelessWidget {
             // se ve la silueta guía sobre el café).
             pour: s.step == StudioStep.art ? s.pour : null,
             interactive: s.artInteractive,
+            bumpTick: s.stepDoneTick,
           ),
         ),
         if (s.step == StudioStep.art) ...[

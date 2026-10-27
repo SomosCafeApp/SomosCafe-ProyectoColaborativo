@@ -410,4 +410,29 @@ void main() {
       expect(s.pour.hasDesign, isFalse);
     });
   });
+
+  group('micro-animaciones por etapa', () {
+    test('avanzar completa la etapa (sube el contador) y retroceder no', () {
+      final product = Product(id: '1', name: 'Latte', description: '', price: 8000, categoryName: 'Cafés calientes');
+      final p = DrinkStudioProvider(product: product, catalog: <Product>[]);
+      final o = DrinkOptions.fromJson(_optionsJson());
+      p.options = o;
+      p.profile = DrinkProfile.of(product, o);
+      expect(p.stepDoneTick, 0);
+      p.next();
+      expect(p.stepDoneTick, 1);
+      p.next();
+      expect(p.stepDoneTick, 2);
+      p.back();
+      expect(p.stepDoneTick, 2);
+      // En la última etapa no hay a dónde avanzar: no cuenta.
+      while (p.step != p.steps.last) {
+        p.next();
+      }
+      final before = p.stepDoneTick;
+      p.next();
+      expect(p.stepDoneTick, before);
+    });
+  });
 }
+

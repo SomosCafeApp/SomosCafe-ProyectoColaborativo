@@ -77,6 +77,7 @@ class TakeawayCupPainter extends CustomPainter {
     _opening(canvas, g);
     if (lid < 1) _steam(canvas, g);
     _lid(canvas, g);
+    _lidSteam(canvas, g);
     _jug(canvas, g);
     _celebrate(canvas);
 
@@ -105,6 +106,9 @@ class TakeawayCupPainter extends CustomPainter {
         ).createShader(rect),
     );
 
+    // Vaso frío: plástico con un leve tinte azulado.
+    if (cold > 0) canvas.drawPath(body, Paint()..color = const Color(0xFFBFE3F2).withValues(alpha: 0.12 * cold));
+
     // Franja inferior de la marca con las onzas.
     canvas.save();
     canvas.clipPath(body);
@@ -113,10 +117,27 @@ class TakeawayCupPainter extends CustomPainter {
     canvas.drawRect(Rect.fromLTRB(g.cx - g.topW, bandTop, g.cx + g.topW, bandTop + 2.2), Paint()..color = StudioColors.cream.withValues(alpha: 0.7));
 
     // Sombra en el costado derecho y un brillo vertical: el vaso gana volumen.
-    final shade = Rect.fromLTRB(g.cx + g.topW * 0.22, g.topY, g.cx + g.topW * 0.55, g.baseY);
+    final round = Rect.fromLTRB(g.cx - g.topW * 0.55, g.topY, g.cx + g.topW * 0.55, g.baseY);
     canvas.drawRect(
-      shade,
-      Paint()..shader = LinearGradient(colors: [Colors.transparent, Colors.black.withValues(alpha: dark ? 0.22 : 0.12)]).createShader(shade),
+      round,
+      Paint()
+        ..shader = LinearGradient(
+          colors: [
+            Colors.black.withValues(alpha: dark ? 0.2 : 0.1),
+            Colors.transparent,
+            Colors.transparent,
+            Colors.black.withValues(alpha: dark ? 0.3 : 0.18),
+          ],
+          stops: const [0, 0.22, 0.62, 1],
+        ).createShader(round),
+    );
+    // Costura vertical del vaso (sigue la inclinación del cono).
+    canvas.drawLine(
+      Offset(g.cx + g.halfWidthAt(g.topY) * 0.8, g.topY),
+      Offset(g.cx + g.halfWidthAt(g.baseY) * 0.8, g.baseY),
+      Paint()
+        ..strokeWidth = 1
+        ..color = Colors.black.withValues(alpha: 0.07),
     );
     final gloss = Rect.fromLTRB(g.cx + g.topW * 0.30, g.topY + g.cupH * 0.04, g.cx + g.topW * 0.40, bandTop - g.cupH * 0.03);
     canvas.drawRRect(
@@ -419,6 +440,29 @@ class TakeawayCupPainter extends CustomPainter {
     }
   }
 
+  /// Con la bebida caliente ya tapada, un hilo de vapor sale por la boquilla.
+  void _lidSteam(Canvas canvas, CupGeo g) {
+    final strength = ((lid - 0.9) / 0.1).clamp(0.0, 1.0).toDouble() * (1 - cold);
+    if (strength <= 0.02) return;
+    final x0 = g.cx + g.topW * 1.1 * 0.17;
+    final y0 = g.topY - g.cupH * 0.05;
+    for (var i = 0; i < 2; i++) {
+      final path = Path()..moveTo(x0 + i * g.topW * 0.05, y0);
+      for (var k = 1; k <= 6; k++) {
+        path.lineTo(x0 + i * g.topW * 0.05 + math.sin(time * 2 + i * 1.4 + k * 0.8) * g.topW * 0.02 * k / 2, y0 - k * g.cupH * 0.055);
+      }
+      canvas.drawPath(
+        path,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeCap = StrokeCap.round
+          ..strokeWidth = 3
+          ..color = (dark ? StudioColors.cream : Colors.white).withValues(alpha: (0.32 - i * 0.1) * strength)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.6),
+      );
+    }
+  }
+
   // ───────────── Tapa ─────────────
 
   void _lid(Canvas canvas, CupGeo g) {
@@ -434,6 +478,8 @@ class TakeawayCupPainter extends CustomPainter {
     final base = Rect.fromCenter(center: Offset(g.cx, g.topY), width: w, height: g.rimRy * 2.15);
     final isCold = cold > 0.5;
     if (isCold) {
+      // Tapa fría: aro plano + domo transparente con brillo y pitillo rayado.
+      canvas.drawOval(base, Paint()..color = Colors.white.withValues(alpha: 0.38));
       final domeH = g.cupH * 0.14;
       final dome = Path()
         ..moveTo(g.cx - w / 2, g.topY)
@@ -442,16 +488,64 @@ class TakeawayCupPainter extends CustomPainter {
         ..close();
       canvas.drawPath(dome, Paint()..color = Colors.white.withValues(alpha: 0.5));
       Watercolor.ink(canvas, dome, StudioColors.ink, width: 2);
-      // Pitillo.
-      final straw = Path()
-        ..moveTo(g.cx + g.topW * 0.12, g.topY - domeH * 1.55 - g.cupH * 0.2)
-        ..lineTo(g.cx - g.topW * 0.06, g.topY + g.cupH * 0.22);
-      Watercolor.ink(canvas, straw, AppColors.primary, width: math.max(4, g.topW * 0.045));
+      // Brillo del domo.
+      canvas.drawPath(
+        Path()
+          ..moveTo(g.cx - w * 0.34, g.topY - domeH * 0.55)
+          ..quadraticBezierTo(g.cx - w * 0.3, g.topY - domeH * 1.2, g.cx - w * 0.1, g.topY - domeH * 1.38),
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeCap = StrokeCap.round
+          ..strokeWidth = 2.6
+          ..color = Colors.white.withValues(alpha: 0.85),
+      );
+      // Pitillo con rayas.
+      final a = Offset(g.cx + g.topW * 0.12, g.topY - domeH * 1.55 - g.cupH * 0.2);
+      final b = Offset(g.cx - g.topW * 0.06, g.topY + g.cupH * 0.22);
+      final strawW = math.max(4.0, g.topW * 0.045);
+      canvas.drawLine(
+        a,
+        b,
+        Paint()
+          ..strokeCap = StrokeCap.round
+          ..strokeWidth = strawW
+          ..color = AppColors.primary,
+      );
+      for (var k = 0; k < 6; k++) {
+        final t0 = 0.06 + k * 0.16;
+        canvas.drawLine(
+          Offset.lerp(a, b, t0)!,
+          Offset.lerp(a, b, t0 + 0.07)!,
+          Paint()
+            ..strokeWidth = strawW * 0.6
+            ..color = StudioColors.cream.withValues(alpha: 0.9),
+        );
+      }
+      // Aro por donde entra el pitillo.
+      canvas.drawOval(
+        Rect.fromCenter(center: Offset.lerp(a, b, 0.3)!.translate(0, -domeH * 0.1), width: g.topW * 0.1, height: g.rimRy * 0.3),
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.6
+          ..color = Colors.white.withValues(alpha: 0.9),
+      );
     } else {
+      // Tapa caliente: sombra, disco, anillo elevado, boquilla con borde y respiradero.
+      canvas.drawOval(base.translate(0, g.rimRy * 0.25), Paint()..color = Colors.black.withValues(alpha: 0.1));
       canvas.drawOval(base, Paint()..color = const Color(0xFFFFFAF0));
+      canvas.drawOval(
+        Rect.fromCenter(center: Offset(g.cx, g.topY - g.cupH * 0.012), width: w * 0.92, height: g.rimRy * 1.95),
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.2
+          ..color = const Color(0xFFE7D7BE),
+      );
       final cap = Rect.fromCenter(center: Offset(g.cx, g.topY - g.cupH * 0.025), width: w * 0.8, height: g.rimRy * 1.7);
       canvas.drawOval(cap, Paint()..color = const Color(0xFFFFF3DE));
-      canvas.drawOval(Rect.fromCenter(center: Offset(g.cx + w * 0.17, g.topY - g.cupH * 0.02), width: w * 0.2, height: g.rimRy * 0.5), Paint()..color = const Color(0xFF4A2C1B));
+      final hole = Rect.fromCenter(center: Offset(g.cx + w * 0.17, g.topY - g.cupH * 0.02), width: w * 0.2, height: g.rimRy * 0.5);
+      canvas.drawOval(hole.inflate(2.5), Paint()..color = const Color(0xFFE9DAC2));
+      canvas.drawOval(hole, Paint()..color = const Color(0xFF4A2C1B));
+      canvas.drawCircle(Offset(g.cx - w * 0.2, g.topY - g.cupH * 0.02), g.rimRy * 0.1, Paint()..color = const Color(0xFF4A2C1B).withValues(alpha: 0.8));
       Watercolor.ink(canvas, Path()..addOval(cap), StudioColors.ink, width: 1.8);
       canvas.drawArc(
         cap.deflate(3),

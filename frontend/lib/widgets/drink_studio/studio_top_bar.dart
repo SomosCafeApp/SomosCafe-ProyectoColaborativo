@@ -6,6 +6,7 @@ import '../../models/drink_studio_stage.dart';
 import '../../providers/drink_studio_provider.dart';
 import 'studio_colors.dart';
 import 'studio_prefs_tiles.dart';
+import '../../core/utils/studio_prefs.dart';
 
 /// Encabezado del estudio: cerrar, nombre, guardar receta, total
 /// actualizado y los pasos numerados (se puede volver a los ya vistos).
@@ -110,9 +111,15 @@ class _Dot extends StatelessWidget {
                 boxShadow: state == _DotState.current ? [BoxShadow(color: StudioColors.primary.withValues(alpha: 0.4), blurRadius: 8)] : null,
               ),
               child: Center(
-                child: state == _DotState.done
-                    ? const Icon(Icons.check_rounded, size: 15, color: Colors.white)
-                    : Icon(step.icon, size: state == _DotState.current ? 16 : 13, color: active ? Colors.white : StudioColors.muted(dark)),
+                // El check "salta" al completar la etapa.
+                child: AnimatedSwitcher(
+                  duration: StudioPrefs.instance.animations ? const Duration(milliseconds: 380) : Duration.zero,
+                  switchInCurve: Curves.easeOutBack,
+                  transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: child),
+                  child: state == _DotState.done
+                      ? const Icon(Icons.check_rounded, key: ValueKey('done'), size: 15, color: Colors.white)
+                      : Icon(step.icon, key: const ValueKey('icon'), size: state == _DotState.current ? 16 : 13, color: active ? Colors.white : StudioColors.muted(dark)),
+                ),
               ),
             ),
             const SizedBox(height: 2),

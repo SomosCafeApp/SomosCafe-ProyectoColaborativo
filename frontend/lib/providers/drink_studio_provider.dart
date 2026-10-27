@@ -84,6 +84,10 @@ class DrinkStudioProvider extends ChangeNotifier {
   /// leche vertida y progreso. Se conserva al navegar entre etapas.
   late final LattePourSession pour = LattePourSession(onCoarseChange: () => notifyListeners(), onDone: _onArtDone);
 
+  /// Sube cada vez que el usuario completa una etapa avanzando
+  /// (dispara el saltito del vaso y el check de la barra de etapas).
+  int stepDoneTick = 0;
+
   // Modo de juego del arte latte
   StudioMode mode = StudioMode.free;
 
@@ -386,6 +390,7 @@ class DrinkStudioProvider extends ChangeNotifier {
     final list = steps;
     final i = list.indexOf(step);
     if (i < 0 || i >= list.length - 1) return;
+    stepDoneTick++;
     final kind = switch (step) {
       StudioStep.size => StudioTransition.tempIntro,
       StudioStep.base => StudioTransition.tempBurst,
