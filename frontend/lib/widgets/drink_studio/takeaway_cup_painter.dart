@@ -6,6 +6,7 @@ import '../../core/constants/app_colors.dart';
 import '../../models/cup_snapshot.dart';
 import 'art_pour.dart';
 import 'cup_geometry.dart';
+import 'latte_pour_session.dart';
 import 'studio_colors.dart';
 import 'surface_decor.dart';
 import 'watercolor.dart';
@@ -22,10 +23,12 @@ class TakeawayCupPainter extends CustomPainter {
     required this.effect,
     required this.effectT,
     required this.effectSeed,
-    required this.artProgress,
     required this.scene,
     required this.lid,
     required this.dark,
+    this.pour,
+    this.artSettle = 1,
+    this.celebrate = 1,
     this.tilt = 0,
   });
 
@@ -37,9 +40,17 @@ class TakeawayCupPainter extends CustomPainter {
   final PourKind effect;
   final double effectT;
   final int effectSeed;
-  /// Progreso con el que se va dibujando el latte art (0..1).
-  final double artProgress;
   final ArtScene scene;
+
+  /// Vertido interactivo del arte latte (silueta guía, leche vertida).
+  /// Null fuera de la etapa de arte (resumen, miniaturas).
+  final LattePourSession? pour;
+
+  /// 0..1: fundido de la leche vertida al diseño terminado.
+  final double artSettle;
+
+  /// 0..1: avance del festejo al terminar el diseño (1 = ya pasó).
+  final double celebrate;
 
   /// 0 = vista de lado … 1 = vista más cenital (sección de arte latte).
   final double tilt;
@@ -66,6 +77,7 @@ class TakeawayCupPainter extends CustomPainter {
     if (lid < 1) _steam(canvas, g);
     _lid(canvas, g);
     _jug(canvas, g);
+    _celebrate(canvas);
 
     Watercolor.grain(canvas, size);
   }
@@ -248,14 +260,8 @@ class TakeawayCupPainter extends CustomPainter {
     canvas.drawOval(rim, Paint()..color = const Color(0xFF6B4B33));
 
     // Nivel real del líquido: cuanto más vacío, más abajo se ve.
-    final baseFrac = snap.isCoffee ? math.min(0.16 + 0.055 * snap.shots, 0.46) : 0.5;
-    final milkFrac = math.max(0.0, math.min(snap.milkLevel * 0.62, 0.9 - baseFrac));
-    final fill = (baseFrac + milkFrac).clamp(0.0, 1.0);
     final surfaceColor = snap.surfaceColor;
-
-    final shrink = 1 - 0.14 * (1 - fill);
-    final center = Offset(g.cx, g.topY + (1 - fill) * g.rimRy * 0.9);
-    final rx = g.rimRx * 0.97 * shrink, ry = g.rimRy * 0.95 * shrink;
+    final (center, rx, ry) = g.surface(snap.fill);
 
     canvas.save();
     canvas.clipPath(Path()..addOval(rim.deflate(1.5)));
@@ -267,7 +273,7 @@ class TakeawayCupPainter extends CustomPainter {
 
     SurfaceDecor.syrups(canvas, center, rx, ry, snap.syrups);
     SurfaceDecor.sweeteners(canvas, center, rx, ry, snap.sweeteners);
-    SurfaceDecor.art(canvas, center, rx, ry, snap.latteArt, artProgress);
+    _art(canvas, center, rx, ry);
 
     if (cold > 0) _iceTop(canvas, center, rx, ry);
     if (effect != PourKind.none && effectT > 0 && effectT < 1) {
@@ -283,6 +289,34 @@ class TakeawayCupPainter extends CustomPainter {
     SurfaceDecor.toppings(canvas, center, rx, ry, snap.toppings, hasArt: snap.latteArt.isNotEmpty);
 
     _surface = (center, rx, ry);
+  }
+
+  /// Arte latte sobre la crema: la silueta guía y la leche que el
+  /// usuario va vertiendo; al terminar, el diseño completo (con un
+  /// fundido corto desde la leche vertida).
+  void _art(Canvas canvas, Offset c, double rx, double ry) {
+    final live = pour;
+    final done = snap.latteArt.isNotEmpty ? snap.latteArt : ((live?.completed ?? false) ? live!.design : '');
+    final guiding = live != null && live.hasDesign && !live.completed;
+    if (done.isEmpty && !guiding) return;
+
+    ArtPour.crema(canvas, c, rx, ry, snap.baseColor);
+
+    if (live != null && live.hasDesign && (guiding || artSettle < 1)) {
+      ArtPour.paintLive(canvas, c, rx, ry, live, guide: guiding);
+    }
+    if (done.isEmpty) return;
+
+    if (live != null && artSettle < 1) {
+      canvas.saveLayer(
+        Rect.fromCenter(center: c, width: rx * 2.4, height: ry * 2.4),
+        Paint()..color = Colors.white.withValues(alpha: artSettle.clamp(0.0, 1.0).toDouble()),
+      );
+      SurfaceDecor.art(canvas, c, rx, ry, done, 1);
+      canvas.restore();
+    } else {
+      SurfaceDecor.art(canvas, c, rx, ry, done, 1);
+    }
   }
 
   void _iceTop(Canvas canvas, Offset c, double rx, double ry) {
@@ -309,7 +343,14 @@ class TakeawayCupPainter extends CustomPainter {
   void _jug(Canvas canvas, CupGeo g) {
     final surface = _surface;
     if (surface == null || scene.jugShow <= 0) return;
-    ArtPour.paint(canvas, surface.$1, surface.$2, surface.$3, g.topW * 0.5, snap, snap.latteArt.isEmpty ? 'Corazón' : snap.latteArt, scene, time);
+    ArtPour.paint(canvas, surface.$1, surface.$2, surface.$3, g.topW * 0.36, snap, scene, time);
+  }
+
+  /// Destellos al terminar el diseño (por encima de todo).
+  void _celebrate(Canvas canvas) {
+    final surface = _surface;
+    if (surface == null || celebrate >= 1) return;
+    ArtPour.celebrate(canvas, surface.$1, surface.$2, surface.$3, celebrate);
   }
 
   // ───────────── Vapor ─────────────

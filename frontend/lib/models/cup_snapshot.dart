@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 /// Foto inmutable de lo que lleva el vaso en este momento. La pintan
@@ -33,6 +35,13 @@ class CupSnapshot {
     this.sweeteners = 0,
     this.latteArt = '',
   });
+
+  /// Qué tan lleno está el vaso (0..1): base de café + leche.
+  double get fill {
+    final baseFrac = isCoffee ? math.min(0.16 + 0.055 * shots, 0.46) : 0.5;
+    final milkFrac = math.max(0.0, math.min(milkLevel * 0.62, 0.9 - baseFrac));
+    return (baseFrac + milkFrac).clamp(0.0, 1.0).toDouble();
+  }
 
   /// Color de la superficie de la bebida (leche sobre base).
   Color get surfaceColor => Color.lerp(milkLevel > 0.02 ? milkColor : baseColor, Colors.white, 0.1)!;

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../models/cup_snapshot.dart';
+import 'art_pour.dart';
 import 'studio_colors.dart';
 import 'surface_decor.dart';
 import 'watercolor.dart';
@@ -90,6 +91,7 @@ class TopViewPainter extends CustomPainter {
     canvas.clipPath(Path()..addOval(surface));
     SurfaceDecor.syrups(canvas, c, sr, sr, snap.syrups);
     SurfaceDecor.sweeteners(canvas, c, sr, sr, snap.sweeteners);
+    if (snap.latteArt.isNotEmpty) ArtPour.crema(canvas, c, sr, sr, snap.baseColor);
     SurfaceDecor.art(canvas, c, sr, sr, snap.latteArt, 1);
     canvas.restore();
 

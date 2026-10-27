@@ -11,6 +11,7 @@ import '../models/product_customization.dart';
 import '../models/product_model.dart';
 import '../services/api_client.dart';
 import '../services/api_exception.dart';
+import '../widgets/drink_studio/latte_pour_session.dart';
 import 'cart_provider.dart';
 import 'recipes_provider.dart';
 
@@ -44,7 +45,6 @@ class DrinkStudioProvider extends ChangeNotifier {
   int shots = 0;
   int quantity = 1;
   double milkLevel = 0.55;
-  String latteArt = '';
   final Set<String> toppings = {};
   final Set<String> syrups = {};
   final Set<String> sweeteners = {};
@@ -64,8 +64,9 @@ class DrinkStudioProvider extends ChangeNotifier {
   /// +1 al avanzar (el vaso entra desde la izquierda), -1 al retroceder.
   int transitionDir = 1;
 
-  /// Cambia cada vez que se elige o quita un diseño de latte art.
-  int artTick = 0;
+  /// Vertido interactivo del arte latte: diseño elegido (silueta),
+  /// leche vertida y progreso. Se conserva al navegar entre etapas.
+  late final LattePourSession pour = LattePourSession(onCoarseChange: () => notifyListeners());
 
   // Efectos
   PourKind pourKind = PourKind.none;
@@ -87,6 +88,7 @@ class DrinkStudioProvider extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    pour.dispose();
     super.dispose();
   }
 
@@ -115,16 +117,31 @@ class DrinkStudioProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  static String _defaultSize(DrinkOptions o) => o.sizes.containsKey(o.defaultSize) ? o.defaultSize : o.sizes.keys.first;
+  static String _defaultType(DrinkOptions o) => o.types.contains(o.defaultType) ? o.defaultType : o.types.first;
+  static String _defaultMilk(DrinkOptions o) => o.milks.containsKey(o.defaultMilk) ? o.defaultMilk : o.milks.keys.first;
+
   void _applyDefaults(DrinkOptions o) {
-    size = o.sizes.containsKey(o.defaultSize) ? o.defaultSize : o.sizes.keys.first;
-    type = o.types.contains(o.defaultType) ? o.defaultType : o.types.first;
-    milk = o.milks.containsKey(o.defaultMilk) ? o.defaultMilk : o.milks.keys.first;
+    size = _defaultSize(o);
+    type = _defaultType(o);
+    milk = _defaultMilk(o);
   }
 
   // ───────────── Datos derivados ─────────────
 
   bool get isHot => type == ProductCustomization.defaultType;
   bool get canLatteArt => (profile?.supportsLatteArt ?? false) && isHot;
+
+  /// Arte latte TERMINADO de la bebida (lo único que viaja al pedido).
+  /// Elegir una figura solo muestra su silueta: el diseño cuenta cuando
+  /// el usuario termina de rellenarla.
+  String get latteArt => canLatteArt && pour.completed ? pour.design : '';
+
+  /// Hay un diseño elegido a medio verter (para avisar antes de seguir).
+  bool get artPending => canLatteArt && pour.pending;
+
+  /// El vaso responde al dedo (vertido) solo en la etapa de arte.
+  bool get artInteractive => step == StudioStep.art && canLatteArt;
   bool get isCoffee => profile?.isCoffee ?? false;
 
   /// Postres reales disponibles para acompañar.
@@ -208,7 +225,7 @@ class DrinkStudioProvider extends ChangeNotifier {
         toppings: toppings.toList()..sort(),
         syrups: syrups.toList()..sort(),
         sweeteners: sweeteners.length,
-        latteArt: canLatteArt ? latteArt : '',
+        latteArt: latteArt,
       );
 
   // ───────────── Elecciones ─────────────
@@ -225,7 +242,6 @@ class DrinkStudioProvider extends ChangeNotifier {
 
   void setType(String v) {
     type = v;
-    if (!canLatteArt) latteArt = '';
     notifyListeners();
   }
 
@@ -275,18 +291,13 @@ class DrinkStudioProvider extends ChangeNotifier {
   bool toggleSyrup(String n) => _toggle(syrups, n, options?.maxSyrups ?? 0, PourKind.syrup);
   bool toggleSweetener(String n) => _toggle(sweeteners, n, options?.maxSweeteners ?? 0, PourKind.sweetener);
 
-  void setLatteArt(String design) {
-    latteArt = latteArt == design ? '' : design;
-    artTick++;
-    notifyListeners();
-  }
+  /// Elige el diseño ('' = sin arte). Muestra la silueta guía: NO
+  /// rellena nada, eso lo hace el usuario vertiendo.
+  void selectArt(String design) => pour.selectDesign(design);
 
-  /// Repite la animación de vertido del diseño elegido.
-  void replayArt() {
-    if (latteArt.isEmpty) return;
-    artTick++;
-    notifyListeners();
-  }
+  /// Borra la leche vertida y deja la silueta lista para empezar de
+  /// nuevo, sin salir de la etapa ni perder las demás elecciones.
+  void restartPour() => pour.restart();
 
   // ───────────── Acompañamientos ─────────────
 
@@ -341,7 +352,7 @@ class DrinkStudioProvider extends ChangeNotifier {
     shots = 0;
     quantity = 1;
     milkLevel = 0.55;
-    latteArt = '';
+    pour.clear();
     toppings.clear();
     syrups.clear();
     sweeteners.clear();
@@ -349,6 +360,34 @@ class DrinkStudioProvider extends ChangeNotifier {
     step = StudioStep.size;
     furthest = 0;
     transition = StudioTransition.none;
+    notifyListeners();
+  }
+
+  /// La etapa actual tiene algo que reiniciar (el resultado no).
+  bool get canResetStep => step != StudioStep.result;
+
+  /// Reinicia SOLO la etapa actual; las demás elecciones se conservan.
+  void resetCurrentStep() {
+    final o = options;
+    if (o == null) return;
+    switch (step) {
+      case StudioStep.size:
+        size = _defaultSize(o);
+      case StudioStep.base:
+        type = _defaultType(o);
+        shots = 0;
+      case StudioStep.milk:
+        milk = _defaultMilk(o);
+        milkLevel = 0.55;
+      case StudioStep.art:
+        pour.clear();
+      case StudioStep.toppings:
+        toppings.clear();
+        syrups.clear();
+        sweeteners.clear();
+      case StudioStep.result:
+        return;
+    }
     notifyListeners();
   }
 
@@ -376,7 +415,12 @@ class DrinkStudioProvider extends ChangeNotifier {
     sweeteners
       ..clear()
       ..addAll(c.sweeteners.where(o.sweeteners.containsKey).take(o.maxSweeteners));
-    latteArt = canLatteArt && o.latteArtDesigns.contains(c.latteArt) ? c.latteArt : '';
+    final design = canLatteArt && o.latteArtDesigns.contains(c.latteArt) ? c.latteArt : '';
+    if (design.isEmpty) {
+      pour.clear();
+    } else {
+      pour.loadCompleted(design);
+    }
     lastRecipe = null;
     furthest = steps.length - 1;
     notifyListeners();

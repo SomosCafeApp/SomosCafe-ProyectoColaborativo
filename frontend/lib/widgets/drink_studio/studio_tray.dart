@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../models/drink_studio_stage.dart';
 import '../../providers/drink_studio_provider.dart';
+import '../common/styled_confirm_dialog.dart';
 import 'studio_colors.dart';
 import 'studio_panels.dart';
 
@@ -10,6 +11,24 @@ import 'studio_panels.dart';
 /// para avanzar y regresar sin perder lo elegido.
 class StudioTray extends StatelessWidget {
   const StudioTray({super.key});
+
+  /// Avanza; si el arte latte quedó a medias, avisa antes de dejarlo.
+  Future<void> _next(BuildContext context, DrinkStudioProvider s) async {
+    if (s.step == StudioStep.art && s.artPending) {
+      final percent = (s.pour.progress * 100).round();
+      final skip = await showStyledConfirmDialog(
+        context,
+        icon: Icons.brush_rounded,
+        title: 'Tu arte latte va al $percent %',
+        message: 'Si sigues ahora, la bebida quedará sin arte latte. Tu avance se guarda por si quieres volver.',
+        confirmLabel: 'Continuar sin arte',
+        cancelLabel: 'Seguir vertiendo',
+        destructive: false,
+      );
+      if (!skip || !context.mounted) return;
+    }
+    s.next();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,9 +72,18 @@ class StudioTray extends StatelessWidget {
                     ),
                     const SizedBox(width: 12),
                   ],
+                  if (s.canResetStep) ...[
+                    IconButton.outlined(
+                      tooltip: 'Reiniciar esta etapa',
+                      onPressed: s.resetCurrentStep,
+                      icon: const Icon(Icons.restart_alt_rounded),
+                      style: IconButton.styleFrom(foregroundColor: StudioColors.primary, minimumSize: const Size(52, 52), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18))),
+                    ),
+                    const SizedBox(width: 12),
+                  ],
                   Expanded(
                     child: FilledButton.icon(
-                      onPressed: s.next,
+                      onPressed: () => _next(context, s),
                       iconAlignment: IconAlignment.end,
                       style: FilledButton.styleFrom(backgroundColor: StudioColors.primary, minimumSize: const Size(0, 52), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18))),
                       icon: Icon(nextStep == StudioStep.result ? Icons.check_circle_rounded : Icons.arrow_forward_rounded),

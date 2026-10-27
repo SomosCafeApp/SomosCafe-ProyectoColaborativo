@@ -11,6 +11,70 @@ class LatteArtShapes {
 
   static const List<String> designs = ['Corazón', 'Hoja', 'Cisne'];
 
+  /// Silueta rellenable de [design] (la zona que hay que cubrir de
+  /// leche al verter), o null si el diseño no tiene forma conocida.
+  /// Se calcula una vez por diseño.
+  static Path? silhouette(String design) {
+    if (!designs.contains(design)) return null;
+    return _silhouettes.putIfAbsent(design, () => _buildSilhouette(design));
+  }
+
+  static final Map<String, Path> _silhouettes = {};
+
+  static Path _union(Iterable<Path> parts) {
+    Path? acc;
+    for (final p in parts) {
+      acc = acc == null ? p : Path.combine(PathOperation.union, acc, p);
+    }
+    return acc ?? Path();
+  }
+
+  static Path _buildSilhouette(String design) {
+    switch (design) {
+      case 'Corazón':
+        return Path.from(_heart);
+
+      case 'Hoja':
+        final parts = <Path>[];
+        for (var i = 0; i < 5; i++) {
+          final y = 0.7 - i * 0.3;
+          final w = 0.8 - i * 0.12;
+          for (final s in [-1.0, 1.0]) {
+            parts.add(
+              Path()
+                ..moveTo(0, y)
+                ..quadraticBezierTo(s * w, y + 0.03, s * w * 0.9, y - 0.32)
+                ..quadraticBezierTo(s * w * 0.22, y - 0.2, 0, y - 0.04)
+                ..close(),
+            );
+          }
+        }
+        // Tallo central y punta.
+        parts.add(Path()..addRect(const Rect.fromLTRB(-0.06, -0.8, 0.06, 0.95)));
+        parts.add(
+          Path()
+            ..moveTo(0, -0.7)
+            ..quadraticBezierTo(0.2, -0.85, 0, -0.98)
+            ..quadraticBezierTo(-0.2, -0.85, 0, -0.7)
+            ..close(),
+        );
+        return _union(parts);
+
+      case 'Cisne':
+        // El cuello se dibuja con un trazo grueso: aquí se aproxima con
+        // círculos a lo largo de su recorrido.
+        final neck = Path();
+        final m = _swanNeck.computeMetrics().first;
+        for (var d = 0.0; d <= m.length; d += 0.05) {
+          final t = m.getTangentForOffset(d);
+          if (t != null) neck.addOval(Rect.fromCircle(center: t.position, radius: 0.12));
+        }
+        final head = Path()..addOval(Rect.fromCircle(center: const Offset(0.37, -0.84), radius: 0.15));
+        return _union([Path.from(_swanBody), neck, head]);
+    }
+    return Path();
+  }
+
   static double _seg(double p, double from, double to) =>
       ((p - from) / (to - from)).clamp(0.0, 1.0).toDouble();
 

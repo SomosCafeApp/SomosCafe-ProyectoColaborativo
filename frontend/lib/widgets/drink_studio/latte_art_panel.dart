@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -5,11 +7,13 @@ import 'package:provider/provider.dart';
 import '../../animations/press_scale.dart';
 import '../../providers/drink_studio_provider.dart';
 import 'latte_art_shapes.dart';
+import 'latte_pour_session.dart';
 import 'option_card.dart';
 import 'studio_colors.dart';
 
-/// Arte latte (opcional): tres diseños con vista previa. Al elegir uno
-/// la jarrita vierte la leche y el dibujo se forma sobre el café.
+/// Arte latte (opcional): el usuario elige un diseño, ve su silueta
+/// sobre el café y la rellena él mismo vertiendo la leche con el dedo.
+/// Elegir una figura NO la dibuja: solo muestra la guía.
 class LatteArtPanel extends StatelessWidget {
   const LatteArtPanel({super.key});
 
@@ -18,72 +22,147 @@ class LatteArtPanel extends StatelessWidget {
     final s = context.watch<DrinkStudioProvider>();
     final dark = Theme.of(context).brightness == Brightness.dark;
     final designs = s.options!.latteArtDesigns;
+    final pour = s.pour;
 
-    Widget card({required Widget preview, required String label, required bool selected, required VoidCallback onTap}) => Expanded(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: PressScale(
-              onTap: onTap,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 240),
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                decoration: BoxDecoration(
-                  color: selected ? StudioColors.primary.withValues(alpha: dark ? 0.3 : 0.14) : StudioColors.soft(dark),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: selected ? StudioColors.primary : Colors.transparent, width: 2),
-                ),
-                child: Column(
-                  children: [
-                    SizedBox(height: 58, width: 58, child: preview),
-                    const SizedBox(height: 5),
-                    Text(label, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: StudioColors.text(dark))),
-                  ],
-                ),
-              ),
+    final hint = !pour.hasDesign
+        ? 'Es opcional y no cuesta extra. Elige un diseño y rellénalo tú mismo.'
+        : pour.completed
+            ? '¡Listo! Si quieres otro intento, reinicia el vertido.'
+            : 'Mantén presionado y arrastra la jarra sobre la silueta.';
+
+    Widget card({required Widget preview, required String label, required bool selected, required VoidCallback onTap}) => PressScale(
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 240),
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            decoration: BoxDecoration(
+              color: selected ? StudioColors.primary.withValues(alpha: dark ? 0.3 : 0.14) : StudioColors.soft(dark),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: selected ? StudioColors.primary : Colors.transparent, width: 2),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(height: 50, width: 50, child: preview),
+                const SizedBox(height: 4),
+                Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: StudioColors.text(dark))),
+              ],
             ),
           ),
         );
 
-    return StagePanel(
-      title: '¿Quieres arte latte?',
-      hint: 'Es opcional y no cuesta extra. Elige un diseño y mira cómo se vierte la leche.',
-      child: Column(
-        children: [
-          Row(
-            children: [
-              card(
-                preview: Icon(Icons.block_rounded, size: 34, color: StudioColors.muted(dark)),
-                label: 'Sin arte',
-                selected: s.latteArt.isEmpty,
+    final items = <Widget Function(double)>[
+      (w) => SizedBox(
+            width: w,
+            child: card(
+              preview: Icon(Icons.block_rounded, size: 32, color: StudioColors.muted(dark)),
+              label: 'Sin arte',
+              selected: !pour.hasDesign,
+              onTap: () {
+                HapticFeedback.selectionClick();
+                s.selectArt('');
+              },
+            ),
+          ),
+      for (final d in designs)
+        (w) => SizedBox(
+              width: w,
+              child: card(
+                preview: LatteArtDisc(design: d, size: 50),
+                label: d,
+                selected: pour.design == d,
                 onTap: () {
                   HapticFeedback.selectionClick();
-                  if (s.latteArt.isNotEmpty) s.setLatteArt(s.latteArt);
+                  s.selectArt(d);
                 },
               ),
-              for (final d in designs)
-                card(
-                  preview: LatteArtDisc(design: d, size: 58),
-                  label: d,
-                  selected: s.latteArt == d,
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    if (s.latteArt != d) s.setLatteArt(d);
-                  },
-                ),
-            ],
-          ),
-          if (s.latteArt.isNotEmpty)
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton.icon(
-                onPressed: s.replayArt,
-                icon: const Icon(Icons.replay_rounded, size: 18),
-                label: const Text('Volver a verter'),
-                style: TextButton.styleFrom(foregroundColor: StudioColors.primary),
-              ),
             ),
+    ];
+
+    return StagePanel(
+      title: '¿Quieres arte latte?',
+      hint: hint,
+      child: Column(
+        children: [
+          LayoutBuilder(
+            builder: (context, box) {
+              const gap = 8.0;
+              final w = math.max(76.0, (box.maxWidth - gap * (items.length - 1)) / items.length);
+              return SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    for (var i = 0; i < items.length; i++) ...[
+                      if (i > 0) const SizedBox(width: gap),
+                      items[i](w),
+                    ],
+                  ],
+                ),
+              );
+            },
+          ),
+          if (pour.hasDesign) ...[
+            const SizedBox(height: 10),
+            PourProgressRow(pour: pour),
+          ],
         ],
       ),
+    );
+  }
+}
+
+/// Barra de progreso del relleno + botón para reiniciar el vertido.
+/// Escucha a la sesión directamente: así se actualiza mientras se
+/// vierte sin reconstruir el resto del estudio.
+class PourProgressRow extends StatelessWidget {
+  const PourProgressRow({super.key, required this.pour});
+  final LattePourSession pour;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return ListenableBuilder(
+      listenable: pour,
+      builder: (context, _) {
+        final p = pour.progress;
+        final percent = (p * 100).round();
+        final done = pour.completed;
+        final label = done ? '¡Completado! · Precisión ${(pour.accuracy * 100).round()} %' : 'Relleno $percent %';
+        return Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: LinearProgressIndicator(minHeight: 10, value: p, color: done ? const Color(0xFF3E9B5F) : StudioColors.primary, backgroundColor: StudioColors.soft(dark)),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      if (done) const Padding(padding: EdgeInsets.only(right: 4), child: Icon(Icons.check_circle_rounded, size: 14, color: Color(0xFF3E9B5F))),
+                      Flexible(child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: StudioColors.muted(dark)))),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            TextButton.icon(
+              onPressed: p > 0 || done
+                  ? () {
+                      HapticFeedback.lightImpact();
+                      pour.restart();
+                    }
+                  : null,
+              icon: const Icon(Icons.replay_rounded, size: 18),
+              label: const Text('Reiniciar'),
+              style: TextButton.styleFrom(foregroundColor: StudioColors.primary),
+            ),
+          ],
+        );
+      },
     );
   }
 }

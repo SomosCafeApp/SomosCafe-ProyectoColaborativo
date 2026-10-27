@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../models/drink_studio_stage.dart';
 import '../../providers/drink_studio_provider.dart';
+import 'art_overlays.dart';
 import 'cup_stage.dart';
 import 'milk_badge.dart';
 import 'studio_colors.dart';
@@ -31,10 +32,17 @@ class StudioGameArea extends StatelessWidget {
             transition: s.transition,
             transitionTick: s.transitionTick,
             transitionDir: s.transitionDir,
-            artTick: s.artTick,
             ambient: s.stepIndex >= 1,
+            // El vertido solo existe en la etapa de arte (y solo en ella
+            // se ve la silueta guía sobre el café).
+            pour: s.step == StudioStep.art ? s.pour : null,
+            interactive: s.artInteractive,
           ),
         ),
+        if (s.step == StudioStep.art) ...[
+          Align(alignment: const Alignment(0, -0.93), child: ArtCoachMark(pour: s.pour)),
+          Align(alignment: const Alignment(0, -0.7), child: ArtDoneBanner(pour: s.pour)),
+        ],
         Align(
           alignment: const Alignment(0, -0.8),
           child: MilkBadge(tick: s.milkPopTick, name: s.step == StudioStep.milk ? s.milkPopName : ''),
