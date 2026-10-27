@@ -8,6 +8,7 @@ import '../providers/font_size_provider.dart';
 import 'personal_data_page.dart';
 import 'security_page.dart';
 import 'chat_page.dart';
+import '../core/utils/studio_prefs.dart';
 import 'terms_page.dart';
 
 import '../widgets/profile/profile_sub_page_header.dart';
@@ -23,6 +24,12 @@ class SettingsPage extends StatefulWidget {
 }
 
   class _SettingsPageState extends State<SettingsPage> {
+
+  @override
+  void initState() {
+    super.initState();
+    StudioPrefs.instance.load();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -101,6 +108,55 @@ class SettingsPage extends StatefulWidget {
 
                   const SizedBox(height: 24),
                   
+                  // ESTUDIO DE BEBIDAS
+
+                  const SettingsSectionHeader(
+                    title: 'Estudio de bebidas',
+                  ),
+
+                  ListenableBuilder(
+                    listenable: StudioPrefs.instance,
+                    builder: (context, _) => Column(
+                      children: [
+                        SettingsCardTile(
+                          icon: Icons.vibration_rounded,
+                          title: 'Vibración',
+                          subtitle: 'Respuesta táctil al preparar tu bebida',
+                          trailing: Switch(
+                            value: StudioPrefs.instance.haptics,
+                            activeThumbColor: Colors.white,
+                            activeTrackColor: primaryBrown,
+                            onChanged: StudioPrefs.instance.setHaptics,
+                          ),
+                        ),
+                        SettingsCardTile(
+                          icon: Icons.auto_awesome_rounded,
+                          title: 'Efectos',
+                          subtitle: 'Destellos, chorros, nieve y fuego',
+                          trailing: Switch(
+                            value: StudioPrefs.instance.effects,
+                            activeThumbColor: Colors.white,
+                            activeTrackColor: primaryBrown,
+                            onChanged: StudioPrefs.instance.setEffects,
+                          ),
+                        ),
+                        SettingsCardTile(
+                          icon: Icons.animation_rounded,
+                          title: 'Animaciones',
+                          subtitle: 'Transiciones y movimiento del vaso',
+                          trailing: Switch(
+                            value: StudioPrefs.instance.animations,
+                            activeThumbColor: Colors.white,
+                            activeTrackColor: primaryBrown,
+                            onChanged: StudioPrefs.instance.setAnimations,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
                   // CUENTA
 
                   const SettingsSectionHeader(

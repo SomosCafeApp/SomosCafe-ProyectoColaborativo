@@ -56,8 +56,8 @@ test("la clave no cambia para líneas sin los campos nuevos", () => {
     );
 });
 
-test("latte art acepta solo los tres diseños y cambia la clave", () => {
-    for (const design of ["Corazón", "Hoja", "Cisne"]) {
+test("latte art acepta solo los diseños conocidos y cambia la clave", () => {
+    for (const design of ["Corazón", "Hoja", "Cisne", "Tulipán", "Rosetta", "Estrella"]) {
         const { customization, error } = normalizeCustomization({ latteArt: design });
         assert.equal(error, undefined);
         assert.equal(customization.latteArt, design);
@@ -91,7 +91,7 @@ test("el endpoint de opciones expone los mismos valores que valida", () => {
     assert.deepEqual(Object.keys(o.sizeOunces), Object.keys(o.sizes));
     assert.equal(o.extraShot.max, 6);
     assert.deepEqual(o.syrups.prices, {});
-    assert.deepEqual(o.latteArt.designs, ["Corazón", "Hoja", "Cisne"]);
+    assert.deepEqual(o.latteArt.designs, ["Corazón", "Hoja", "Cisne", "Tulipán", "Rosetta", "Estrella"]);
 });
 
 test("la leche deslactosada está disponible y se cobra", () => {

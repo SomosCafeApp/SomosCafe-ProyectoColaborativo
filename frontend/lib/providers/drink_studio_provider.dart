@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../core/utils/drink_profile.dart';
+import '../core/utils/studio_prefs.dart';
 import '../models/cup_snapshot.dart';
 import '../models/drink_options.dart';
 import '../models/drink_recipe.dart';
@@ -11,6 +12,7 @@ import '../models/product_customization.dart';
 import '../models/product_model.dart';
 import '../services/api_client.dart';
 import '../services/api_exception.dart';
+import '../widgets/drink_studio/latte_art_shapes.dart';
 import '../widgets/drink_studio/latte_pour_session.dart';
 import 'cart_provider.dart';
 import 'recipes_provider.dart';
@@ -28,7 +30,21 @@ class StudioAddResult {
 /// actualiza el vaso al instante. Las opciones y precios vienen del
 /// backend; los acompañamientos son los postres reales del menú.
 class DrinkStudioProvider extends ChangeNotifier {
-  DrinkStudioProvider({required this.product, required List<Product> catalog}) : _catalog = catalog;
+  DrinkStudioProvider({required this.product, required List<Product> catalog}) : _catalog = catalog {
+    // Cambiar vibración / efectos / animaciones repinta el estudio al instante.
+    StudioPrefs.instance.addListener(_onPrefs);
+    StudioPrefs.instance.load();
+  }
+
+  void _onPrefs() => notifyListeners();
+
+  /// En el desafío, un diseño terminado puede ser récord.
+  void _onArtDone(LattePourSession s) {
+    final score = s.score;
+    if (mode == StudioMode.challenge && score != null) {
+      s.newRecord = StudioPrefs.instance.recordBest(s.design, score.points);
+    }
+  }
 
   final Product product;
   final List<Product> _catalog;
@@ -66,7 +82,17 @@ class DrinkStudioProvider extends ChangeNotifier {
 
   /// Vertido interactivo del arte latte: diseño elegido (silueta),
   /// leche vertida y progreso. Se conserva al navegar entre etapas.
-  late final LattePourSession pour = LattePourSession(onCoarseChange: () => notifyListeners());
+  late final LattePourSession pour = LattePourSession(onCoarseChange: () => notifyListeners(), onDone: _onArtDone);
+
+  // Modo de juego del arte latte
+  StudioMode mode = StudioMode.free;
+
+  /// Diseño que hay que completar en el modo desafío.
+  String challengeDesign = '';
+  final math.Random _rng = math.Random();
+
+  /// Nombre que se imprime en la etiqueta del vaso ('' = nombre de la bebida).
+  String cupName = '';
 
   // Efectos
   PourKind pourKind = PourKind.none;
@@ -88,6 +114,7 @@ class DrinkStudioProvider extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    StudioPrefs.instance.removeListener(_onPrefs);
     pour.dispose();
     super.dispose();
   }
@@ -136,6 +163,41 @@ class DrinkStudioProvider extends ChangeNotifier {
   /// Elegir una figura solo muestra su silueta: el diseño cuenta cuando
   /// el usuario termina de rellenarla.
   String get latteArt => canLatteArt && pour.completed ? pour.design : '';
+
+  /// Texto de la etiqueta del vaso.
+  String get cupLabel => cupName.trim().isEmpty ? product.name : cupName.trim();
+
+  void setCupName(String v) {
+    cupName = v.length > 18 ? v.substring(0, 18) : v;
+    notifyListeners();
+  }
+
+  /// Diseños que la app sabe dibujar y la bebida admite.
+  List<String> get _playableDesigns => (options?.latteArtDesigns ?? const <String>[]).where((d) => LatteArtShapes.silhouette(d) != null).toList();
+
+  /// Cambia entre arte libre (sin puntos) y desafío (con puntuación).
+  void setMode(StudioMode m) {
+    if (mode == m) return;
+    mode = m;
+    pour.scoring = m == StudioMode.challenge;
+    if (m == StudioMode.challenge) {
+      newChallenge();
+    } else {
+      notifyListeners();
+    }
+  }
+
+  /// Sortea un diseño distinto al actual y deja listo el vertido.
+  void newChallenge() {
+    final pool = _playableDesigns;
+    if (pool.isEmpty) return;
+    final others = pool.where((d) => d != challengeDesign).toList();
+    final list = others.isEmpty ? pool : others;
+    challengeDesign = list[_rng.nextInt(list.length)];
+    pour.selectDesign(challengeDesign);
+    // selectDesign no avisa si el diseño era el mismo.
+    notifyListeners();
+  }
 
   /// Hay un diseño elegido a medio verter (para avisar antes de seguir).
   bool get artPending => canLatteArt && pour.pending;
@@ -187,7 +249,7 @@ class DrinkStudioProvider extends ChangeNotifier {
   /// visual sigue a las onzas (referencia: 12 oz).
   double get sizeFactor {
     final oz = ounces;
-    if (oz != null && oz > 0) return math.pow(oz / 12, 0.45).toDouble();
+    if (oz != null && oz > 0) return math.pow(oz / 12, 0.6).toDouble();
     final keys = options?.sizes.keys.toList() ?? const <String>[];
     final i = keys.indexOf(size);
     return keys.length < 2 || i < 0 ? 1.0 : 0.85 + 0.3 * i / (keys.length - 1);
@@ -226,6 +288,7 @@ class DrinkStudioProvider extends ChangeNotifier {
         syrups: syrups.toList()..sort(),
         sweeteners: sweeteners.length,
         latteArt: latteArt,
+        label: cupLabel,
       );
 
   // ───────────── Elecciones ─────────────
@@ -353,6 +416,10 @@ class DrinkStudioProvider extends ChangeNotifier {
     quantity = 1;
     milkLevel = 0.55;
     pour.clear();
+    mode = StudioMode.free;
+    pour.scoring = false;
+    challengeDesign = '';
+    cupName = '';
     toppings.clear();
     syrups.clear();
     sweeteners.clear();
@@ -421,6 +488,7 @@ class DrinkStudioProvider extends ChangeNotifier {
     } else {
       pour.loadCompleted(design);
     }
+    cupName = r.name;
     lastRecipe = null;
     furthest = steps.length - 1;
     notifyListeners();
@@ -438,7 +506,7 @@ class DrinkStudioProvider extends ChangeNotifier {
 
   /// Guarda lo preparado como receta (acción voluntaria del usuario).
   Future<String?> saveRecipe(RecipesProvider recipes, {String? name}) =>
-      recipes.saveRecipe(product.id, customization, milkLevel, name: name);
+      recipes.saveRecipe(product.id, customization, milkLevel, name: name ?? (cupName.trim().isEmpty ? null : cupName.trim()));
 
   // ───────────── Carrito ─────────────
 

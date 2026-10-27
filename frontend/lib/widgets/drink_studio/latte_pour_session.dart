@@ -1,9 +1,9 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../core/utils/latte_pour_engine.dart';
+import '../../core/utils/studio_prefs.dart';
 import 'latte_art_shapes.dart';
 
 /// Estado del vertido interactivo del arte latte.
@@ -22,13 +22,25 @@ import 'latte_art_shapes.dart';
 /// repinta el vaso, no reconstruye toda la pantalla. Los cambios
 /// "gruesos" (elegir, terminar, reiniciar) avisan por [onCoarseChange].
 class LattePourSession extends ChangeNotifier {
-  LattePourSession({this.onCoarseChange});
+  LattePourSession({this.onCoarseChange, this.onDone});
 
   final VoidCallback? onCoarseChange;
 
-  /// Vibración suave al terminar y en cada cuarto de avance. La
-  /// pantalla de ajustes podrá apagarla.
-  static bool hapticsEnabled = true;
+  /// Se llama una vez al terminar el diseño (antes del aviso general),
+  /// para que quien la use registre récords, etc.
+  final void Function(LattePourSession session)? onDone;
+
+  /// Modo desafío: al terminar se calcula una puntuación. En modo libre
+  /// queda en false y no hay puntos de ningún tipo.
+  bool scoring = false;
+
+  /// El último diseño terminado superó el mejor puntaje guardado.
+  bool newRecord = false;
+
+  ArtScore? _score;
+
+  /// Puntuación del diseño recién terminado (solo con [scoring]).
+  ArtScore? get score => _score;
 
   static const int _grid = 32;
   static const double _extent = 1.2;
@@ -132,6 +144,8 @@ class LattePourSession extends ChangeNotifier {
     _silhouette = null;
     _guide = null;
     _completed = false;
+    _score = null;
+    newRecord = false;
     if (design.isEmpty) return;
     final sil = LatteArtShapes.silhouette(design);
     if (sil == null) {
@@ -176,6 +190,8 @@ class LattePourSession extends ChangeNotifier {
     _completed = false;
     _pouring = false;
     _milestone = 0;
+    _score = null;
+    newRecord = false;
     resetTick++;
     _coarse();
   }
@@ -238,7 +254,7 @@ class LattePourSession extends ChangeNotifier {
     final m = (p * 4).floor();
     if (m > _milestone && m < 4) {
       _milestone = m;
-      _buzz(HapticFeedback.selectionClick);
+      _buzz(StudioHaptics.select);
     }
   }
 
@@ -247,12 +263,13 @@ class LattePourSession extends ChangeNotifier {
     _pouring = false;
     _engine?.lift();
     doneTick++;
-    _buzz(HapticFeedback.mediumImpact);
+    _score = scoring ? ArtScore.of(accuracy) : null;
+    _buzz(StudioHaptics.medium);
+    onDone?.call(this);
     _coarse();
   }
 
   void _buzz(Future<void> Function() haptic) {
-    if (!hapticsEnabled) return;
     haptic().catchError((Object _) {});
   }
 

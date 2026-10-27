@@ -1,7 +1,10 @@
 import 'dart:ui' show Offset;
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:somoscafeapp/core/utils/latte_pour_engine.dart';
 import 'package:somoscafeapp/core/utils/drink_profile.dart';
+import 'package:somoscafeapp/core/utils/studio_prefs.dart';
 import 'package:somoscafeapp/providers/drink_studio_provider.dart';
 import 'package:somoscafeapp/models/drink_studio_stage.dart';
 import 'package:somoscafeapp/widgets/drink_studio/latte_pour_session.dart';
@@ -21,7 +24,7 @@ Map<String, dynamic> _optionsJson({Map<String, num> syrups = const {}}) => {
       'toppings': {'Canela': 1000},
       'syrups': {'prices': syrups, 'max': 3},
       'sweeteners': {'prices': {}, 'max': 2},
-      'latteArt': {'keywords': ['latte'], 'designs': ['Corazón', 'Hoja', 'Cisne']},
+      'latteArt': {'keywords': ['latte'], 'designs': ['Corazón', 'Hoja', 'Cisne', 'Tulipán', 'Rosetta', 'Estrella']},
       'sizeOunces': {'Pequeño': 8, 'Mediano': 12, 'Grande': 16},
       'coffeeKeywords': ['café', 'latte'],
       'defaults': {'size': 'Mediano', 'type': 'Caliente', 'milk': 'Entera'},
@@ -76,7 +79,7 @@ void main() {
     expect(o.hasSyrups, isTrue);
     expect(o.hasSweeteners, isFalse);
     expect(o.ouncesOf('Grande'), 16);
-    expect(o.latteArtDesigns, ['Corazón', 'Hoja', 'Cisne']);
+    expect(o.latteArtDesigns, ['Corazón', 'Hoja', 'Cisne', 'Tulipán', 'Rosetta', 'Estrella']);
     final c = ProductCustomization(size: 'Grande', milk: 'Avena', extraShots: 1, syrups: {'Vainilla'});
     expect(o.extraPriceOf(c), 5000 + 1000 + 3000 + 1500);
   });
@@ -106,8 +109,8 @@ void main() {
     expect(milkKindOf('Otra'), MilkKind.generic);
   });
 
-  test('los tres diseños de latte art existen y tienen punto de vertido', () {
-    expect(LatteArtShapes.designs, ['Corazón', 'Hoja', 'Cisne']);
+  test('los seis diseños de latte art existen y tienen punto de vertido', () {
+    expect(LatteArtShapes.designs, ['Corazón', 'Hoja', 'Cisne', 'Tulipán', 'Rosetta', 'Estrella']);
     for (final d in LatteArtShapes.designs) {
       final start = LatteArtShapes.pourPoint(d, 0);
       final end = LatteArtShapes.pourPoint(d, 1);
@@ -117,7 +120,7 @@ void main() {
   });
 
   group('arte latte interactivo', () {
-    setUp(() => LattePourSession.hapticsEnabled = false);
+    setUp(() => StudioPrefs.instance.haptics = false);
 
     DrinkStudioProvider studio() {
       final product = Product(id: '1', name: 'Latte', description: '', price: 8000, categoryName: 'Cafés calientes');
@@ -276,5 +279,135 @@ void main() {
       expect(s.stamps, isEmpty);
     });
   });
-}
 
+  group('modo desafío, puntuación y preferencias', () {
+    setUp(() {
+      SharedPreferences.setMockInitialValues({});
+      StudioPrefs.instance.haptics = false;
+    });
+
+    DrinkStudioProvider studio() {
+      final product = Product(id: '1', name: 'Latte', description: '', price: 8000, categoryName: 'Cafés calientes');
+      final p = DrinkStudioProvider(product: product, catalog: <Product>[]);
+      final o = DrinkOptions.fromJson(_optionsJson());
+      p.options = o;
+      p.profile = DrinkProfile.of(product, o);
+      return p;
+    }
+
+    test('el modo libre nunca puntúa', () {
+      final s = studio();
+      expect(s.mode, StudioMode.free);
+      expect(s.pour.scoring, isFalse);
+      s.selectArt('Corazón');
+      expect(s.pour.score, isNull);
+    });
+
+    test('el desafío sortea un diseño real y activa la puntuación', () {
+      final s = studio();
+      s.setMode(StudioMode.challenge);
+      expect(s.pour.scoring, isTrue);
+      expect(s.challengeDesign, isNotEmpty);
+      expect(LatteArtShapes.designs, contains(s.challengeDesign));
+      expect(s.pour.design, s.challengeDesign);
+      for (var i = 0; i < 12; i++) {
+        final before = s.challengeDesign;
+        s.newChallenge();
+        expect(s.challengeDesign, isNot(before));
+      }
+      s.setMode(StudioMode.free);
+      expect(s.pour.scoring, isFalse);
+    });
+
+    test('las seis figuras tienen silueta y se pueden elegir', () {
+      final s = studio();
+      for (final d in LatteArtShapes.designs) {
+        s.selectArt(d);
+        expect(s.pour.silhouette, isNotNull, reason: d);
+        expect(s.pour.guide, isNotNull, reason: d);
+        expect(s.pour.progress, 0, reason: d);
+      }
+    });
+
+    test('terminar un reto da puntos y registra el récord', () {
+      final s = studio();
+      s.setMode(StudioMode.challenge);
+      s.selectArt('Corazón');
+      final sess = s.pour;
+      sess.pointerDown(Offset.zero);
+      for (var i = 0; i < 12; i++) {
+        sess.tick(0.016);
+      }
+      for (var y = -0.65; y <= 0.85 && !sess.completed; y += 0.12) {
+        for (var x = -0.95; x <= 0.95 && !sess.completed; x += 0.05) {
+          sess.pointerMove(Offset(x, y));
+          sess.tick(0.016);
+        }
+      }
+      expect(sess.completed, isTrue);
+      expect(sess.score, isNotNull);
+      expect(sess.score!.points, inInclusiveRange(40, 100));
+      expect(sess.newRecord, isTrue);
+      expect(StudioPrefs.instance.bestScores['Corazón'], sess.score!.points);
+      expect(StudioPrefs.instance.recordBest('Corazón', 1), isFalse);
+    });
+
+    test('puntuación: terminar vale 40 y la precisión suma hasta 100', () {
+      expect(ArtScore.of(0).points, 40);
+      expect(ArtScore.of(1).points, 100);
+      expect(ArtScore.of(1).stars, 3);
+    });
+
+    test('el nombre del vaso: por defecto el de la bebida, máximo 18 letras', () {
+      final s = studio();
+      expect(s.cupLabel, 'Latte');
+      expect(s.snapshot.label, 'Latte');
+      s.setCupName('  Mi café  ');
+      expect(s.cupLabel, 'Mi café');
+      s.setCupName('a' * 40);
+      expect(s.cupName.length, 18);
+      s.setCupName('');
+      expect(s.cupLabel, 'Latte');
+    });
+
+    test('los tamaños crecen de forma proporcional a las onzas', () {
+      final s = studio();
+      s.setSize('Pequeño');
+      final small = s.sizeFactor;
+      s.setSize('Mediano');
+      final medium = s.sizeFactor;
+      s.setSize('Grande');
+      final large = s.sizeFactor;
+      expect(small, lessThan(medium));
+      expect(medium, closeTo(1, 1e-9));
+      expect(large, greaterThan(medium));
+    });
+
+    test('las preferencias avisan y apagan vibración, efectos y animaciones', () {
+      final prefs = StudioPrefs.instance;
+      var calls = 0;
+      void l() => calls++;
+      prefs.addListener(l);
+      prefs.setEffects(false);
+      prefs.setAnimations(false);
+      prefs.setHaptics(false);
+      prefs.setEffects(false); // sin cambio: no avisa
+      expect(calls, 3);
+      expect([prefs.effects, prefs.animations, prefs.haptics], [false, false, false]);
+      prefs.setEffects(true);
+      prefs.setAnimations(true);
+      prefs.removeListener(l);
+    });
+
+    test('reiniciar todo devuelve el modo libre y borra el nombre', () {
+      final s = studio();
+      s.setMode(StudioMode.challenge);
+      s.setCupName('X');
+      s.restart();
+      expect(s.mode, StudioMode.free);
+      expect(s.pour.scoring, isFalse);
+      expect(s.cupName, '');
+      expect(s.pour.hasDesign, isFalse);
+    });
+  });
+}

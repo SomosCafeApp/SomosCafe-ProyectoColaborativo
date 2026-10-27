@@ -1,10 +1,11 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/utils/studio_prefs.dart';
 import '../../animations/press_scale.dart';
+import '../../models/drink_studio_stage.dart';
 import '../../providers/drink_studio_provider.dart';
 import 'latte_art_shapes.dart';
 import 'latte_pour_session.dart';
@@ -23,8 +24,11 @@ class LatteArtPanel extends StatelessWidget {
     final dark = Theme.of(context).brightness == Brightness.dark;
     final designs = s.options!.latteArtDesigns;
     final pour = s.pour;
+    final challenge = s.mode == StudioMode.challenge;
 
-    final hint = !pour.hasDesign
+    final hint = challenge
+        ? (pour.completed ? '¡Reto cumplido! Prueba otro o reinicia para mejorar tu puntaje.' : 'Rellena la silueta del reto con la mayor precisión que puedas.')
+        : !pour.hasDesign
         ? 'Es opcional y no cuesta extra. Elige un diseño y rellénalo tú mismo.'
         : pour.completed
             ? '¡Listo! Si quieres otro intento, reinicia el vertido.'
@@ -59,7 +63,7 @@ class LatteArtPanel extends StatelessWidget {
               label: 'Sin arte',
               selected: !pour.hasDesign,
               onTap: () {
-                HapticFeedback.selectionClick();
+                StudioHaptics.select();
                 s.selectArt('');
               },
             ),
@@ -72,7 +76,7 @@ class LatteArtPanel extends StatelessWidget {
                 label: d,
                 selected: pour.design == d,
                 onTap: () {
-                  HapticFeedback.selectionClick();
+                  StudioHaptics.select();
                   s.selectArt(d);
                 },
               ),
@@ -84,7 +88,24 @@ class LatteArtPanel extends StatelessWidget {
       hint: hint,
       child: Column(
         children: [
-          LayoutBuilder(
+          SegmentedButton<StudioMode>(
+            showSelectedIcon: false,
+            style: SegmentedButton.styleFrom(selectedBackgroundColor: StudioColors.primary, selectedForegroundColor: Colors.white, foregroundColor: StudioColors.text(dark), visualDensity: VisualDensity.compact),
+            segments: const [
+              ButtonSegment(value: StudioMode.free, label: Text('Libre'), icon: Icon(Icons.brush_rounded, size: 16)),
+              ButtonSegment(value: StudioMode.challenge, label: Text('Desafío'), icon: Icon(Icons.emoji_events_rounded, size: 16)),
+            ],
+            selected: {s.mode},
+            onSelectionChanged: (v) {
+              StudioHaptics.select();
+              s.setMode(v.first);
+            },
+          ),
+          const SizedBox(height: 10),
+          if (challenge)
+            _ChallengeCard(studio: s)
+          else
+            LayoutBuilder(
             builder: (context, box) {
               const gap = 8.0;
               final w = math.max(76.0, (box.maxWidth - gap * (items.length - 1)) / items.length);
@@ -127,7 +148,9 @@ class PourProgressRow extends StatelessWidget {
         final p = pour.progress;
         final percent = (p * 100).round();
         final done = pour.completed;
-        final label = done ? '¡Completado! · Precisión ${(pour.accuracy * 100).round()} %' : 'Relleno $percent %';
+        final score = pour.score;
+        final stars = score == null ? '' : '${'★' * score.stars}${'☆' * (3 - score.stars)} · ${score.points} pts · ';
+        final label = done ? '¡Completado! · $stars' 'Precisión ${(pour.accuracy * 100).round()} %' : 'Relleno $percent %';
         return Row(
           children: [
             Expanded(
@@ -152,7 +175,7 @@ class PourProgressRow extends StatelessWidget {
             TextButton.icon(
               onPressed: p > 0 || done
                   ? () {
-                      HapticFeedback.lightImpact();
+                      StudioHaptics.light();
                       pour.restart();
                     }
                   : null,
@@ -161,6 +184,52 @@ class PourProgressRow extends StatelessWidget {
               style: TextButton.styleFrom(foregroundColor: StudioColors.primary),
             ),
           ],
+        );
+      },
+    );
+  }
+}
+
+/// Reto del modo desafío: diseño a completar, mejor puntaje y otro reto.
+class _ChallengeCard extends StatelessWidget {
+  const _ChallengeCard({required this.studio});
+  final DrinkStudioProvider studio;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final design = studio.challengeDesign;
+    return ListenableBuilder(
+      listenable: StudioPrefs.instance,
+      builder: (context, _) {
+        final best = StudioPrefs.instance.bestScores[design];
+        return Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(color: StudioColors.soft(dark), borderRadius: BorderRadius.circular(18)),
+          child: Row(
+            children: [
+              if (design.isNotEmpty) LatteArtDisc(design: design, size: 56),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Reto: $design', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: StudioColors.text(dark))),
+                    Text(best == null ? 'Aún sin récord' : 'Tu mejor puntaje: $best pts', style: TextStyle(fontSize: 12.5, color: StudioColors.muted(dark))),
+                  ],
+                ),
+              ),
+              TextButton.icon(
+                onPressed: () {
+                  StudioHaptics.select();
+                  studio.newChallenge();
+                },
+                icon: const Icon(Icons.casino_rounded, size: 18),
+                label: const Text('Otro reto'),
+                style: TextButton.styleFrom(foregroundColor: StudioColors.primary),
+              ),
+            ],
+          ),
         );
       },
     );

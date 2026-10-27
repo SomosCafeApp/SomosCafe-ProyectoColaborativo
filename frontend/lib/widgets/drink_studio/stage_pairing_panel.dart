@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/utils/studio_prefs.dart';
 import '../../core/utils/money_format.dart';
 import '../../models/product_model.dart';
 import '../../providers/drink_studio_provider.dart';
@@ -35,7 +35,7 @@ class PairingPanel extends StatelessWidget {
             dark: dark,
             selected: s.pairings.containsKey(items[i].id),
             onTap: () {
-              HapticFeedback.selectionClick();
+              StudioHaptics.select();
               s.togglePairing(items[i]);
             },
           ),

@@ -72,6 +72,7 @@ class TakeawayCupPainter extends CustomPainter {
     _body(canvas, g);
     _window(canvas, g);
     _brand(canvas, g);
+    _nameLabel(canvas, g);
     _condensation(canvas, g);
     _opening(canvas, g);
     if (lid < 1) _steam(canvas, g);
@@ -110,6 +111,18 @@ class TakeawayCupPainter extends CustomPainter {
     final bandTop = g.baseY - g.cupH * 0.15;
     canvas.drawRect(Rect.fromLTRB(g.cx - g.topW, bandTop, g.cx + g.topW, g.baseY + 30), Paint()..color = AppColors.primary);
     canvas.drawRect(Rect.fromLTRB(g.cx - g.topW, bandTop, g.cx + g.topW, bandTop + 2.2), Paint()..color = StudioColors.cream.withValues(alpha: 0.7));
+
+    // Sombra en el costado derecho y un brillo vertical: el vaso gana volumen.
+    final shade = Rect.fromLTRB(g.cx + g.topW * 0.22, g.topY, g.cx + g.topW * 0.55, g.baseY);
+    canvas.drawRect(
+      shade,
+      Paint()..shader = LinearGradient(colors: [Colors.transparent, Colors.black.withValues(alpha: dark ? 0.22 : 0.12)]).createShader(shade),
+    );
+    final gloss = Rect.fromLTRB(g.cx + g.topW * 0.30, g.topY + g.cupH * 0.04, g.cx + g.topW * 0.40, bandTop - g.cupH * 0.03);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(gloss, Radius.circular(g.topW * 0.05)),
+      Paint()..color = Colors.white.withValues(alpha: 0.28),
+    );
     canvas.restore();
 
     final oz = snap.ounces;
@@ -159,6 +172,8 @@ class TakeawayCupPainter extends CustomPainter {
       }
       wave..lineTo(right, yTop)..lineTo(left, yTop)..close();
       canvas.drawPath(wave, Paint()..color = upper.withValues(alpha: 0.97));
+      // Capa de espuma en lo alto de la leche.
+      canvas.drawRect(Rect.fromLTRB(left, yTop, right, yTop + h * 0.04), Paint()..color = Color.lerp(upper, Colors.white, 0.55)!.withValues(alpha: 0.9));
 
     }
 
@@ -232,6 +247,33 @@ class TakeawayCupPainter extends CustomPainter {
     }
     _text(canvas, 'SOMOS', Offset(c.dx, c.dy + r * 1.35), g.topW * 0.075, AppColors.primary, spacing: 1.4);
     _text(canvas, 'CAFÉ', Offset(c.dx, c.dy + r * 1.35 + g.topW * 0.085), g.topW * 0.075, AppColors.primary, spacing: 3);
+  }
+
+  // ───────────── Etiqueta con el nombre ─────────────
+
+  /// Pegatina con el nombre de la bebida (o el que le puso el usuario).
+  void _nameLabel(Canvas canvas, CupGeo g) {
+    final text = snap.label.trim();
+    if (text.isEmpty) return;
+    final h = g.cupH * 0.085;
+    final w = g.topW * 0.48;
+    final c = Offset(g.cx + g.topW * 0.12, g.topY + g.cupH * 0.72);
+    final rect = RRect.fromRectAndRadius(Rect.fromCenter(center: c, width: w, height: h), Radius.circular(h / 2));
+    canvas.drawRRect(rect, Paint()..color = StudioColors.cream);
+    canvas.drawRRect(
+      rect,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.4
+        ..color = AppColors.primary.withValues(alpha: 0.6),
+    );
+    final tp = TextPainter(
+      text: TextSpan(text: text, style: TextStyle(color: AppColors.primary, fontSize: h * 0.46, fontWeight: FontWeight.w800, letterSpacing: 0.3)),
+      textDirection: TextDirection.ltr,
+      maxLines: 1,
+      ellipsis: '…',
+    )..layout(maxWidth: w * 0.88);
+    tp.paint(canvas, c - Offset(tp.width / 2, tp.height / 2));
   }
 
   // ───────────── Condensación (fría) ─────────────
@@ -411,6 +453,17 @@ class TakeawayCupPainter extends CustomPainter {
       canvas.drawOval(cap, Paint()..color = const Color(0xFFFFF3DE));
       canvas.drawOval(Rect.fromCenter(center: Offset(g.cx + w * 0.17, g.topY - g.cupH * 0.02), width: w * 0.2, height: g.rimRy * 0.5), Paint()..color = const Color(0xFF4A2C1B));
       Watercolor.ink(canvas, Path()..addOval(cap), StudioColors.ink, width: 1.8);
+      canvas.drawArc(
+        cap.deflate(3),
+        math.pi * 1.05,
+        math.pi * 0.5,
+        false,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeCap = StrokeCap.round
+          ..strokeWidth = 2
+          ..color = Colors.white.withValues(alpha: 0.7),
+      );
     }
     Watercolor.ink(canvas, Path()..addOval(base), StudioColors.ink, width: 2.2);
     canvas.drawOval(base.deflate(2), Paint()

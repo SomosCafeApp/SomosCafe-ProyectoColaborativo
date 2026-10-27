@@ -85,7 +85,10 @@ class _ArtDoneBannerState extends State<ArtDoneBanner> {
     if (!widget.pour.completed || !mounted) return;
     setState(() {
       _visible = true;
-      _text = '¡Arte latte listo! ${widget.pour.verdict}';
+      final score = widget.pour.score;
+      _text = score == null
+          ? '¡Arte latte listo! ${widget.pour.verdict}'
+          : '¡Reto superado! ${'★' * score.stars}${'☆' * (3 - score.stars)} · ${score.points} pts${widget.pour.newRecord ? ' · ¡Récord!' : ''}';
     });
     _timer?.cancel();
     _timer = Timer(_visibleFor, () {

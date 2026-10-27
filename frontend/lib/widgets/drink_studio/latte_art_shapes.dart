@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
@@ -9,7 +10,7 @@ import 'studio_colors.dart';
 class LatteArtShapes {
   LatteArtShapes._();
 
-  static const List<String> designs = ['Corazón', 'Hoja', 'Cisne'];
+  static const List<String> designs = ['Corazón', 'Hoja', 'Cisne', 'Tulipán', 'Rosetta', 'Estrella'];
 
   /// Silueta rellenable de [design] (la zona que hay que cubrir de
   /// leche al verter), o null si el diseño no tiene forma conocida.
@@ -71,6 +72,18 @@ class LatteArtShapes {
         }
         final head = Path()..addOval(Rect.fromCircle(center: const Offset(0.37, -0.84), radius: 0.15));
         return _union([Path.from(_swanBody), neck, head]);
+
+      case 'Tulipán':
+        return _union([for (final l in _tulipLayers) _tulipLayer(l), _tulipTip]);
+
+      case 'Rosetta':
+        return _union([
+          for (var i = 0; i < _rosettaLayers; i++) _crescent(i),
+          Path()..addRect(const Rect.fromLTRB(-0.06, -0.88, 0.06, 0.9)),
+        ]);
+
+      case 'Estrella':
+        return _star(0.95, 0.42);
     }
     return Path();
   }
@@ -100,6 +113,16 @@ class LatteArtShapes {
           0.45 - 0.1 * _seg(p, 0.35, 1),
           0.5 - 1.35 * _seg(p, 0.35, 1),
         );
+
+      case 'Tulipán':
+        return Offset(0, 0.6 - 1.5 * p);
+
+      case 'Rosetta':
+        return Offset(0, 0.85 - 1.6 * p);
+
+      case 'Estrella':
+        final a = -math.pi / 2 + 2 * math.pi * p;
+        return Offset(0.7 * math.cos(a), 0.7 * math.sin(a));
 
       default:
         return Offset.zero;
@@ -278,7 +301,169 @@ class LatteArtShapes {
               ),
           );
         }
+
+      case 'Tulipán':
+        final tulipLine = Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 0.035
+          ..strokeCap = StrokeCap.round
+          ..color = const Color(0xFF8A5A36).withValues(alpha: alpha * 0.55);
+
+        for (var i = 0; i < _tulipLayers.length; i++) {
+          final t = Curves.easeOut.transform(_seg(p, i * 0.24, i * 0.24 + 0.3));
+          if (t <= 0) continue;
+          final l = _tulipLayers[i];
+          final path = _tulipLayer(l);
+          c.save();
+          c.translate(0, l.$2);
+          c.scale(t, 1);
+          c.translate(0, -l.$2);
+          c.drawPath(path, fill);
+          c.drawPath(path, tulipLine);
+          c.restore();
+        }
+
+        final tip = Curves.easeOutBack.transform(_seg(p, 0.75, 1));
+        if (tip > 0) {
+          c.save();
+          c.translate(0, -0.38);
+          c.scale(tip);
+          c.translate(0, 0.38);
+          c.drawPath(_tulipTip, fill);
+          c.drawPath(_tulipTip, tulipLine);
+          c.restore();
+        }
+
+      case 'Rosetta':
+        final rosettaLine = Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 0.03
+          ..strokeCap = StrokeCap.round
+          ..color = const Color(0xFF8A5A36).withValues(alpha: alpha * 0.55);
+
+        for (var i = 0; i < _rosettaLayers; i++) {
+          final t = Curves.easeOut.transform(
+            _seg(p, i / _rosettaLayers * 0.78, i / _rosettaLayers * 0.78 + 0.22),
+          );
+          if (t <= 0) continue;
+          final y = _rosettaY(i);
+          final path = _crescent(i);
+          c.save();
+          c.translate(0, y);
+          c.scale(t, 1);
+          c.translate(0, -y);
+          c.drawPath(path, fill);
+          c.drawPath(path, rosettaLine);
+          c.restore();
+        }
+
+        final rosettaStem = 1.78 * _seg(p, 0, 0.95);
+        c.drawLine(
+          const Offset(0, 0.9),
+          Offset(0, 0.9 - rosettaStem),
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 0.07
+            ..strokeCap = StrokeCap.round
+            ..color = StudioColors.cream.withValues(alpha: alpha * 0.97),
+        );
+
+      case 'Estrella':
+        final star = _star(0.95, 0.42);
+        final reveal = _seg(p, 0, 0.85);
+
+        c.save();
+        if (reveal < 1) {
+          // Las puntas aparecen girando alrededor del centro.
+          c.clipPath(
+            Path()
+              ..moveTo(0, 0)
+              ..arcTo(
+                Rect.fromCircle(center: Offset.zero, radius: 2),
+                -math.pi / 2,
+                2 * math.pi * reveal,
+                false,
+              )
+              ..close(),
+          );
+        }
+        c.drawPath(star, fill);
+        c.drawPath(star, edge);
+        c.restore();
+
+        final inner = _seg(p, 0.85, 1);
+        if (inner > 0) {
+          c.save();
+          c.scale(0.5 * inner);
+          c.drawPath(
+            star,
+            Paint()
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 0.07
+              ..strokeJoin = StrokeJoin.round
+              ..color = const Color(0xFF8A5A36).withValues(alpha: alpha * 0.55),
+          );
+          c.restore();
+        }
     }
+  }
+
+  // ───────────── Tulipán, Rosetta y Estrella ─────────────
+
+  /// Capas del tulipán de abajo arriba: corazones apilados que se
+  /// estrechan. (escala, y de la punta inferior).
+  static const List<(double, double)> _tulipLayers = [
+    (0.62, 0.9),
+    (0.5, 0.5),
+    (0.4, 0.1),
+  ];
+
+  /// Corazón de la misma forma que `_heart`, a escala [l].$1 y con su
+  /// punta inferior en y = [l].$2.
+  static Path _tulipLayer((double, double) l) {
+    final k = l.$1;
+    final dy = l.$2 - 0.82 * k;
+    double x(double v) => v * k;
+    double y(double v) => v * k + dy;
+    return Path()
+      ..moveTo(x(0), y(0.82))
+      ..cubicTo(x(-1.05), y(0.15), x(-0.95), y(-0.85), x(-0.02), y(-0.32))
+      ..cubicTo(x(0.95), y(-0.85), x(1.05), y(0.15), x(0), y(0.82))
+      ..close();
+  }
+
+  static final Path _tulipTip = Path()
+    ..moveTo(-0.17, -0.38)
+    ..quadraticBezierTo(-0.12, -0.7, 0, -0.9)
+    ..quadraticBezierTo(0.12, -0.7, 0.17, -0.38)
+    ..close();
+
+  static const int _rosettaLayers = 7;
+
+  static double _rosettaY(int i) => 0.68 - i * 0.26;
+
+  /// Arco ancho que cae hacia los lados (∩): cada capa del helecho.
+  static Path _crescent(int i) {
+    final y = _rosettaY(i);
+    final w = 0.85 - i * 0.09;
+    return Path()
+      ..moveTo(-w, y + 0.12)
+      ..quadraticBezierTo(0, y - 0.2, w, y + 0.12)
+      ..lineTo(w * 0.9, y + 0.28)
+      ..quadraticBezierTo(0, y, -w * 0.9, y + 0.28)
+      ..close();
+  }
+
+  /// Estrella de [n] puntas centrada en el origen (una punta arriba).
+  static Path _star(double outer, double inner, {int n = 5}) {
+    final path = Path();
+    for (var k = 0; k < n * 2; k++) {
+      final r = k.isEven ? outer : inner;
+      final a = -math.pi / 2 + k * math.pi / n;
+      final x = r * math.cos(a), y = r * math.sin(a);
+      k == 0 ? path.moveTo(x, y) : path.lineTo(x, y);
+    }
+    return path..close();
   }
 
   static final Path _heart = Path()

@@ -21,6 +21,9 @@ class CupSnapshot {
   final int sweeteners;
   final String latteArt;
 
+  /// Nombre impreso en la etiqueta del vaso.
+  final String label;
+
   const CupSnapshot({
     this.sizeFactor = 1,
     this.ounces,
@@ -34,7 +37,25 @@ class CupSnapshot {
     this.syrups = const [],
     this.sweeteners = 0,
     this.latteArt = '',
+    this.label = '',
   });
+
+  /// Misma bebida con otro tamaño (para animar el cambio de tamaño).
+  CupSnapshot withSizeFactor(double factor) => CupSnapshot(
+        sizeFactor: factor,
+        ounces: ounces,
+        isHot: isHot,
+        isCoffee: isCoffee,
+        baseColor: baseColor,
+        shots: shots,
+        milkLevel: milkLevel,
+        milkColor: milkColor,
+        toppings: toppings,
+        syrups: syrups,
+        sweeteners: sweeteners,
+        latteArt: latteArt,
+        label: label,
+      );
 
   /// Qué tan lleno está el vaso (0..1): base de café + leche.
   double get fill {

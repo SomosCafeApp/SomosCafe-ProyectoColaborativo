@@ -23,6 +23,13 @@ class SummaryOverlay extends StatefulWidget {
 
 class _SummaryOverlayState extends State<SummaryOverlay> {
   bool? _top;
+  late final TextEditingController _name = TextEditingController(text: context.read<DrinkStudioProvider>().cupName);
+
+  @override
+  void dispose() {
+    _name.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,7 +65,7 @@ class _SummaryOverlayState extends State<SummaryOverlay> {
             ),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                padding: EdgeInsets.fromLTRB(16, 0, 16, 24 + MediaQuery.viewInsetsOf(context).bottom),
                 children: [
                   SizedBox(
                     height: 290,
@@ -71,6 +78,20 @@ class _SummaryOverlayState extends State<SummaryOverlay> {
                       const SizedBox(width: 8),
                       chip('De lado', Icons.local_cafe_outlined, !top, () => setState(() => _top = false)),
                     ],
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _name,
+                    maxLength: 18,
+                    textCapitalization: TextCapitalization.words,
+                    onChanged: s.setCupName,
+                    decoration: InputDecoration(
+                      labelText: 'Nombre en tu vaso',
+                      hintText: s.product.name,
+                      counterText: '',
+                      prefixIcon: const Icon(Icons.edit_rounded, color: StudioColors.primary),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Text(s.product.name, textAlign: TextAlign.center, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: StudioColors.text(dark))),

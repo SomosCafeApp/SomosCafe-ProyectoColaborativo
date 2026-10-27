@@ -12,8 +12,8 @@ class CupGeo {
   CupGeo(Size size, double factor, {double tilt = 0}) {
     final unit = math.min(size.height, size.width * 1.35);
     cupH = unit * 0.5 * factor * (1 + 0.5 * tilt);
-    topW = cupH * 0.72;
-    botW = topW * 0.70;
+    topW = cupH * 0.66;
+    botW = topW * 0.66;
     cx = size.width / 2;
     // Sin inclinación el vaso apoya en el 90 % del alto (como siempre);
     // con ella la boca sube hacia el centro del escenario.

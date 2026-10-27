@@ -3,6 +3,7 @@ import 'package:flutter/gestures.dart' show PointerDeviceKind;
 import 'package:flutter/scheduler.dart';
 
 import '../../animations/motion.dart';
+import '../../core/utils/studio_prefs.dart';
 import '../../models/cup_snapshot.dart';
 import 'ambient_painter.dart';
 import 'art_pour.dart';
@@ -72,6 +73,15 @@ class _CupStageState extends State<CupStage> with TickerProviderStateMixin {
   late final AnimationController _top = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
   late final AnimationController _lid = AnimationController(vsync: this, duration: const Duration(milliseconds: 750));
 
+  /// Cambio de tamaño del vaso: crece o se encoge en vez de saltar.
+  late final AnimationController _size = AnimationController(vsync: this, duration: const Duration(milliseconds: 420));
+  late double _sizeFrom = widget.snapshot.sizeFactor;
+  late double _sizeTo = widget.snapshot.sizeFactor;
+
+  double get _factor => _sizeFrom + (_sizeTo - _sizeFrom) * Curves.easeOutCubic.transform(_size.value);
+
+  CupSnapshot get _snap => (_factor - widget.snapshot.sizeFactor).abs() < 1e-6 ? widget.snapshot : widget.snapshot.withSizeFactor(_factor);
+
   /// Satisfacción al terminar el diseño (0 → 1; 1 = en reposo).
   late final AnimationController _done = AnimationController(vsync: this, duration: const Duration(milliseconds: 1600));
 
@@ -81,7 +91,22 @@ class _CupStageState extends State<CupStage> with TickerProviderStateMixin {
   int? _activePointer;
   int _doneSeen = 0;
 
-  bool _reduced = false;
+  bool _mediaReduced = false;
+
+  /// Sin animaciones: el sistema pidió reducir movimiento o el usuario
+  /// las apagó en los ajustes del estudio.
+  bool get _reduced => _mediaReduced || !StudioPrefs.instance.animations;
+
+  /// Partículas, destellos y chorros decorativos.
+  bool get _fxOn => StudioPrefs.instance.effects;
+
+  void _syncLoop() {
+    if (_reduced) {
+      _loop.stop();
+    } else if (!_loop.isAnimating) {
+      _loop.repeat();
+    }
+  }
 
   @override
   void initState() {
@@ -92,6 +117,7 @@ class _CupStageState extends State<CupStage> with TickerProviderStateMixin {
     _top.value = widget.view == CupView.top ? 1 : 0;
     _lid.value = widget.lidOn ? 1 : 0;
     _slide.value = 1;
+    _size.value = 1;
     _done.value = 1;
     _jug.value = _jugWanted ? 1 : 0;
     _doneSeen = widget.pour?.doneTick ?? 0;
@@ -136,7 +162,7 @@ class _CupStageState extends State<CupStage> with TickerProviderStateMixin {
     final p = widget.pour;
     if (p == null || p.doneTick == _doneSeen) return;
     _doneSeen = p.doneTick;
-    if (_reduced) {
+    if (_reduced || !_fxOn) {
       _done.value = 1;
     } else {
       _done.forward(from: 0);
@@ -146,12 +172,8 @@ class _CupStageState extends State<CupStage> with TickerProviderStateMixin {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _reduced = Motion.reduced(context);
-    if (_reduced) {
-      _loop.stop();
-    } else if (!_loop.isAnimating) {
-      _loop.repeat();
-    }
+    _mediaReduced = Motion.reduced(context);
+    _syncLoop();
   }
 
   @override
@@ -164,11 +186,23 @@ class _CupStageState extends State<CupStage> with TickerProviderStateMixin {
       widget.pour?.addListener(_onSession);
       _doneSeen = widget.pour?.doneTick ?? 0;
     }
-    if (old.pourTick != widget.pourTick && widget.pourKind != PourKind.none && !_reduced) {
+    if (old.pourTick != widget.pourTick && widget.pourKind != PourKind.none && !_reduced && _fxOn) {
       _fx.forward(from: 0);
     }
+    _syncLoop();
+    if ((old.snapshot.sizeFactor - s.sizeFactor).abs() > 1e-6) {
+      _sizeFrom = _factor;
+      _sizeTo = s.sizeFactor;
+      if (_reduced) {
+        _size.value = 1;
+      } else {
+        _size.forward(from: 0);
+      }
+    }
     if (old.snapshot.isHot != s.isHot) {
-      if (s.isHot) {
+      if (_reduced) {
+        _temp.value = s.isHot ? 0 : 1;
+      } else if (s.isHot) {
         _temp.reverse();
       } else {
         _temp.forward();
@@ -182,11 +216,20 @@ class _CupStageState extends State<CupStage> with TickerProviderStateMixin {
       }
     }
     if (old.view != widget.view) {
-      _tilt.animateTo(widget.view == CupView.tilt ? 1 : 0);
-      _top.animateTo(widget.view == CupView.top ? 1 : 0);
+      final tiltTo = widget.view == CupView.tilt ? 1.0 : 0.0;
+      final topTo = widget.view == CupView.top ? 1.0 : 0.0;
+      if (_reduced) {
+        _tilt.value = tiltTo;
+        _top.value = topTo;
+      } else {
+        _tilt.animateTo(tiltTo);
+        _top.animateTo(topTo);
+      }
     }
     if (old.lidOn != widget.lidOn) {
-      if (widget.lidOn) {
+      if (_reduced) {
+        _lid.value = widget.lidOn ? 1 : 0;
+      } else if (widget.lidOn) {
         _lid.forward();
       } else {
         _lid.reverse();
@@ -200,7 +243,7 @@ class _CupStageState extends State<CupStage> with TickerProviderStateMixin {
   void dispose() {
     widget.pour?.removeListener(_onSession);
     _pourTicker.dispose();
-    for (final c in [_loop, _fx, _temp, _jug, _slide, _tilt, _top, _lid, _done]) {
+    for (final c in [_loop, _fx, _temp, _jug, _slide, _tilt, _top, _lid, _done, _size]) {
       c.dispose();
     }
     super.dispose();
@@ -216,7 +259,7 @@ class _CupStageState extends State<CupStage> with TickerProviderStateMixin {
   /// el painter, con la cámara ya acercada.
   Offset _unitOf(PointerEvent e, Size box) {
     final s = widget.snapshot;
-    final g = CupGeo(box, s.sizeFactor, tilt: 1);
+    final g = CupGeo(box, _factor, tilt: 1);
     final (c, rx, ry) = g.surface(s.fill);
     var p = e.localPosition;
     if (e.kind == PointerDeviceKind.touch || e.kind == PointerDeviceKind.stylus) p = p.translate(0, -_fingerLift);
@@ -243,7 +286,6 @@ class _CupStageState extends State<CupStage> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
-    final s = widget.snapshot;
     final pr = widget.pour;
     return RepaintBoundary(
       child: LayoutBuilder(
@@ -256,8 +298,9 @@ class _CupStageState extends State<CupStage> with TickerProviderStateMixin {
             onPointerUp: _up,
             onPointerCancel: _up,
             child: AnimatedBuilder(
-              animation: Listenable.merge(<Listenable>[_loop, _fx, _temp, _jug, _slide, _tilt, _top, _lid, _done, if (pr != null) pr]),
+              animation: Listenable.merge(<Listenable>[_loop, _fx, _temp, _jug, _slide, _tilt, _top, _lid, _done, _size, if (pr != null) pr]),
               builder: (context, _) {
+                final s = _snap;
                 final time = _loop.value * 10;
                 final cold = Curves.easeInOut.transform(_temp.value);
                 final slide = Curves.easeOutCubic.transform(_slide.value);
@@ -314,10 +357,10 @@ class _CupStageState extends State<CupStage> with TickerProviderStateMixin {
                       ),
                     IgnorePointer(
                       child: CustomPaint(
-                        painter: TransitionPainter(kind: widget.transition, t: _slide.value, cold: !s.isHot, time: time),
+                        painter: TransitionPainter(kind: _fxOn ? widget.transition : StudioTransition.none, t: _slide.value, cold: !s.isHot, time: time),
                       ),
                     ),
-                    if (widget.ambient) IgnorePointer(child: CustomPaint(painter: AmbientPainter(time: time, cold: cold, front: true, dark: dark))),
+                    if (widget.ambient && _fxOn) IgnorePointer(child: CustomPaint(painter: AmbientPainter(time: time, cold: cold, front: true, dark: dark))),
                   ],
                 );
               },

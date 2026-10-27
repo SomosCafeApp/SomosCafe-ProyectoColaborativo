@@ -255,3 +255,24 @@ class LattePourEngine {
     lift();
   }
 }
+
+/// Puntuación del modo desafío (opcional: el modo libre nunca la usa).
+/// Terminar el diseño ya vale 40 puntos; la precisión del vertido
+/// aporta hasta 60 más. Las estrellas premian la precisión.
+class ArtScore {
+  const ArtScore({required this.points, required this.stars});
+
+  /// 40..100.
+  final int points;
+
+  /// 1..3.
+  final int stars;
+
+  factory ArtScore.of(double accuracy) {
+    final a = accuracy.clamp(0.0, 1.0).toDouble();
+    return ArtScore(
+      points: (40 + 60 * a).round(),
+      stars: a >= 0.85 ? 3 : (a >= 0.65 ? 2 : 1),
+    );
+  }
+}

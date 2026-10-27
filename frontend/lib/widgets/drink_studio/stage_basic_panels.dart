@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/utils/studio_prefs.dart';
 import '../../core/utils/money_format.dart';
 import '../../providers/drink_studio_provider.dart';
 import '../../animations/press_scale.dart';
@@ -32,7 +32,7 @@ class SizePanel extends StatelessWidget {
                 padding: EdgeInsets.only(left: i == 0 ? 0 : 10),
                 child: PressScale(
                   onTap: () {
-                    HapticFeedback.selectionClick();
+                    StudioHaptics.select();
                     s.setSize(keys[i]);
                   },
                   child: AnimatedContainer(
@@ -91,7 +91,7 @@ class BasePanel extends StatelessWidget {
                     padding: EdgeInsets.only(right: t == o.types.last ? 0 : 10),
                     child: PressScale(
                       onTap: () {
-                        HapticFeedback.selectionClick();
+                        StudioHaptics.select();
                         s.setType(t);
                       },
                       child: AnimatedContainer(
@@ -135,7 +135,7 @@ class BasePanel extends StatelessWidget {
                   icon: Icons.add_rounded,
                   onTap: s.shots < o.maxExtraShots
                       ? () {
-                          HapticFeedback.lightImpact();
+                          StudioHaptics.light();
                           s.changeShots(1);
                         }
                       : null,
@@ -231,7 +231,7 @@ class MilkPanel extends StatelessWidget {
                   for (final m in milks.entries)
                     PressScale(
                       onTap: () {
-                        HapticFeedback.selectionClick();
+                        StudioHaptics.select();
                         s.setMilk(m.key);
                       },
                       child: AnimatedContainer(

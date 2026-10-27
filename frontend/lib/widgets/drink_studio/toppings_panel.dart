@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/utils/studio_prefs.dart';
 import '../../animations/press_scale.dart';
 import '../../core/utils/money_format.dart';
 import '../../providers/drink_studio_provider.dart';
@@ -55,7 +55,7 @@ class ToppingsPanel extends StatelessWidget {
             for (final e in prices.entries)
               PressScale(
                 onTap: () {
-                  HapticFeedback.selectionClick();
+                  StudioHaptics.select();
                   if (!onToggle(e.key)) {
                     ScaffoldMessenger.of(context)
                       ..hideCurrentSnackBar()

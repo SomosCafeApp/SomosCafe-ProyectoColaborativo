@@ -5,6 +5,7 @@ import '../../core/utils/money_format.dart';
 import '../../models/drink_studio_stage.dart';
 import '../../providers/drink_studio_provider.dart';
 import 'studio_colors.dart';
+import 'studio_prefs_tiles.dart';
 
 /// Encabezado del estudio: cerrar, nombre, guardar receta, total
 /// actualizado y los pasos numerados (se puede volver a los ya vistos).
@@ -34,6 +35,7 @@ class StudioTopBar extends StatelessWidget {
                   ],
                 ),
               ),
+              IconButton(tooltip: 'Ajustes del estudio', onPressed: () => showStudioSettingsSheet(context), icon: Icon(Icons.tune_rounded, color: StudioColors.muted(dark))),
               IconButton(tooltip: 'Guardar receta', onPressed: onSave, icon: const Icon(Icons.bookmark_add_outlined, color: StudioColors.primary)),
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 250),
