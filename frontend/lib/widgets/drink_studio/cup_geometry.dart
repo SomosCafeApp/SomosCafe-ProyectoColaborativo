@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 /// Medidas del vaso para un lienzo y un factor de tamaño dados. El
 /// factor escala alto Y ancho a la vez (así crece la capacidad).
 class CupGeo {
-  CupGeo(Size size, double factor) {
+  /// [tilt] (0..1) sube la "cámara": la boca del vaso se abre más
+  /// y la superficie de la bebida se ve con mayor perspectiva.
+  CupGeo(Size size, double factor, {double tilt = 0}) {
     final unit = math.min(size.height, size.width * 1.35);
     cupH = unit * 0.5 * factor;
     topW = cupH * 0.72;
@@ -13,7 +15,7 @@ class CupGeo {
     cx = size.width / 2;
     baseY = size.height * 0.9;
     topY = baseY - cupH;
-    rimRy = topW * 0.17;
+    rimRy = topW * (0.17 + 0.2 * tilt);
   }
 
   late final double cupH, topW, botW, cx, baseY, topY, rimRy;

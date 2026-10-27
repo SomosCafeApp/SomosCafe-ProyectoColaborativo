@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/utils/money_format.dart';
+import '../../models/drink_studio_stage.dart';
 import '../../providers/drink_studio_provider.dart';
 import 'studio_colors.dart';
 
 /// Encabezado del estudio: cerrar, nombre, guardar receta, total
-/// actualizado y una barra con el progreso de la preparación.
+/// actualizado y los pasos numerados (se puede volver a los ya vistos).
 class StudioTopBar extends StatelessWidget {
   const StudioTopBar({super.key, required this.onClose, required this.onSave});
   final VoidCallback onClose;
@@ -16,6 +17,7 @@ class StudioTopBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = context.watch<DrinkStudioProvider>();
     final dark = Theme.of(context).brightness == Brightness.dark;
+    final steps = s.steps;
     return Column(
       children: [
         Padding(
@@ -32,11 +34,7 @@ class StudioTopBar extends StatelessWidget {
                   ],
                 ),
               ),
-              IconButton(
-                tooltip: 'Guardar receta',
-                onPressed: onSave,
-                icon: const Icon(Icons.bookmark_add_outlined, color: StudioColors.primary),
-              ),
+              IconButton(tooltip: 'Guardar receta', onPressed: onSave, icon: const Icon(Icons.bookmark_add_outlined, color: StudioColors.primary)),
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 250),
                 transitionBuilder: (c, a) => ScaleTransition(scale: a, child: c),
@@ -51,18 +49,75 @@ class StudioTopBar extends StatelessWidget {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 6, 20, 0),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0, end: s.progress),
-              duration: const Duration(milliseconds: 400),
-              curve: Curves.easeOutCubic,
-              builder: (context, v, _) => LinearProgressIndicator(minHeight: 5, value: v, color: StudioColors.primary, backgroundColor: StudioColors.soft(dark)),
-            ),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: Row(
+            children: [
+              for (var i = 0; i < steps.length; i++) ...[
+                if (i > 0)
+                  Expanded(
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 350),
+                      height: 3,
+                      color: i <= s.stepIndex ? StudioColors.primary : StudioColors.soft(dark),
+                    ),
+                  ),
+                _Dot(
+                  number: i + 1,
+                  step: steps[i],
+                  state: i < s.stepIndex ? _DotState.done : (i == s.stepIndex ? _DotState.current : _DotState.todo),
+                  onTap: i <= s.furthest && i != s.stepIndex ? () => s.goToStep(steps[i]) : null,
+                ),
+              ],
+            ],
           ),
         ),
       ],
+    );
+  }
+}
+
+enum _DotState { done, current, todo }
+
+class _Dot extends StatelessWidget {
+  const _Dot({required this.number, required this.step, required this.state, this.onTap});
+  final int number;
+  final StudioStep step;
+  final _DotState state;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final active = state != _DotState.todo;
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutBack,
+              width: state == _DotState.current ? 30 : 24,
+              height: state == _DotState.current ? 30 : 24,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: active ? StudioColors.primary : StudioColors.soft(dark),
+                boxShadow: state == _DotState.current ? [BoxShadow(color: StudioColors.primary.withValues(alpha: 0.4), blurRadius: 8)] : null,
+              ),
+              child: Center(
+                child: state == _DotState.done
+                    ? const Icon(Icons.check_rounded, size: 15, color: Colors.white)
+                    : Icon(step.icon, size: state == _DotState.current ? 16 : 13, color: active ? Colors.white : StudioColors.muted(dark)),
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(step.label, style: TextStyle(fontSize: 9.5, fontWeight: state == _DotState.current ? FontWeight.w800 : FontWeight.w600, color: active ? StudioColors.primary : StudioColors.muted(dark))),
+          ],
+        ),
+      ),
     );
   }
 }

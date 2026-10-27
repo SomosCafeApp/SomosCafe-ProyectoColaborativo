@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/utils/money_format.dart';
+import '../../models/drink_studio_stage.dart';
 import '../../providers/drink_studio_provider.dart';
 import '../common/styled_confirm_dialog.dart';
 import 'studio_colors.dart';
@@ -11,6 +12,31 @@ class SummaryActions extends StatelessWidget {
   final DrinkStudioProvider studio;
   final VoidCallback onAdd;
   final VoidCallback onSave;
+
+  Future<void> _edit(BuildContext context) {
+    return showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheet) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(padding: EdgeInsets.only(bottom: 8), child: Text('¿Qué quieres cambiar?', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16))),
+            for (final step in studio.steps.where((x) => x != StudioStep.result))
+              ListTile(
+                leading: Icon(step.icon, color: StudioColors.primary),
+                title: Text(step.label),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () {
+                  Navigator.pop(sheet);
+                  studio.goToStep(step);
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 
   Future<void> _reset(BuildContext context) async {
     final ok = await showStyledConfirmDialog(
@@ -37,7 +63,7 @@ class SummaryActions extends StatelessWidget {
       children: [
         Row(
           children: [
-            Expanded(child: OutlinedButton.icon(onPressed: busy ? null : studio.closeSummary, icon: const Icon(Icons.edit_rounded, size: 18), label: const Text('Editar'), style: style)),
+            Expanded(child: OutlinedButton.icon(onPressed: busy ? null : () => _edit(context), icon: const Icon(Icons.edit_rounded, size: 18), label: const Text('Editar'), style: style)),
             const SizedBox(width: 10),
             Expanded(child: OutlinedButton.icon(onPressed: busy ? null : onSave, icon: const Icon(Icons.bookmark_add_outlined, size: 18), label: const Text('Guardar'), style: style)),
             const SizedBox(width: 10),

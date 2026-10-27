@@ -93,3 +93,11 @@ test("el endpoint de opciones expone los mismos valores que valida", () => {
     assert.deepEqual(o.syrups.prices, {});
     assert.deepEqual(o.latteArt.designs, ["Corazón", "Hoja", "Cisne"]);
 });
+
+test("la leche deslactosada está disponible y se cobra", () => {
+    const { customization, error } = normalizeCustomization({ milk: "Deslactosada" });
+    assert.equal(error, undefined);
+    assert.equal(customization.milk, "Deslactosada");
+    assert.equal(customizationPrice(customization), 1000);
+    assert.ok("Deslactosada" in getCustomizationOptions().milks);
+});

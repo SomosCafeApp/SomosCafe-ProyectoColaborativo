@@ -6,6 +6,8 @@ import 'package:provider/provider.dart';
 
 import '../../core/utils/money_format.dart';
 import '../../providers/drink_studio_provider.dart';
+import '../../animations/press_scale.dart';
+import 'milk_badge.dart';
 import 'option_card.dart';
 import 'studio_colors.dart';
 
@@ -17,24 +19,48 @@ class SizePanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = context.watch<DrinkStudioProvider>();
     final o = s.options!;
+    final dark = Theme.of(context).brightness == Brightness.dark;
     final keys = o.sizes.keys.toList();
     return StagePanel(
       title: '¿De qué tamaño la quieres?',
       hint: 'Mira cómo crece o se encoge tu vaso.',
-      child: Wrap(
-        spacing: 10,
-        runSpacing: 10,
+      child: Row(
         children: [
           for (var i = 0; i < keys.length; i++)
-            OptionCard(
-              label: o.ouncesOf(keys[i]) != null ? '${keys[i]} · ${o.ouncesOf(keys[i])} oz' : keys[i],
-              caption: formatExtra(o.sizes[keys[i]]!),
-              selected: s.size == keys[i],
-              leading: MiniCup(scale: keys.length < 2 ? 1 : 0.7 + 0.6 * i / (keys.length - 1)),
-              onTap: () {
-                HapticFeedback.selectionClick();
-                s.setSize(keys[i]);
-              },
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(left: i == 0 ? 0 : 10),
+                child: PressScale(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    s.setSize(keys[i]);
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 240),
+                    curve: Curves.easeOutCubic,
+                    padding: const EdgeInsets.fromLTRB(6, 12, 6, 12),
+                    decoration: BoxDecoration(
+                      color: s.size == keys[i] ? StudioColors.primary.withValues(alpha: dark ? 0.3 : 0.14) : StudioColors.soft(dark),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: s.size == keys[i] ? StudioColors.primary : Colors.transparent, width: 2),
+                      boxShadow: s.size == keys[i] ? [BoxShadow(color: StudioColors.primary.withValues(alpha: 0.25), blurRadius: 12, offset: const Offset(0, 4))] : null,
+                    ),
+                    child: Column(
+                      children: [
+                        SizedBox(height: 46, child: Align(alignment: Alignment.bottomCenter, child: MiniCup(scale: keys.length < 2 ? 1 : 0.7 + 0.6 * i / (keys.length - 1)))),
+                        const SizedBox(height: 6),
+                        Text(
+                          o.ouncesOf(keys[i]) != null ? '${o.ouncesOf(keys[i])} oz' : keys[i],
+                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: StudioColors.text(dark)),
+                        ),
+                        Text(keys[i], style: TextStyle(fontSize: 12, color: StudioColors.muted(dark))),
+                        const SizedBox(height: 4),
+                        Text(formatExtra(o.sizes[keys[i]]!), style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: StudioColors.primary)),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ),
         ],
       ),
@@ -57,19 +83,36 @@ class BasePanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
+          Row(
             children: [
               for (final t in o.types)
-                OptionCard(
-                  label: t,
-                  selected: s.type == t,
-                  leading: Icon(t == 'Frío' ? Icons.ac_unit_rounded : Icons.local_fire_department_rounded, size: 20, color: StudioColors.primary),
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    s.setType(t);
-                  },
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.only(right: t == o.types.last ? 0 : 10),
+                    child: PressScale(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        s.setType(t);
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 240),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        decoration: BoxDecoration(
+                          color: s.type == t ? StudioColors.primary.withValues(alpha: dark ? 0.3 : 0.14) : StudioColors.soft(dark),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: s.type == t ? StudioColors.primary : Colors.transparent, width: 2),
+                        ),
+                        child: Column(
+                          children: [
+                            Icon(t == 'Frío' ? Icons.ac_unit_rounded : Icons.local_fire_department_rounded, size: 32, color: t == 'Frío' ? const Color(0xFF5FA8C8) : const Color(0xFFE8772E)),
+                            const SizedBox(height: 4),
+                            Text(t, style: TextStyle(fontWeight: FontWeight.w900, color: StudioColors.text(dark))),
+                            Text(t == 'Frío' ? 'Hielo y frescura' : 'Vapor y calor', style: TextStyle(fontSize: 11.5, color: StudioColors.muted(dark))),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
             ],
           ),
@@ -178,21 +221,41 @@ class MilkPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              for (final m in milks.entries)
-                OptionCard(
-                  label: m.key,
-                  caption: formatExtra(m.value),
-                  selected: s.milk == m.key,
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    s.setMilk(m.key);
-                  },
-                ),
-            ],
+          LayoutBuilder(
+            builder: (context, box) {
+              final w = (box.maxWidth - 20) / 3;
+              return Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  for (final m in milks.entries)
+                    PressScale(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        s.setMilk(m.key);
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 240),
+                        width: w,
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        decoration: BoxDecoration(
+                          color: s.milk == m.key ? StudioColors.primary.withValues(alpha: dark ? 0.3 : 0.14) : StudioColors.soft(dark),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: s.milk == m.key ? StudioColors.primary : Colors.transparent, width: 2),
+                        ),
+                        child: Column(
+                          children: [
+                            SizedBox(width: 40, height: 40, child: CustomPaint(painter: MilkIllustrationPainter(milkKindOf(m.key)))),
+                            const SizedBox(height: 4),
+                            Text(m.key, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: StudioColors.text(dark))),
+                            Text(formatExtra(m.value), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: StudioColors.primary)),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
           ),
           const SizedBox(height: 14),
           Row(

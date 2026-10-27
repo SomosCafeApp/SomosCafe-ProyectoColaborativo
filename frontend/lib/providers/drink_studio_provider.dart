@@ -44,7 +44,6 @@ class DrinkStudioProvider extends ChangeNotifier {
   int shots = 0;
   int quantity = 1;
   double milkLevel = 0.55;
-  double mix = 0;
   String latteArt = '';
   final Set<String> toppings = {};
   final Set<String> syrups = {};
@@ -52,11 +51,21 @@ class DrinkStudioProvider extends ChangeNotifier {
   final Map<String, Product> pairings = {};
 
   // Interfaz
-  StudioStage tab = StudioStage.size;
-  final Set<StudioStage> visited = {StudioStage.size};
-  bool showSummary = false;
+  StudioStep step = StudioStep.size;
+
+  /// Sección más avanzada a la que ya llegó (permite volver a las anteriores).
+  int furthest = 0;
   bool adding = false;
-  double? spoon;
+
+  // Transición entre secciones
+  StudioTransition transition = StudioTransition.none;
+  int transitionTick = 0;
+
+  /// +1 al avanzar (el vaso entra desde la izquierda), -1 al retroceder.
+  int transitionDir = 1;
+
+  /// Cambia cada vez que se elige o quita un diseño de latte art.
+  int artTick = 0;
 
   // Efectos
   PourKind pourKind = PourKind.none;
@@ -122,28 +131,38 @@ class DrinkStudioProvider extends ChangeNotifier {
   List<Product> get availablePairings =>
       _catalog.where((p) => p.isAvailable && !p.isCustomizable && p.id != product.id).toList();
 
-  /// Pestañas de la bandeja de control (según datos reales y tipo de bebida).
-  List<StudioStage> get tabs {
+  /// Secciones del flujo, en orden. El arte latte solo en bebidas
+  /// calientes con espuma; los toppings solo si hay algo que elegir.
+  List<StudioStep> get steps {
     final o = options;
     if (o == null) return const [];
     return [
-      StudioStage.size,
-      StudioStage.base,
-      StudioStage.milk,
-      if (o.hasSyrups) StudioStage.syrups,
-      if (o.hasSweeteners) StudioStage.sweeteners,
-      if (o.toppings.isNotEmpty) StudioStage.toppings,
-      if (canLatteArt && o.latteArtDesigns.isNotEmpty) StudioStage.latteArt,
-      if (availablePairings.isNotEmpty) StudioStage.pairing,
+      StudioStep.size,
+      StudioStep.base,
+      StudioStep.milk,
+      if (canLatteArt && o.latteArtDesigns.isNotEmpty) StudioStep.art,
+      if (o.toppings.isNotEmpty || o.hasSyrups || o.hasSweeteners) StudioStep.toppings,
+      StudioStep.result,
     ];
   }
 
-  /// Fracción de pestañas que el usuario ya visitó.
-  double get progress {
-    final list = tabs;
-    if (list.isEmpty) return 0;
-    return list.where(visited.contains).length / list.length;
+  int get stepIndex {
+    final i = steps.indexOf(step);
+    return i < 0 ? 0 : i;
   }
+
+  bool get isFirstStep => stepIndex == 0;
+  bool get showSummary => step == StudioStep.result;
+
+  /// Avance del recorrido (0..1).
+  double get progress => steps.length < 2 ? 0 : stepIndex / (steps.length - 1);
+
+  /// Cómo se dibuja el vaso en la sección actual.
+  CupView get view => switch (step) {
+        StudioStep.art => CupView.tilt,
+        StudioStep.toppings => CupView.top,
+        _ => CupView.side,
+      };
 
   int? get ounces => options?.ouncesOf(size);
 
@@ -158,7 +177,7 @@ class DrinkStudioProvider extends ChangeNotifier {
   }
 
   /// Ya hay algo preparado (para confirmar antes de salir).
-  bool get hasProgress => !customization.isDefault || pairings.isNotEmpty || mix > 0;
+  bool get hasProgress => !customization.isDefault || pairings.isNotEmpty || stepIndex > 0;
 
   ProductCustomization get customization => ProductCustomization(
         size: size,
@@ -186,12 +205,10 @@ class DrinkStudioProvider extends ChangeNotifier {
         shots: shots,
         milkLevel: milkLevel,
         milkColor: DrinkProfile.milkColorFor(milk),
-        mix: mix,
         toppings: toppings.toList()..sort(),
         syrups: syrups.toList()..sort(),
         sweeteners: sweeteners.length,
         latteArt: canLatteArt ? latteArt : '',
-        spoon: spoon,
       );
 
   // ───────────── Elecciones ─────────────
@@ -209,7 +226,6 @@ class DrinkStudioProvider extends ChangeNotifier {
   void setType(String v) {
     type = v;
     if (!canLatteArt) latteArt = '';
-    if (!tabs.contains(tab)) tab = StudioStage.base;
     notifyListeners();
   }
 
@@ -261,18 +277,14 @@ class DrinkStudioProvider extends ChangeNotifier {
 
   void setLatteArt(String design) {
     latteArt = latteArt == design ? '' : design;
+    artTick++;
     notifyListeners();
   }
 
-  // ───────────── Mezcla ─────────────
-
-  void setSpoon(double? depth) {
-    spoon = depth;
-    notifyListeners();
-  }
-
-  void addMix(double delta) {
-    mix = (mix + delta).clamp(0.0, 1.0).toDouble();
+  /// Repite la animación de vertido del diseño elegido.
+  void replayArt() {
+    if (latteArt.isEmpty) return;
+    artTick++;
     notifyListeners();
   }
 
@@ -285,20 +297,41 @@ class DrinkStudioProvider extends ChangeNotifier {
 
   // ───────────── Navegación dentro de la misma pantalla ─────────────
 
-  void goTo(StudioStage s) {
-    tab = s;
-    visited.add(s);
+  void _move(StudioStep to, int dir, StudioTransition kind) {
+    step = to;
+    final index = steps.indexOf(to);
+    if (index > furthest) furthest = index;
+    transition = kind;
+    transitionDir = dir;
+    transitionTick++;
     notifyListeners();
   }
 
-  void openSummary() {
-    showSummary = true;
-    notifyListeners();
+  /// Avanza a la siguiente sección con su animación propia.
+  void next() {
+    final list = steps;
+    final i = list.indexOf(step);
+    if (i < 0 || i >= list.length - 1) return;
+    final kind = switch (step) {
+      StudioStep.size => StudioTransition.tempIntro,
+      StudioStep.base => StudioTransition.tempBurst,
+      _ => StudioTransition.plain,
+    };
+    _move(list[i + 1], 1, kind);
   }
 
-  void closeSummary() {
-    showSummary = false;
-    notifyListeners();
+  void back() {
+    final list = steps;
+    final i = list.indexOf(step);
+    if (i > 0) _move(list[i - 1], -1, StudioTransition.plain);
+  }
+
+  /// Salta a una sección ya alcanzada (sin perder lo elegido).
+  void goToStep(StudioStep target) {
+    final list = steps;
+    final to = list.indexOf(target), from = list.indexOf(step);
+    if (to < 0 || to == from || to > furthest) return;
+    _move(target, to > from ? 1 : -1, StudioTransition.plain);
   }
 
   /// Vuelve a empezar con un vaso vacío.
@@ -308,18 +341,14 @@ class DrinkStudioProvider extends ChangeNotifier {
     shots = 0;
     quantity = 1;
     milkLevel = 0.55;
-    mix = 0;
     latteArt = '';
-    spoon = null;
     toppings.clear();
     syrups.clear();
     sweeteners.clear();
     pairings.clear();
-    tab = StudioStage.size;
-    visited
-      ..clear()
-      ..add(StudioStage.size);
-    showSummary = false;
+    step = StudioStep.size;
+    furthest = 0;
+    transition = StudioTransition.none;
     notifyListeners();
   }
 
@@ -328,6 +357,8 @@ class DrinkStudioProvider extends ChangeNotifier {
   /// Aplica una receta guardada o reciente, ignorando lo que ya no
   /// exista en el menú actual (nunca rompe el estudio).
   void applyRecipe(DrinkRecipe r) {
+    // Una receta aplica al recorrido completo: se vuelve al inicio para revisarla.
+    step = StudioStep.size;
     final o = options;
     if (o == null) return;
     final c = r.customization;
@@ -346,9 +377,8 @@ class DrinkStudioProvider extends ChangeNotifier {
       ..clear()
       ..addAll(c.sweeteners.where(o.sweeteners.containsKey).take(o.maxSweeteners));
     latteArt = canLatteArt && o.latteArtDesigns.contains(c.latteArt) ? c.latteArt : '';
-    mix = 0;
     lastRecipe = null;
-    visited.addAll(tabs);
+    furthest = steps.length - 1;
     notifyListeners();
   }
 

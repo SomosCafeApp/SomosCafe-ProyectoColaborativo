@@ -19,8 +19,7 @@ class SummaryDetails extends StatelessWidget {
       if ((s.profile?.isCoffee ?? false) && s.shots > 0) (Icons.coffee_rounded, 'Shots extra', '+${s.shots}'),
       if (s.options!.hasSyrups) (Icons.opacity_rounded, 'Jarabes', list(s.syrups)),
       if (s.options!.hasSweeteners) (Icons.grain_rounded, 'Endulzantes', list(s.sweeteners)),
-      if (s.options!.toppings.isNotEmpty) (Icons.auto_awesome_rounded, 'Adicionales', list(s.toppings)),
-      (Icons.sync_rounded, 'Mezcla', s.mix >= 1 ? 'Bien mezclada' : 'Sin mezclar del todo'),
+      if (s.options!.toppings.isNotEmpty) (Icons.auto_awesome_rounded, 'Toppings', list(s.toppings)),
       if (s.canLatteArt) (Icons.brush_rounded, 'Decoración', s.latteArt.isEmpty ? 'Sin latte art' : s.latteArt),
       if (s.availablePairings.isNotEmpty) (Icons.cake_rounded, 'Acompañamiento', list(s.pairings.values.map((p) => p.name))),
     ];

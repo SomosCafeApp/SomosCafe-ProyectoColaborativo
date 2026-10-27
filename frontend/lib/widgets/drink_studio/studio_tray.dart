@@ -1,24 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/utils/money_format.dart';
 import '../../models/drink_studio_stage.dart';
 import '../../providers/drink_studio_provider.dart';
 import 'studio_colors.dart';
 import 'studio_panels.dart';
 
-/// Bandeja de control inferior: pestañas de ingredientes, el panel de
-/// la pestaña activa y el botón para terminar. Todo en la misma pantalla.
+/// Bandeja inferior: el panel de la sección activa y los controles
+/// para avanzar y regresar sin perder lo elegido.
 class StudioTray extends StatelessWidget {
-  const StudioTray({super.key, required this.onFinish});
-  final VoidCallback onFinish;
+  const StudioTray({super.key});
 
   @override
   Widget build(BuildContext context) {
     final s = context.watch<DrinkStudioProvider>();
     final dark = Theme.of(context).brightness == Brightness.dark;
-    final tabs = s.tabs;
-    final active = tabs.contains(s.tab) ? s.tab : tabs.first;
+    final steps = s.steps;
+    final nextStep = s.stepIndex + 1 < steps.length ? steps[s.stepIndex + 1] : StudioStep.result;
 
     return Container(
       decoration: BoxDecoration(
@@ -28,26 +26,15 @@ class StudioTray extends StatelessWidget {
       ),
       child: Column(
         children: [
-          const SizedBox(height: 10),
-          SizedBox(
-            height: 62,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              itemCount: tabs.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 8),
-              itemBuilder: (context, i) => _Tab(stage: tabs[i], selected: tabs[i] == active, visited: s.visited.contains(tabs[i]), onTap: () => s.goTo(tabs[i])),
-            ),
-          ),
           Expanded(
             child: SingleChildScrollView(
               child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 280),
+                duration: const Duration(milliseconds: 300),
                 transitionBuilder: (child, anim) => FadeTransition(
                   opacity: anim,
-                  child: SlideTransition(position: Tween(begin: const Offset(0.06, 0), end: Offset.zero).animate(anim), child: child),
+                  child: SlideTransition(position: Tween(begin: Offset(0.08 * s.transitionDir, 0), end: Offset.zero).animate(anim), child: child),
                 ),
-                child: KeyedSubtree(key: ValueKey(active), child: buildStudioPanel(active, s)),
+                child: KeyedSubtree(key: ValueKey(s.step), child: buildStudioPanel(s.step)),
               ),
             ),
           ),
@@ -55,63 +42,31 @@ class StudioTray extends StatelessWidget {
             top: false,
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
-              child: SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: onFinish,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: StudioColors.primary,
-                    minimumSize: const Size(0, 52),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+              child: Row(
+                children: [
+                  if (!s.isFirstStep) ...[
+                    OutlinedButton.icon(
+                      onPressed: s.back,
+                      icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                      label: const Text('Atrás'),
+                      style: OutlinedButton.styleFrom(foregroundColor: StudioColors.primary, minimumSize: const Size(0, 52), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18))),
+                    ),
+                    const SizedBox(width: 12),
+                  ],
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: s.next,
+                      iconAlignment: IconAlignment.end,
+                      style: FilledButton.styleFrom(backgroundColor: StudioColors.primary, minimumSize: const Size(0, 52), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18))),
+                      icon: Icon(nextStep == StudioStep.result ? Icons.check_circle_rounded : Icons.arrow_forward_rounded),
+                      label: Text(nextStep == StudioStep.result ? 'Ver mi bebida' : 'Siguiente · ${nextStep.label}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+                    ),
                   ),
-                  icon: const Icon(Icons.check_circle_rounded),
-                  label: Text('Terminar mi bebida · ${formatCop(s.total)}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
-                ),
+                ],
               ),
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _Tab extends StatelessWidget {
-  const _Tab({required this.stage, required this.selected, required this.visited, required this.onTap});
-  final StudioStage stage;
-  final bool selected;
-  final bool visited;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 220),
-        curve: Curves.easeOutCubic,
-        width: 74,
-        decoration: BoxDecoration(
-          color: selected ? StudioColors.primary : StudioColors.soft(dark),
-          borderRadius: BorderRadius.circular(18),
-        ),
-        child: Stack(
-          children: [
-            Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(stage.icon, size: 22, color: selected ? Colors.white : StudioColors.primary),
-                  const SizedBox(height: 3),
-                  Text(stage.label, maxLines: 1, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: selected ? Colors.white : StudioColors.text(dark))),
-                ],
-              ),
-            ),
-            if (visited && !selected)
-              const Positioned(top: 6, right: 8, child: Icon(Icons.check_circle_rounded, size: 13, color: StudioColors.primary)),
-          ],
-        ),
       ),
     );
   }

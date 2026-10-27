@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../models/cup_snapshot.dart';
+import 'art_pour.dart';
 import 'cup_geometry.dart';
 import 'studio_colors.dart';
 import 'surface_decor.dart';
@@ -21,9 +22,11 @@ class TakeawayCupPainter extends CustomPainter {
     required this.effect,
     required this.effectT,
     required this.effectSeed,
-    required this.artT,
+    required this.artProgress,
+    required this.scene,
     required this.lid,
     required this.dark,
+    this.tilt = 0,
   });
 
   final CupSnapshot snap;
@@ -34,7 +37,12 @@ class TakeawayCupPainter extends CustomPainter {
   final PourKind effect;
   final double effectT;
   final int effectSeed;
-  final double artT;
+  /// Progreso con el que se va dibujando el latte art (0..1).
+  final double artProgress;
+  final ArtScene scene;
+
+  /// 0 = vista de lado … 1 = vista más cenital (sección de arte latte).
+  final double tilt;
 
   /// 0 = sin tapa … 1 = tapa puesta.
   final double lid;
@@ -42,9 +50,12 @@ class TakeawayCupPainter extends CustomPainter {
 
   static const Color _paper = Color(0xFFFFFAF0);
 
+  /// Centro y radios de la superficie (se calculan en _opening).
+  (Offset, double, double)? _surface;
+
   @override
   void paint(Canvas canvas, Size size) {
-    final g = CupGeo(size, snap.sizeFactor);
+    final g = CupGeo(size, snap.sizeFactor, tilt: tilt);
 
     _shadow(canvas, g);
     _body(canvas, g);
@@ -54,6 +65,7 @@ class TakeawayCupPainter extends CustomPainter {
     _opening(canvas, g);
     if (lid < 1) _steam(canvas, g);
     _lid(canvas, g);
+    _jug(canvas, g);
 
     Watercolor.grain(canvas, size);
   }
@@ -119,9 +131,8 @@ class TakeawayCupPainter extends CustomPainter {
     final milkFrac = math.max(0.0, math.min(snap.milkLevel * 0.62, 0.9 - baseFrac));
     final yBase = bottom - h * baseFrac;
     final yTop = bottom - h * (baseFrac + milkFrac);
-    final blend = Color.lerp(snap.baseColor, snap.milkColor, 0.55)!;
-    final lower = Color.lerp(snap.baseColor, blend, snap.mix)!;
-    final upper = Color.lerp(snap.milkColor, blend, snap.mix)!;
+    final lower = snap.baseColor;
+    final upper = snap.milkColor;
 
     final low = Rect.fromLTRB(left, yBase, right, bottom);
     canvas.drawRect(
@@ -137,32 +148,6 @@ class TakeawayCupPainter extends CustomPainter {
       wave..lineTo(right, yTop)..lineTo(left, yTop)..close();
       canvas.drawPath(wave, Paint()..color = upper.withValues(alpha: 0.97));
 
-      // La mezcla difumina la frontera entre capas.
-      if (snap.mix > 0) {
-        final band = Rect.fromLTRB(left, yBase - h * 0.14 * snap.mix, right, yBase + h * 0.14 * snap.mix);
-        canvas.drawRect(
-          band,
-          Paint()..shader = LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [upper, lower]).createShader(band),
-        );
-      }
-    }
-
-    // Estelas del remolino mientras se mezcla.
-    if (snap.spoon != null || (snap.mix > 0 && snap.mix < 1)) {
-      final streak = Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round
-        ..strokeWidth = 1.6
-        ..color = StudioColors.cream.withValues(alpha: 0.35);
-      for (var i = 0; i < 3; i++) {
-        final path = Path();
-        for (var k = 0; k <= 10; k++) {
-          final y = yTop + (bottom - yTop) * k / 10;
-          final x = (left + right) / 2 + math.sin(time * 4 + k * 0.9 + i * 2) * (right - left) * 0.3;
-          k == 0 ? path.moveTo(x, y) : path.lineTo(x, y);
-        }
-        canvas.drawPath(path, streak);
-      }
     }
 
     // Hielo en bebidas frías (aparece con la transición de temperatura).
@@ -266,12 +251,7 @@ class TakeawayCupPainter extends CustomPainter {
     final baseFrac = snap.isCoffee ? math.min(0.16 + 0.055 * snap.shots, 0.46) : 0.5;
     final milkFrac = math.max(0.0, math.min(snap.milkLevel * 0.62, 0.9 - baseFrac));
     final fill = (baseFrac + milkFrac).clamp(0.0, 1.0);
-    final hasMilk = milkFrac > 0.01;
-    final surfaceColor = Color.lerp(
-      Color.lerp(hasMilk ? snap.milkColor : snap.baseColor, Color.lerp(snap.baseColor, snap.milkColor, 0.55)!, snap.mix)!,
-      Colors.white,
-      0.1,
-    )!;
+    final surfaceColor = snap.surfaceColor;
 
     final shrink = 1 - 0.14 * (1 - fill);
     final center = Offset(g.cx, g.topY + (1 - fill) * g.rimRy * 0.9);
@@ -285,10 +265,9 @@ class TakeawayCupPainter extends CustomPainter {
       Paint()..color = Color.lerp(surfaceColor, snap.baseColor, 0.18)!.withValues(alpha: 0.5),
     );
 
-    SurfaceDecor.swirl(canvas, center, rx, ry, snap.mix, time);
     SurfaceDecor.syrups(canvas, center, rx, ry, snap.syrups);
     SurfaceDecor.sweeteners(canvas, center, rx, ry, snap.sweeteners);
-    SurfaceDecor.art(canvas, center, rx, ry, snap.latteArt, artT);
+    SurfaceDecor.art(canvas, center, rx, ry, snap.latteArt, artProgress);
 
     if (cold > 0) _iceTop(canvas, center, rx, ry);
     if (effect != PourKind.none && effectT > 0 && effectT < 1) {
@@ -301,9 +280,9 @@ class TakeawayCupPainter extends CustomPainter {
     Watercolor.ink(canvas, Path()..addOval(rim.inflate(g.topW * 0.018)), StudioColors.ink.withValues(alpha: 0.6), width: 1.6);
 
     // Toppings (la crema sobresale del borde).
-    SurfaceDecor.toppings(canvas, center, rx, ry, snap.toppings);
+    SurfaceDecor.toppings(canvas, center, rx, ry, snap.toppings, hasArt: snap.latteArt.isNotEmpty);
 
-    _spoon(canvas, g, center, rx, ry);
+    _surface = (center, rx, ry);
   }
 
   void _iceTop(Canvas canvas, Offset c, double rx, double ry) {
@@ -326,29 +305,11 @@ class TakeawayCupPainter extends CustomPainter {
     }
   }
 
-  /// Cuchara que se mueve en círculos mientras se mezcla.
-  void _spoon(Canvas canvas, CupGeo g, Offset c, double rx, double ry) {
-    final depth = snap.spoon;
-    if (depth == null) return;
-    final a = time * 7;
-    final tip = Offset(c.dx + math.cos(a) * rx * 0.38, c.dy + math.sin(a) * ry * 0.38 + depth * ry * 0.5);
-    final handle = Offset(g.cx + g.topW * 0.62, g.topY - g.cupH * 0.42);
-    canvas.drawLine(
-      handle,
-      tip,
-      Paint()
-        ..strokeCap = StrokeCap.round
-        ..strokeWidth = math.max(4, g.topW * 0.045)
-        ..color = StudioColors.ink,
-    );
-    canvas.drawOval(Rect.fromCenter(center: tip, width: g.topW * 0.1, height: g.topW * 0.075), Paint()..color = StudioColors.latte);
-    canvas.drawOval(
-      Rect.fromCenter(center: c, width: rx * 1.1, height: ry * 1.1),
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.6
-        ..color = Colors.white.withValues(alpha: 0.35 + 0.2 * math.sin(a)),
-    );
+  /// Jarrita de leche del arte latte (se dibuja por encima de todo).
+  void _jug(Canvas canvas, CupGeo g) {
+    final surface = _surface;
+    if (surface == null || scene.jugShow <= 0) return;
+    ArtPour.paint(canvas, surface.$1, surface.$2, surface.$3, g.topW * 0.5, snap, snap.latteArt.isEmpty ? 'Corazón' : snap.latteArt, scene, time);
   }
 
   // ───────────── Vapor ─────────────

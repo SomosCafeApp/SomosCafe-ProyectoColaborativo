@@ -69,7 +69,7 @@ class DrinkStudioPage extends StatelessWidget {
   Future<void> _close(BuildContext context) async {
     final s = context.read<DrinkStudioProvider>();
     if (s.showSummary) {
-      s.closeSummary();
+      s.back();
       return;
     }
     if (!s.hasProgress) {
@@ -85,24 +85,6 @@ class DrinkStudioPage extends StatelessWidget {
       cancelLabel: 'Seguir preparando',
     );
     if (leave && context.mounted) Navigator.of(context).pop();
-  }
-
-  Future<void> _finish(BuildContext context) async {
-    final s = context.read<DrinkStudioProvider>();
-    final pending = s.tabs.where((t) => !s.visited.contains(t)).toList();
-    if (pending.isNotEmpty) {
-      final go = await showStyledConfirmDialog(
-        context,
-        icon: Icons.local_cafe_rounded,
-        title: '¿Terminar tu bebida?',
-        message: 'Aún no has pasado por: ${pending.map((t) => t.label).join(', ')}. Puedes terminar así o seguir preparándola.',
-        confirmLabel: 'Terminar',
-        cancelLabel: 'Seguir preparando',
-        destructive: false,
-      );
-      if (!go || !context.mounted) return;
-    }
-    s.openSummary();
   }
 
   Future<void> _save(BuildContext context) async {
@@ -173,7 +155,7 @@ class DrinkStudioPage extends StatelessWidget {
                         StudioTopBar(onClose: () => _close(context), onSave: () => _save(context)),
                         const LastRecipeBanner(),
                         const Expanded(child: StudioGameArea()),
-                        SizedBox(height: (box.maxHeight * 0.46).clamp(280.0, 430.0), child: StudioTray(onFinish: () => _finish(context))),
+                        SizedBox(height: (box.maxHeight * (s.step == StudioStep.toppings || s.step == StudioStep.art ? 0.46 : 0.42)).clamp(270.0, 430.0), child: const StudioTray()),
                       ],
                     ),
                   ),

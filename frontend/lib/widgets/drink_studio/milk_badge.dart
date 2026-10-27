@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -7,19 +8,21 @@ import 'studio_colors.dart';
 /// Ilustración breve que aparece al elegir una leche: vaca (entera),
 /// soya, almendra o planta de avena. Si el nombre no coincide con
 /// ninguna, muestra una gota genérica (no se inventa un origen).
-enum MilkKind { cow, soy, almond, oat, generic }
+enum MilkKind { cow, lactoseFree, soy, almond, oat, generic }
 
 MilkKind milkKindOf(String name) {
   final n = name.toLowerCase();
-  if (n.contains('entera') || n.contains('vaca') || n.contains('deslact')) return MilkKind.cow;
+  if (n.contains('deslact')) return MilkKind.lactoseFree;
+  if (n.contains('entera') || n.contains('vaca')) return MilkKind.cow;
   if (n.contains('soya') || n.contains('soja')) return MilkKind.soy;
   if (n.contains('almendra')) return MilkKind.almond;
   if (n.contains('avena')) return MilkKind.oat;
   return MilkKind.generic;
 }
 
-/// Burbuja que aparece con un rebote y se desvanece sola (~1.5 s).
-/// Se dispara cada vez que [tick] cambia.
+/// Burbuja con la ilustración de la leche elegida. Aparece con un
+/// rebote y se queda a la vista ~1,8 s antes de desvanecerse; cada
+/// nueva elección la vuelve a mostrar.
 class MilkBadge extends StatefulWidget {
   const MilkBadge({super.key, required this.tick, required this.name});
   final int tick;
@@ -29,18 +32,30 @@ class MilkBadge extends StatefulWidget {
   State<MilkBadge> createState() => _MilkBadgeState();
 }
 
-class _MilkBadgeState extends State<MilkBadge> with SingleTickerProviderStateMixin {
-  late final AnimationController _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 1600));
+class _MilkBadgeState extends State<MilkBadge> {
+  static const Duration _visibleFor = Duration(milliseconds: 1800);
+  bool _visible = false;
+  String _name = '';
+  Timer? _timer;
 
   @override
   void didUpdateWidget(MilkBadge old) {
     super.didUpdateWidget(old);
-    if (old.tick != widget.tick) _c.forward(from: 0);
+    if (old.tick != widget.tick && widget.name.isNotEmpty) {
+      setState(() {
+        _visible = true;
+        _name = widget.name;
+      });
+      _timer?.cancel();
+      _timer = Timer(_visibleFor, () {
+        if (mounted) setState(() => _visible = false);
+      });
+    }
   }
 
   @override
   void dispose() {
-    _c.dispose();
+    _timer?.cancel();
     super.dispose();
   }
 
@@ -48,41 +63,32 @@ class _MilkBadgeState extends State<MilkBadge> with SingleTickerProviderStateMix
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
     return IgnorePointer(
-      child: AnimatedBuilder(
-        animation: _c,
-        builder: (context, _) {
-          final t = _c.value;
-          if (t == 0 || t == 1) return const SizedBox.shrink();
-          final pop = Curves.elasticOut.transform((t / 0.35).clamp(0.0, 1.0));
-          final fade = t > 0.75 ? 1 - (t - 0.75) / 0.25 : 1.0;
-          return Opacity(
-            opacity: fade.clamp(0.0, 1.0).toDouble(),
-            child: Transform.translate(
-              offset: Offset(0, -18 * t),
-              child: Transform.scale(
-                scale: 0.3 + 0.7 * pop,
-                child: Container(
-                  width: 96,
-                  padding: const EdgeInsets.fromLTRB(8, 8, 8, 6),
-                  decoration: BoxDecoration(
-                    color: StudioColors.panel(dark),
-                    borderRadius: BorderRadius.circular(22),
-                    border: Border.all(color: StudioColors.primary, width: 1.6),
-                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.18), blurRadius: 12, offset: const Offset(0, 5))],
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(width: 64, height: 64, child: CustomPaint(painter: MilkIllustrationPainter(milkKindOf(widget.name)))),
-                      const SizedBox(height: 4),
-                      Text(widget.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: StudioColors.text(dark))),
-                    ],
-                  ),
-                ),
-              ),
+      child: AnimatedOpacity(
+        opacity: _visible ? 1 : 0,
+        duration: const Duration(milliseconds: 280),
+        child: AnimatedScale(
+          scale: _visible ? 1 : 0.55,
+          duration: const Duration(milliseconds: 420),
+          curve: Curves.easeOutBack,
+          child: Container(
+            width: 104,
+            padding: const EdgeInsets.fromLTRB(8, 8, 8, 6),
+            decoration: BoxDecoration(
+              color: StudioColors.panel(dark),
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: StudioColors.primary, width: 1.6),
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.18), blurRadius: 12, offset: const Offset(0, 5))],
             ),
-          );
-        },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(width: 68, height: 68, child: CustomPaint(painter: MilkIllustrationPainter(milkKindOf(_name)))),
+                const SizedBox(height: 4),
+                Text(_name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: StudioColors.text(dark))),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -100,6 +106,8 @@ class MilkIllustrationPainter extends CustomPainter {
     switch (kind) {
       case MilkKind.cow:
         _cow(canvas);
+      case MilkKind.lactoseFree:
+        _carton(canvas);
       case MilkKind.soy:
         _soy(canvas);
       case MilkKind.almond:
@@ -141,6 +149,36 @@ class MilkIllustrationPainter extends CustomPainter {
     c.drawRRect(muzzle, _fill(const Color(0xFFF4B6B6)));
     c.drawOval(Rect.fromCenter(center: const Offset(27, 45), width: 3.4, height: 5), _fill(const Color(0xFF8B4A4A)));
     c.drawOval(Rect.fromCenter(center: const Offset(37, 45), width: 3.4, height: 5), _fill(const Color(0xFF8B4A4A)));
+  }
+
+  void _carton(Canvas c) {
+    const ink = Color(0xFF5A3A24);
+    final box = Path()
+      ..moveTo(16, 24)
+      ..lineTo(48, 24)
+      ..lineTo(48, 58)
+      ..lineTo(16, 58)
+      ..close();
+    final roof = Path()
+      ..moveTo(16, 24)
+      ..lineTo(24, 8)
+      ..lineTo(40, 8)
+      ..lineTo(48, 24)
+      ..close();
+    c.drawPath(box, _fill(Colors.white));
+    c.drawPath(roof, _fill(const Color(0xFFEADCC6)));
+    c.drawPath(box, _line(ink, 2));
+    c.drawPath(roof, _line(ink, 2));
+    // Símbolo "sin lactosa": gota tachada.
+    final drop = Path()
+      ..moveTo(32, 30)
+      ..quadraticBezierTo(41, 41, 38, 47)
+      ..quadraticBezierTo(32, 53, 26, 47)
+      ..quadraticBezierTo(23, 41, 32, 30)
+      ..close();
+    c.drawPath(drop, _fill(const Color(0xFFCFE4F0)));
+    c.drawPath(drop, _line(StudioColors.primary, 2));
+    c.drawLine(const Offset(22, 52), const Offset(42, 30), _line(const Color(0xFFE53935), 3));
   }
 
   void _soy(Canvas c) {

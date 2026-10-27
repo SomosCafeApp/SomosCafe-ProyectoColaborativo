@@ -4,6 +4,8 @@ import 'package:somoscafeapp/models/drink_options.dart';
 import 'package:somoscafeapp/models/drink_recipe.dart';
 import 'package:somoscafeapp/models/product_customization.dart';
 import 'package:somoscafeapp/models/product_model.dart';
+import 'package:somoscafeapp/widgets/drink_studio/latte_art_shapes.dart';
+import 'package:somoscafeapp/widgets/drink_studio/milk_badge.dart';
 
 Map<String, dynamic> _optionsJson({Map<String, num> syrups = const {}}) => {
       'sizes': {'Pequeño': 3000, 'Mediano': 0, 'Grande': 5000},
@@ -87,5 +89,24 @@ void main() {
   test('formatCop', () {
     expect(formatCop(12500), r'$12.500');
     expect(formatExtra(0), 'Incluido');
+  });
+
+  test('cada leche tiene su ilustración, incluida la deslactosada', () {
+    expect(milkKindOf('Entera'), MilkKind.cow);
+    expect(milkKindOf('Deslactosada'), MilkKind.lactoseFree);
+    expect(milkKindOf('Soya'), MilkKind.soy);
+    expect(milkKindOf('Almendra'), MilkKind.almond);
+    expect(milkKindOf('Avena'), MilkKind.oat);
+    expect(milkKindOf('Otra'), MilkKind.generic);
+  });
+
+  test('los tres diseños de latte art existen y tienen punto de vertido', () {
+    expect(LatteArtShapes.designs, ['Corazón', 'Hoja', 'Cisne']);
+    for (final d in LatteArtShapes.designs) {
+      final start = LatteArtShapes.pourPoint(d, 0);
+      final end = LatteArtShapes.pourPoint(d, 1);
+      expect(start.dx.isFinite && start.dy.isFinite, isTrue);
+      expect(end.dx.isFinite && end.dy.isFinite, isTrue);
+    }
   });
 }

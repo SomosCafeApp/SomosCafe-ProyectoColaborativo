@@ -19,6 +19,9 @@ export const TYPE_OPTIONS = ["Caliente", "Frío"];
 
 export const MILK_PRICES = {
     "Entera": 0,
+    // OJO: el precio de la deslactosada es una suposición (igual al de
+    // las leches vegetales). Confírmalo con el negocio.
+    "Deslactosada": 1000,
     "Almendra": 1000,
     "Avena": 1000,
     "Soya": 2000
