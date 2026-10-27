@@ -9,8 +9,11 @@
 // calcula aquí. (Paso 4 del plan: estos valores saldrán del hardcode
 // hacia la base de datos / panel admin.)
 
+// Ajuste de precio por tamaño respecto al precio base del producto
+// (el base corresponde al tamaño Mediano). Puede ser NEGATIVO:
+//   Pequeño = base - 3.000 · Mediano = base · Grande = base + 5.000
 export const SIZE_PRICES = {
-    "Pequeño": 3000,
+    "Pequeño": -3000,
     "Mediano": 0,
     "Grande": 5000
 };
@@ -42,6 +45,12 @@ export const TOPPING_PRICES = {
 // inventan sabores ni precios). Cuando el negocio defina los suyos,
 // basta con agregarlos aquí, ej.  "Vainilla": 1500  — el minijuego,
 // el carrito y los pedidos los validan y cobran sin más cambios.
+// Cantidades de toppings: la primera porción se cobra al precio del
+// catálogo (TOPPING_PRICES) y cada porción adicional del MISMO topping
+// suma TOPPING_EXTRA_PORTION_PRICE. Máximo MAX_TOPPING_QUANTITY por topping.
+export const TOPPING_EXTRA_PORTION_PRICE = 300;
+export const MAX_TOPPING_QUANTITY = 5;
+
 export const SYRUP_PRICES = {};
 export const SWEETENER_PRICES = {};
 export const MAX_SYRUPS = 3;
@@ -77,9 +86,72 @@ export const DEFAULT_CUSTOMIZATION = {
     milk: "Entera",
     extraShots: 0,
     toppings: [],
+    toppingQuantities: {},
     syrups: [],
     sweeteners: [],
     latteArt: ""
+};
+
+// Toppings: acepta la lista antigua ["Canela"] (1 porción cada uno)
+// o un mapa { "Canela": 2 }. Devuelve { names, quantities } o { error }.
+// Si `raw` es lista y viene `qtyMap` (formato guardado en carrito,
+// pedidos y recetas), las porciones salen de ahí (por defecto 1).
+const normalizeToppings = (raw, qtyMap) => {
+
+    if (raw === undefined || raw === null) {
+        return { names: [], quantities: {} };
+    }
+
+    let entries;
+
+    if (Array.isArray(raw)) {
+        const map =
+            qtyMap && typeof qtyMap === "object" && !Array.isArray(qtyMap)
+                ? qtyMap
+                : {};
+        entries = raw.map(name => [name, map[name] ?? 1]);
+    } else if (typeof raw === "object") {
+        entries = Object.entries(raw);
+    } else {
+        return { error: "Toppings must be a list" };
+    }
+
+    const quantities = {};
+
+    for (const [name, rawQty] of entries) {
+
+        if (!Object.prototype.hasOwnProperty.call(TOPPING_PRICES, name)) {
+            return { error: `Invalid topping: ${String(name)}` };
+        }
+
+        const qty = Number(rawQty);
+
+        if (!Number.isInteger(qty) || qty < 0 || qty > MAX_TOPPING_QUANTITY) {
+            return {
+                error: `La cantidad de ${name} debe ser un entero entre 0 y ${MAX_TOPPING_QUANTITY}`
+            };
+        }
+
+        // Un nombre repetido en la lista no suma porciones: se queda la última.
+        if (qty > 0) quantities[name] = qty;
+    }
+
+    const names = Object.keys(quantities).sort();
+    const ordered = {};
+    for (const n of names) ordered[n] = quantities[n];
+
+    return { names, quantities: ordered };
+};
+
+// Precio de un topping según su cantidad (0 porciones = no se cobra).
+export const toppingLinePrice = (name, quantity) => {
+
+    const qty = Number(quantity) || 0;
+
+    if (qty <= 0) return 0;
+
+    return (TOPPING_PRICES[name] || 0)
+        + (qty - 1) * TOPPING_EXTRA_PORTION_PRICE;
 };
 
 // Lista de nombres que deben existir en un catálogo de precios.
@@ -148,11 +220,6 @@ export const normalizeCustomization = (raw) => {
             ? 0
             : Number(input.extraShots);
 
-    const toppings =
-        input.toppings === undefined || input.toppings === null
-            ? []
-            : input.toppings;
-
     if (!Object.prototype.hasOwnProperty.call(SIZE_PRICES, size)) {
         return { error: `Invalid size: ${size}` };
     }
@@ -175,19 +242,10 @@ export const normalizeCustomization = (raw) => {
         };
     }
 
-    if (!Array.isArray(toppings)) {
-        return { error: "Toppings must be a list" };
-    }
-
-    for (const topping of toppings) {
-        if (!Object.prototype.hasOwnProperty.call(TOPPING_PRICES, topping)) {
-            return { error: `Invalid topping: ${topping}` };
-        }
-    }
-
-    // Sin duplicados y en orden estable: así "Canela+Caramelo" y
-    // "Caramelo+Canela" producen la misma clave de línea.
-    const uniqueToppings = [...new Set(toppings)].sort();
+    // Orden estable: "Canela+Caramelo" y "Caramelo+Canela" producen la
+    // misma clave de línea. `toppingQuantities` guarda las porciones.
+    const toppingsResult = normalizeToppings(input.toppings, input.toppingQuantities);
+    if (toppingsResult.error) return { error: toppingsResult.error };
 
     const syrupsResult = normalizeNamedList(
         input.syrups, SYRUP_PRICES, MAX_SYRUPS, "jarabe"
@@ -208,7 +266,8 @@ export const normalizeCustomization = (raw) => {
             type,
             milk,
             extraShots,
-            toppings: uniqueToppings,
+            toppings: toppingsResult.names,
+            toppingQuantities: toppingsResult.quantities,
             syrups: syrupsResult.list,
             sweeteners: sweetenersResult.list,
             latteArt: artResult.design
@@ -228,7 +287,10 @@ export const customizationPrice = (customization) => {
     extra += (c.extraShots || 0) * EXTRA_SHOT_PRICE;
 
     for (const topping of (c.toppings || [])) {
-        extra += TOPPING_PRICES[topping] || 0;
+        extra += toppingLinePrice(
+            topping,
+            c.toppingQuantities?.[topping] ?? 1
+        );
     }
 
     for (const syrup of (c.syrups || [])) {
@@ -253,7 +315,12 @@ export const customizationKey = (customization) => {
         c.type,
         c.milk,
         c.extraShots || 0,
-        (c.toppings || []).join(",")
+        (c.toppings || [])
+            .map(t => {
+                const q = c.toppingQuantities?.[t] ?? 1;
+                return q > 1 ? `${t}x${q}` : t;
+            })
+            .join(",")
     ];
 
     // Los campos nuevos solo se agregan cuando traen algo: así las
@@ -328,6 +395,7 @@ export const resolveCustomization = (product, raw) => {
             customization: {
                 ...DEFAULT_CUSTOMIZATION,
                 toppings: [],
+                toppingQuantities: {},
                 syrups: [],
                 sweeteners: [],
                 latteArt: ""
@@ -362,6 +430,10 @@ export const getCustomizationOptions = () => ({
     milks: { ...MILK_PRICES },
     extraShot: { price: EXTRA_SHOT_PRICE, max: MAX_EXTRA_SHOTS },
     toppings: { ...TOPPING_PRICES },
+    toppingRules: {
+        extraPortionPrice: TOPPING_EXTRA_PORTION_PRICE,
+        maxQuantity: MAX_TOPPING_QUANTITY
+    },
     syrups: { prices: { ...SYRUP_PRICES }, max: MAX_SYRUPS },
     sweeteners: { prices: { ...SWEETENER_PRICES }, max: MAX_SWEETENERS },
     sizeOunces: { ...SIZE_OUNCES },

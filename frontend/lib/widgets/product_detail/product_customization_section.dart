@@ -81,7 +81,7 @@ class ProductCustomizationSection extends StatelessWidget {
           title: 'Tamaño',
           child: Row(
             children: [
-              _sizeOption('Pequeño', '8oz', '+\$3.000'),
+              _sizeOption('Pequeño', '8oz', '-\$3.000'),
               const SizedBox(width: 8),
               _sizeOption('Mediano', '12oz', null),
               const SizedBox(width: 8),

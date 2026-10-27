@@ -8,7 +8,10 @@ import {
     customizationKey,
     supportsLatteArt,
     getCustomizationOptions,
-    DEFAULT_CUSTOMIZATION
+    DEFAULT_CUSTOMIZATION,
+    SIZE_PRICES,
+    TOPPING_EXTRA_PORTION_PRICE,
+    MAX_TOPPING_QUANTITY
 } from "../utils/customization.js";
 
 const latte = { name: "Latte", categoryId: { name: "Cafés calientes" } };
@@ -100,4 +103,79 @@ test("la leche deslactosada está disponible y se cobra", () => {
     assert.equal(customization.milk, "Deslactosada");
     assert.equal(customizationPrice(customization), 1000);
     assert.ok("Deslactosada" in getCustomizationOptions().milks);
+});
+
+test("regla de tamaños: pequeño -3000, mediano 0, grande +5000", () => {
+    assert.deepEqual(SIZE_PRICES, { "Pequeño": -3000, "Mediano": 0, "Grande": 5000 });
+    const price = (size) =>
+        customizationPrice(normalizeCustomization({ size }).customization);
+    const base = 10000;
+    assert.equal(base + price("Pequeño"), 7000);
+    assert.equal(base + price("Mediano"), 10000);
+    assert.equal(base + price("Grande"), 15000);
+});
+
+test("el pequeño nunca es más caro que el mediano ni el grande más barato", () => {
+    const price = (size, extra = {}) =>
+        customizationPrice(normalizeCustomization({ size, ...extra }).customization);
+    for (const extra of [{}, { milk: "Soya", extraShots: 2 }, { toppings: { Canela: 3 } }]) {
+        assert.ok(price("Pequeño", extra) < price("Mediano", extra));
+        assert.ok(price("Mediano", extra) < price("Grande", extra));
+    }
+});
+
+test("el tamaño no se suma dos veces ni cambia con otras opciones", () => {
+    const small = normalizeCustomization({ size: "Pequeño", milk: "Avena" }).customization;
+    assert.equal(customizationPrice(small), -3000 + 1000);
+});
+
+test("toppings: lista antigua = una porción cada uno", () => {
+    const { customization } = normalizeCustomization({ toppings: ["Canela", "Caramelo"] });
+    assert.deepEqual(customization.toppingQuantities, { Canela: 1, Caramelo: 1 });
+    assert.equal(customizationPrice(customization), 1000 + 1500);
+});
+
+test("toppings: cada porción extra suma $300", () => {
+    const { customization, error } = normalizeCustomization({
+        toppings: { Canela: 3, Chispas: 1 }
+    });
+    assert.equal(error, undefined);
+    assert.equal(TOPPING_EXTRA_PORTION_PRICE, 300);
+    assert.equal(customizationPrice(customization), (1000 + 2 * 300) + 2500);
+});
+
+test("toppings: cantidad 0 lo retira y no se cobra", () => {
+    const { customization } = normalizeCustomization({ toppings: { Canela: 0, Chispas: 2 } });
+    assert.deepEqual(customization.toppings, ["Chispas"]);
+    assert.equal(customizationPrice(customization), 2500 + 300);
+});
+
+test("toppings: valida cantidades y nombres", () => {
+    assert.ok(normalizeCustomization({ toppings: { Canela: MAX_TOPPING_QUANTITY + 1 } }).error);
+    assert.ok(normalizeCustomization({ toppings: { Canela: -1 } }).error);
+    assert.ok(normalizeCustomization({ toppings: { Canela: 1.5 } }).error);
+    assert.ok(normalizeCustomization({ toppings: { Fresas: 1 } }).error);
+    assert.ok(normalizeCustomization({ toppings: "Canela" }).error);
+});
+
+test("toppings: el formato guardado (lista + toppingQuantities) conserva las porciones", () => {
+    const stored = { toppings: ["Canela"], toppingQuantities: { Canela: 2 } };
+    const { customization } = normalizeCustomization(stored);
+    assert.equal(customizationPrice(customization), 1000 + 300);
+    const again = normalizeCustomization(customization).customization;
+    assert.equal(customizationKey(again), customizationKey(customization));
+});
+
+test("la clave distingue cantidades de toppings", () => {
+    const k1 = customizationKey(normalizeCustomization({ toppings: { Canela: 1 } }).customization);
+    const k2 = customizationKey(normalizeCustomization({ toppings: { Canela: 2 } }).customization);
+    assert.notEqual(k1, k2);
+    assert.equal(k1, "Mediano|Caliente|Entera|0|Canela");
+});
+
+test("las opciones exponen las reglas de toppings", () => {
+    const o = getCustomizationOptions();
+    assert.equal(o.toppingRules.extraPortionPrice, 300);
+    assert.equal(o.toppingRules.maxQuantity, MAX_TOPPING_QUANTITY);
+    assert.equal(o.sizes["Pequeño"], -3000);
 });

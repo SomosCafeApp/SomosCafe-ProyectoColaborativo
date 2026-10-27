@@ -13,6 +13,8 @@ const customizationSchema = new mongoose.Schema(
         milk: { type: String, required: true },
         extraShots: { type: Number, default: 0 },
         toppings: { type: [String], default: [] },
+        // Porciones por topping: { "Canela": 2 }. Vacío = 1 de cada uno.
+        toppingQuantities: { type: mongoose.Schema.Types.Mixed, default: {} },
         syrups: { type: [String], default: [] },
         sweeteners: { type: [String], default: [] },
         latteArt: { type: String, default: "" },

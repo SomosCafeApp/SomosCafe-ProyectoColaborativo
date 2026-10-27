@@ -62,6 +62,9 @@ class DrinkStudioProvider extends ChangeNotifier {
   int quantity = 1;
   double milkLevel = 0.55;
   final Set<String> toppings = {};
+
+  /// Porciones por topping (solo para los elegidos; ausente = 1).
+  final Map<String, int> toppingQty = {};
   final Set<String> syrups = {};
   final Set<String> sweeteners = {};
   final Map<String, Product> pairings = {};
@@ -268,6 +271,7 @@ class DrinkStudioProvider extends ChangeNotifier {
         milk: milk,
         extraShots: shots,
         toppings: Set<String>.from(toppings),
+        toppingQuantities: {for (final t in toppings) t: toppingQty[t] ?? 1},
         syrups: Set<String>.from(syrups),
         sweeteners: Set<String>.from(sweeteners),
         latteArt: latteArt,
@@ -354,7 +358,38 @@ class DrinkStudioProvider extends ChangeNotifier {
     return true;
   }
 
-  bool toggleTopping(String n) => _toggle(toppings, n, 99, PourKind.topping);
+  /// Tocar la tarjeta: añade 1 porción o retira el topping completo.
+  bool toggleTopping(String n) {
+    if (toppings.remove(n)) {
+      toppingQty.remove(n);
+    } else {
+      toppings.add(n);
+      toppingQty[n] = 1;
+      _pour(PourKind.topping);
+    }
+    notifyListeners();
+    return true;
+  }
+
+  int toppingQuantity(String n) => toppings.contains(n) ? (toppingQty[n] ?? 1) : 0;
+
+  /// Suma o resta porciones de [n]. Al llegar a 0 se retira. Devuelve
+  /// false si se pasa del máximo que acepta el servidor.
+  bool changeToppingQuantity(String n, int delta) {
+    final max = options?.maxToppingQuantity ?? ProductCustomization.maxToppingQuantity;
+    final next = toppingQuantity(n) + delta;
+    if (next > max) return false;
+    if (next <= 0) {
+      toppings.remove(n);
+      toppingQty.remove(n);
+    } else {
+      toppings.add(n);
+      toppingQty[n] = next;
+      if (delta > 0) _pour(PourKind.topping);
+    }
+    notifyListeners();
+    return true;
+  }
   bool toggleSyrup(String n) => _toggle(syrups, n, options?.maxSyrups ?? 0, PourKind.syrup);
   bool toggleSweetener(String n) => _toggle(sweeteners, n, options?.maxSweeteners ?? 0, PourKind.sweetener);
 
@@ -426,6 +461,7 @@ class DrinkStudioProvider extends ChangeNotifier {
     challengeDesign = '';
     cupName = '';
     toppings.clear();
+    toppingQty.clear();
     syrups.clear();
     sweeteners.clear();
     pairings.clear();
@@ -455,6 +491,7 @@ class DrinkStudioProvider extends ChangeNotifier {
         pour.clear();
       case StudioStep.toppings:
         toppings.clear();
+        toppingQty.clear();
         syrups.clear();
         sweeteners.clear();
       case StudioStep.result:
@@ -481,6 +518,11 @@ class DrinkStudioProvider extends ChangeNotifier {
     toppings
       ..clear()
       ..addAll(c.toppings.where(o.toppings.containsKey));
+    toppingQty
+      ..clear()
+      ..addAll({
+        for (final t in toppings) t: c.quantityOf(t).clamp(1, o.maxToppingQuantity).toInt(),
+      });
     syrups
       ..clear()
       ..addAll(c.syrups.where(o.syrups.containsKey).take(o.maxSyrups));

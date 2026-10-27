@@ -5,5 +5,5 @@ String formatCop(double value) {
   return '${value < 0 ? '-' : ''}\$$dotted';
 }
 
-/// Diferencia de precio de una opción: "Incluido" o "+$3.000".
-String formatExtra(double value) => value <= 0 ? 'Incluido' : '+${formatCop(value)}';
+/// Diferencia de precio de una opción: "Incluido", "+$3.000" o "-$3.000".
+String formatExtra(double value) => value == 0 ? 'Incluido' : (value < 0 ? formatCop(value) : '+${formatCop(value)}');

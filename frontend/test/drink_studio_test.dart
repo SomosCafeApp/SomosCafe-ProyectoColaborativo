@@ -17,7 +17,7 @@ import 'package:somoscafeapp/widgets/drink_studio/latte_art_shapes.dart';
 import 'package:somoscafeapp/widgets/drink_studio/milk_badge.dart';
 
 Map<String, dynamic> _optionsJson({Map<String, num> syrups = const {}}) => {
-      'sizes': {'Pequeño': 3000, 'Mediano': 0, 'Grande': 5000},
+      'sizes': {'Pequeño': -3000, 'Mediano': 0, 'Grande': 5000},
       'types': ['Caliente', 'Frío'],
       'milks': {'Entera': 0, 'Avena': 1000},
       'extraShot': {'price': 3000, 'max': 6},
@@ -82,6 +82,39 @@ void main() {
     expect(o.latteArtDesigns, ['Corazón', 'Hoja', 'Cisne', 'Tulipán', 'Rosetta', 'Estrella']);
     final c = ProductCustomization(size: 'Grande', milk: 'Avena', extraShots: 1, syrups: {'Vainilla'});
     expect(o.extraPriceOf(c), 5000 + 1000 + 3000 + 1500);
+  });
+
+  test('tamaños: pequeño resta, mediano base, grande suma', () {
+    final o = DrinkOptions.fromJson(_optionsJson());
+    double unit(String size) => 10000 + o.extraPriceOf(ProductCustomization(size: size));
+    expect(unit('Pequeño'), 7000);
+    expect(unit('Mediano'), 10000);
+    expect(unit('Grande'), 15000);
+    expect(unit('Pequeño') < unit('Mediano'), isTrue);
+    // Mismo cálculo local (sin red) que el del servidor.
+    expect(ProductCustomization(size: 'Pequeño').extraPrice, -3000);
+    expect(formatExtra(-3000), r'-$3.000');
+  });
+
+  test('toppings con cantidad: primera al precio del catálogo, extras +\$300', () {
+    final c = ProductCustomization(
+      toppings: {'Canela', 'Chispas'},
+      toppingQuantities: {'Canela': 3, 'Chispas': 1},
+    );
+    expect(c.quantityOf('Canela'), 3);
+    expect(c.extraPrice, (1000 + 2 * 300) + 2500);
+    expect(c.key, 'Mediano|Caliente|Entera|0|Canelax3,Chispas');
+    final back = ProductCustomization.fromJson(c.toJson());
+    expect(back.quantityOf('Canela'), 3);
+    expect(back.extraPrice, c.extraPrice);
+    // Formato del servidor: lista + toppingQuantities.
+    final server = ProductCustomization.fromJson({
+      'toppings': ['Canela'],
+      'toppingQuantities': {'Canela': 2},
+    });
+    expect(server.extraPrice, 1000 + 300);
+    // Lista antigua sin cantidades = 1 porción.
+    expect(ProductCustomization.fromJson({'toppings': ['Canela']}).quantityOf('Canela'), 1);
   });
 
   test('sin catálogo de jarabes la etapa no existe', () {

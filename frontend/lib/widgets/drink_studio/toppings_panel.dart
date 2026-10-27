@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/utils/studio_prefs.dart';
+import '../../models/product_customization.dart';
 import '../../animations/press_scale.dart';
 import '../../core/utils/money_format.dart';
 import '../../providers/drink_studio_provider.dart';
@@ -21,7 +22,7 @@ class ToppingsPanel extends StatelessWidget {
     final hasCream = s.toppings.any((t) => t.toLowerCase().contains('crema'));
     final note = s.latteArt.isNotEmpty && hasCream
         ? 'Tu crema va en el borde para dejar a la vista el arte latte.'
-        : 'Toca para añadir o quitar. Cada ingrediente se ve en tu bebida al instante.';
+        : 'Toca para añadir o quitar y usa + / − para más porciones (cada extra suma \$300).';
 
     return StagePanel(
       title: 'Decora con toppings',
@@ -29,7 +30,7 @@ class ToppingsPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (o.toppings.isNotEmpty) _group(context, s, o.toppings, s.toppings, s.toggleTopping, null),
+          if (o.toppings.isNotEmpty) _group(context, s, o.toppings, s.toppings, s.toggleTopping, null, quantities: true),
           if (o.hasSyrups) ...[
             const _Label('Jarabes'),
             _group(context, s, o.syrups, s.syrups, s.toggleSyrup, o.maxSyrups),
@@ -43,7 +44,7 @@ class ToppingsPanel extends StatelessWidget {
     );
   }
 
-  Widget _group(BuildContext context, DrinkStudioProvider s, Map<String, double> prices, Set<String> selected, bool Function(String) onToggle, int? max) {
+  Widget _group(BuildContext context, DrinkStudioProvider s, Map<String, double> prices, Set<String> selected, bool Function(String) onToggle, int? max, {bool quantities = false}) {
     final dark = Theme.of(context).brightness == Brightness.dark;
     return LayoutBuilder(
       builder: (context, box) {
@@ -82,7 +83,13 @@ class ToppingsPanel extends StatelessWidget {
                             ToppingIcon(name: e.key, size: 42),
                             const SizedBox(height: 4),
                             Text(e.key, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: StudioColors.text(dark))),
-                            Text(formatExtra(e.value), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: StudioColors.primary)),
+                            Text(
+                              quantities && selected.contains(e.key)
+                                  ? formatExtra(ProductCustomization.toppingLinePrice(e.value, s.toppingQuantity(e.key)))
+                                  : formatExtra(e.value),
+                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: StudioColors.primary),
+                            ),
+                            if (quantities && selected.contains(e.key)) _stepper(context, s, e.key, dark),
                           ],
                         ),
                       ),
@@ -109,6 +116,43 @@ class ToppingsPanel extends StatelessWidget {
       },
     );
   }
+}
+
+Widget _stepper(BuildContext context, DrinkStudioProvider s, String name, bool dark) {
+  Widget btn(IconData icon, VoidCallback onTap) => GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(4),
+          child: Icon(icon, size: 20, color: StudioColors.primary),
+        ),
+      );
+  final qty = s.toppingQuantity(name);
+  return Padding(
+    padding: const EdgeInsets.only(top: 2),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        btn(Icons.remove_circle_outline_rounded, () {
+          StudioHaptics.select();
+          s.changeToppingQuantity(name, -1);
+        }),
+        SizedBox(
+          width: 18,
+          child: Text('$qty', textAlign: TextAlign.center, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: StudioColors.text(dark))),
+        ),
+        btn(Icons.add_circle_outline_rounded, () {
+          StudioHaptics.select();
+          if (!s.changeToppingQuantity(name, 1)) {
+            final max = s.options?.maxToppingQuantity ?? ProductCustomization.maxToppingQuantity;
+            ScaffoldMessenger.of(context)
+              ..hideCurrentSnackBar()
+              ..showSnackBar(SnackBar(content: Text('Máximo $max porciones de $name')));
+          }
+        }),
+      ],
+    ),
+  );
 }
 
 class _Label extends StatelessWidget {

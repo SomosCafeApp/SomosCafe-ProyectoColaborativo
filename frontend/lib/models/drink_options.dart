@@ -11,6 +11,8 @@ class DrinkOptions {
   final double extraShotPrice;
   final int maxExtraShots;
   final Map<String, double> toppings;
+  final double toppingExtraPortionPrice;
+  final int maxToppingQuantity;
   final Map<String, double> syrups;
   final int maxSyrups;
   final Map<String, double> sweeteners;
@@ -32,6 +34,8 @@ class DrinkOptions {
     required this.extraShotPrice,
     required this.maxExtraShots,
     required this.toppings,
+    required this.toppingExtraPortionPrice,
+    required this.maxToppingQuantity,
     required this.syrups,
     required this.maxSyrups,
     required this.sweeteners,
@@ -58,6 +62,7 @@ class DrinkOptions {
 
   factory DrinkOptions.fromJson(Map<String, dynamic> json) {
     final shot = (json['extraShot'] as Map?) ?? const {};
+    final toppingRules = (json['toppingRules'] as Map?) ?? const {};
     final syrups = (json['syrups'] as Map?) ?? const {};
     final sweeteners = (json['sweeteners'] as Map?) ?? const {};
     final art = (json['latteArt'] as Map?) ?? const {};
@@ -70,6 +75,10 @@ class DrinkOptions {
       extraShotPrice: (shot['price'] as num?)?.toDouble() ?? 0,
       maxExtraShots: (shot['max'] as num?)?.toInt() ?? 0,
       toppings: _prices(json['toppings']),
+      toppingExtraPortionPrice: (toppingRules['extraPortionPrice'] as num?)?.toDouble() ??
+          ProductCustomization.toppingExtraPortionPrice,
+      maxToppingQuantity:
+          (toppingRules['maxQuantity'] as num?)?.toInt() ?? ProductCustomization.maxToppingQuantity,
       syrups: _prices(syrups['prices']),
       maxSyrups: (syrups['max'] as num?)?.toInt() ?? 0,
       sweeteners: _prices(sweeteners['prices']),
@@ -104,7 +113,8 @@ class DrinkOptions {
   double extraPriceOf(ProductCustomization c) {
     double extra = (sizes[c.size] ?? 0) + (milks[c.milk] ?? 0) + c.extraShots * extraShotPrice;
     for (final t in c.toppings) {
-      extra += toppings[t] ?? 0;
+      final qty = c.quantityOf(t);
+      if (qty > 0) extra += (toppings[t] ?? 0) + (qty - 1) * toppingExtraPortionPrice;
     }
     for (final s in c.syrups) {
       extra += syrups[s] ?? 0;

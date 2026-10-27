@@ -11,8 +11,10 @@ class ProductCustomization {
   static const String defaultType = 'Caliente';
   static const String defaultMilk = 'Entera';
 
+  /// Ajuste por tamaño sobre el precio base (puede ser negativo):
+  /// Pequeño = base - 3.000 · Mediano = base · Grande = base + 5.000.
   static const Map<String, double> sizePrices = {
-    'Pequeño': 3000,
+    'Pequeño': -3000,
     'Mediano': 0,
     'Grande': 5000,
   };
@@ -33,6 +35,15 @@ class ProductCustomization {
     'Caramelo': 1500,
   };
 
+  /// Cada porción extra del mismo topping suma esto (la primera se
+  /// cobra al precio de [toppingPrices]). Igual que el backend.
+  static const double toppingExtraPortionPrice = 300;
+  static const int maxToppingQuantity = 5;
+
+  /// Precio de un topping según sus porciones (0 = no se cobra).
+  static double toppingLinePrice(double unitPrice, int quantity) =>
+      quantity <= 0 ? 0 : unitPrice + (quantity - 1) * toppingExtraPortionPrice;
+
   /// Jarabes y endulzantes: el catálogo real lo manda el backend y se
   /// registra aquí con `DrinkOptions.register()` al abrir el estudio.
   /// Mientras no exista (lista vacía) no suman nada.
@@ -44,6 +55,10 @@ class ProductCustomization {
   final String milk;
   final int extraShots;
   final Set<String> toppings;
+
+  /// Porciones por topping ({'Canela': 2}). Un topping de [toppings]
+  /// sin entrada aquí cuenta como 1 porción.
+  final Map<String, int> toppingQuantities;
   final Set<String> syrups;
   final Set<String> sweeteners;
 
@@ -56,14 +71,20 @@ class ProductCustomization {
     this.milk = defaultMilk,
     this.extraShots = 0,
     Set<String>? toppings,
+    Map<String, int>? toppingQuantities,
     Set<String>? syrups,
     Set<String>? sweeteners,
     this.latteArt = '',
   })  : toppings = toppings ?? <String>{},
+        toppingQuantities = toppingQuantities ?? <String, int>{},
         syrups = syrups ?? <String>{},
         sweeteners = sweeteners ?? <String>{};
 
   bool get hasLatteArt => latteArt.isNotEmpty;
+
+  /// Porciones del topping [name] (0 si no está elegido).
+  int quantityOf(String name) =>
+      toppings.contains(name) ? (toppingQuantities[name] ?? 1) : 0;
 
   /// Sin ninguna opción distinta de las de por defecto.
   bool get isDefault =>
@@ -83,7 +104,7 @@ class ProductCustomization {
     extra += milkPrices[milk] ?? 0;
     extra += extraShots * extraShotPrice;
     for (final topping in toppings) {
-      extra += toppingPrices[topping] ?? 0;
+      extra += toppingLinePrice(toppingPrices[topping] ?? 0, quantityOf(topping));
     }
     for (final syrup in syrups) {
       extra += syrupPrices[syrup] ?? 0;
@@ -103,6 +124,7 @@ class ProductCustomization {
     String? milk,
     int? extraShots,
     Set<String>? toppings,
+    Map<String, int>? toppingQuantities,
     Set<String>? syrups,
     Set<String>? sweeteners,
     String? latteArt,
@@ -113,6 +135,7 @@ class ProductCustomization {
         milk: milk ?? this.milk,
         extraShots: extraShots ?? this.extraShots,
         toppings: toppings ?? Set<String>.from(this.toppings),
+        toppingQuantities: toppingQuantities ?? Map<String, int>.from(this.toppingQuantities),
         syrups: syrups ?? Set<String>.from(this.syrups),
         sweeteners: sweeteners ?? Set<String>.from(this.sweeteners),
         latteArt: latteArt ?? this.latteArt,
@@ -122,7 +145,10 @@ class ProductCustomization {
   /// igual que `customizationKey` del backend (los campos nuevos solo
   /// se agregan cuando traen algo).
   String get key {
-    final sorted = toppings.toList()..sort();
+    final sorted = (toppings.toList()..sort()).map((t) {
+      final q = quantityOf(t);
+      return q > 1 ? '${t}x$q' : t;
+    });
     final parts = <Object>[size, type, milk, extraShots, sorted.join(',')];
     if (syrups.isNotEmpty) parts.add('s:${(syrups.toList()..sort()).join(',')}');
     if (sweeteners.isNotEmpty) parts.add('w:${(sweeteners.toList()..sort()).join(',')}');
@@ -144,7 +170,10 @@ class ProductCustomization {
     final extras = <String>[
       ...(syrups.toList()..sort()),
       ...(sweeteners.toList()..sort()),
-      ...(toppings.toList()..sort()),
+      ...(toppings.toList()..sort()).map((t) {
+        final q = quantityOf(t);
+        return q > 1 ? '$t x$q' : t;
+      }),
       if (latteArt.isNotEmpty) 'Latte art: $latteArt',
     ];
 
@@ -159,7 +188,9 @@ class ProductCustomization {
         'type': type,
         'milk': milk,
         'extraShots': extraShots,
-        'toppings': (toppings.toList()..sort()),
+        'toppings': {
+          for (final t in (toppings.toList()..sort())) t: quantityOf(t),
+        },
         'syrups': (syrups.toList()..sort()),
         'sweeteners': (sweeteners.toList()..sort()),
         'latteArt': latteArt,
@@ -170,12 +201,30 @@ class ProductCustomization {
     Set<String> names(String field) =>
         (json[field] as List?)?.map((e) => e.toString()).toSet() ?? <String>{};
 
+    // El backend devuelve la lista de nombres + toppingQuantities; al
+    // enviar usamos el mapa {nombre: porciones}. Se aceptan ambos.
+    final rawToppings = json['toppings'];
+    final rawQty = json['toppingQuantities'];
+    final quantities = <String, int>{};
+    if (rawToppings is Map) {
+      rawToppings.forEach((k, v) {
+        final q = (v as num?)?.toInt() ?? 0;
+        if (q > 0) quantities[k.toString()] = q;
+      });
+    } else if (rawToppings is List) {
+      for (final name in rawToppings) {
+        final q = rawQty is Map ? (rawQty[name] as num?)?.toInt() ?? 1 : 1;
+        if (q > 0) quantities[name.toString()] = q;
+      }
+    }
+
     return ProductCustomization(
       size: json['size'] as String? ?? defaultSize,
       type: json['type'] as String? ?? defaultType,
       milk: json['milk'] as String? ?? defaultMilk,
       extraShots: (json['extraShots'] as num?)?.toInt() ?? 0,
-      toppings: names('toppings'),
+      toppings: quantities.keys.toSet(),
+      toppingQuantities: quantities,
       syrups: names('syrups'),
       sweeteners: names('sweeteners'),
       latteArt: json['latteArt'] is String ? json['latteArt'] as String : '',
