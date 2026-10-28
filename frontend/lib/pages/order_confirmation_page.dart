@@ -167,6 +167,8 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
     if (order == null) {
       // El carrito NO se toca: el usuario puede corregir y reintentar.
       _snack(orderProvider.errorMessage ?? 'No se pudo crear el pedido');
+      // Si el precio cambió, se recarga el carrito para mostrar el real.
+      if (orderProvider.priceChanged) cart.fetchCart();
       if (coupon != null) _refreshCouponAfterError(coupon);
       return;
     }

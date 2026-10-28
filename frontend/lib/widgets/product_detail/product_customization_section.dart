@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/utils/money_format.dart';
+import '../../models/product_customization.dart';
 import 'custom_chip_grid.dart';
 import 'custom_section_card.dart';
 import 'delivery_info_section.dart';
@@ -19,6 +21,9 @@ class ProductCustomizationSection extends StatelessWidget {
   final Color primary;
   final Color borderColor;
   final Color counterBg;
+
+  /// Precio de lista del producto: define el ajuste real de cada tamaño.
+  final double basePrice;
 
   final String selectedSize;
   final String selectedType;
@@ -42,6 +47,7 @@ class ProductCustomizationSection extends StatelessWidget {
     required this.primary,
     required this.borderColor,
     required this.counterBg,
+    required this.basePrice,
     required this.selectedSize,
     required this.selectedType,
     required this.selectedMilk,
@@ -55,19 +61,23 @@ class ProductCustomizationSection extends StatelessWidget {
     required this.onToppingToggle,
   });
 
-  static const _milkOptions = [
-    {'title': 'Entera'},
-    {'title': 'Almendra', 'price': '+\$1.000'},
-    {'title': 'Avena', 'price': '+\$1.000'},
-    {'title': 'Soya', 'price': '+\$2.000'},
-  ];
+  // Etiquetas y precios salen de las tablas reales (las del servidor
+  // cuando ya se descargaron): nada de textos con precio escritos a mano.
+  static List<Map<String, String>> get _milkOptions => [
+        for (final e in ProductCustomization.milkPrices.entries) {'title': e.key, if (e.value != 0) 'price': formatExtra(e.value)},
+      ];
 
-  static const _toppingOptions = [
-    {'title': 'Crema batida', 'price': '+\$2.000'},
-    {'title': 'Canela', 'price': '+\$1.000'},
-    {'title': 'Chispas', 'price': '+\$2.500'},
-    {'title': 'Caramelo', 'price': '+\$1.500'},
-  ];
+  static const _toppingNames = ['Crema batida', 'Canela', 'Chispas', 'Caramelo'];
+
+  static List<Map<String, String>> get _toppingOptions => [
+        for (final t in _toppingNames) {'title': t, 'price': formatExtra(ProductCustomization.toppingPrices[t] ?? 0)},
+      ];
+
+  /// Ajuste del tamaño para ESTE producto (con el piso del Pequeño).
+  String? _sizePrice(String size) {
+    final adj = ProductCustomization.sizeAdjustment(size, basePrice);
+    return adj == 0 ? null : formatExtra(adj);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -83,7 +93,7 @@ class ProductCustomizationSection extends StatelessWidget {
             children: [
               _sizeOption('Pequeño', '8oz', '-\$3.000'),
               const SizedBox(width: 8),
-              _sizeOption('Mediano', '12oz', null),
+              _sizeOption('Mediano', '12oz', _sizePrice('Mediano')),
               const SizedBox(width: 8),
               _sizeOption('Grande', '16oz', '+\$5.000'),
             ],

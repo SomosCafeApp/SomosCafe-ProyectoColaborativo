@@ -24,18 +24,26 @@ class CartGuard {
       return;
     }
 
-    await context.read<CartProvider>().addToCart(
-          product,
-          quantity: quantity,
-          customization: customization,
-        );
+    // Se toman antes del await: la pantalla que llamó (p. ej. el detalle)
+    // suele cerrarse mientras el servidor responde, y el aviso debe
+    // mostrarse igual.
+    final cart = context.read<CartProvider>();
+    final messenger = ScaffoldMessenger.of(context);
 
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
+    await cart.addToCart(
+      product,
+      quantity: quantity,
+      customization: customization,
+    );
+
+    // Si el servidor rechazó el alta (p. ej. el precio cambió) se avisa
+    // en vez de anunciar un éxito falso.
+    final rejected = cart.lastAddError;
+    messenger.showSnackBar(
       SnackBar(
-        content: Text('${product.name} añadido al carrito'),
-        backgroundColor: AppColors.primary,
-        duration: const Duration(seconds: 2),
+        content: Text(rejected ?? '${product.name} añadido al carrito'),
+        backgroundColor: rejected == null ? AppColors.primary : Colors.red.shade700,
+        duration: Duration(seconds: rejected == null ? 2 : 4),
       ),
     );
   }

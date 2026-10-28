@@ -75,6 +75,12 @@ class OrderProvider extends ChangeNotifier {
   ///
   /// NO vacía el carrito: quien llama lo hace solo si esto devuelve
   /// una orden (ver OrderConfirmationPage).
+  /// true si el último intento de pedido fue rechazado porque el total
+  /// mostrado no coincidía con el del servidor (409). Quien llama debe
+  /// recargar el carrito para mostrar los precios reales.
+  bool _priceChanged = false;
+  bool get priceChanged => _priceChanged;
+
   Future<Order?> createOrder({
     required List<CartLine> lines,
     required DeliveryType deliveryType,
@@ -99,6 +105,7 @@ class OrderProvider extends ChangeNotifier {
 
     _isCreating = true;
     _errorMessage = null;
+    _priceChanged = false;
     notifyListeners();
 
     try {
@@ -111,6 +118,9 @@ class OrderProvider extends ChangeNotifier {
         'couponId': ?couponId,
         if (deliveryType == DeliveryType.delivery && addressId != null) 'addressId': addressId,
         'notes': notes.trim(),
+        // Total de productos que vio el cliente (con promociones, sin
+        // envío ni cupón): el servidor rechaza el pedido si no coincide.
+        'expectedItemsTotal': lines.fold<double>(0, (sum, l) => sum + l.lineTotal).round(),
         'items': lines
             .map((l) => {
                   'productId': l.product.id,
@@ -127,7 +137,8 @@ class OrderProvider extends ChangeNotifier {
       notifyListeners();
       return order;
     } on ApiException catch (e) {
-      _errorMessage = _translateCreateError(e.message);
+      _priceChanged = e.statusCode == 409;
+      _errorMessage = _priceChanged ? 'Los precios de tu carrito cambiaron. Ya los actualizamos: revisa el total y confirma de nuevo.' : _translateCreateError(e.message);
       _isCreating = false;
       notifyListeners();
       return null;

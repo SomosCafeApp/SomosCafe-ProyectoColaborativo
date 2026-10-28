@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/utils/money_format.dart';
+import '../common/price_breakdown_card.dart';
 import '../../providers/drink_studio_provider.dart';
 import 'latte_art_shapes.dart';
 import 'studio_colors.dart';
@@ -125,8 +125,10 @@ class SummaryDetails extends StatelessWidget {
   }
 }
 
-/// Desglose de precio: base, cada extra con su detalle (por ejemplo
-/// "2 extra × $300"), cantidad y total actualizado.
+/// Desglose de precio de la bebida: base, ajuste por tamaño, cada
+/// adicional con su detalle (por ejemplo "2 extra × $300"), descuento,
+/// cantidad, acompañamientos y total. Usa el mismo componente (y los
+/// mismos valores) que el detalle del producto y el carrito.
 class SummaryPrice extends StatelessWidget {
   const SummaryPrice({super.key, required this.studio});
   final DrinkStudioProvider studio;
@@ -135,52 +137,23 @@ class SummaryPrice extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = studio;
     final dark = Theme.of(context).brightness == Brightness.dark;
-    final lines = s.priceLines;
-
-    Widget line(String a, String b, {String? detail, bool bold = false, Color? color}) => Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(a, style: TextStyle(fontSize: bold ? 16 : 13.5, fontWeight: bold ? FontWeight.w900 : FontWeight.w600, color: color ?? StudioColors.text(dark))),
-                    if (detail != null) Text(detail, style: TextStyle(fontSize: 11.5, color: StudioColors.muted(dark))),
-                  ],
-                ),
-              ),
-              Text(b, style: TextStyle(fontSize: bold ? 22 : 13.5, fontWeight: bold ? FontWeight.w900 : FontWeight.w800, color: bold ? StudioColors.primary : (color ?? StudioColors.text(dark)))),
-            ],
-          ),
-        );
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: StudioColors.panel(dark), borderRadius: BorderRadius.circular(24), border: Border.all(color: StudioColors.primary.withValues(alpha: 0.3))),
-      child: Column(
-        children: [
-          const Align(alignment: Alignment.centerLeft, child: SectionLabel('Resumen de precio')),
-          line('Bebida base', formatCop(s.product.effectivePrice)),
-          for (final l in lines) line(l.label, formatExtra(l.amount), detail: l.detail),
-          if (lines.isNotEmpty) ...[
-            const Divider(height: 18),
-            line('Precio por bebida', formatCop(s.unitPrice)),
+    return Column(
+      children: [
+        PriceBreakdownCard(
+          quote: s.quote,
+          quantity: s.quantity,
+          extraRows: [
+            for (final p in s.pairings.values) PriceLine(p.name, p.effectivePrice),
           ],
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              Expanded(child: Text('Cantidad', style: TextStyle(fontWeight: FontWeight.w700, color: StudioColors.text(dark)))),
-              QuantityPill(value: s.quantity, onMinus: s.quantity > 1 ? () => s.changeQuantity(-1) : null, onPlus: () => s.changeQuantity(1)),
-            ],
-          ),
-          if (s.quantity > 1) line('Subtotal × ${s.quantity}', formatCop(s.drinkTotal)),
-          if (s.pairings.isNotEmpty) line('Acompañamientos', formatCop(s.pairingsTotal)),
-          const Divider(height: 22),
-          line('Total', formatCop(s.total), bold: true),
-        ],
-      ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(child: Text('Cantidad', style: TextStyle(fontWeight: FontWeight.w700, color: StudioColors.text(dark)))),
+            QuantityPill(value: s.quantity, onMinus: s.quantity > 1 ? () => s.changeQuantity(-1) : null, onPlus: () => s.changeQuantity(1)),
+          ],
+        ),
+      ],
     );
   }
 }

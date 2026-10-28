@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../models/price_quote.dart';
 import '../models/product_customization.dart';
 import '../models/product_model.dart';
 import '../services/api_client.dart';
@@ -19,6 +20,11 @@ class CartLine {
   /// Precio por unidad ANTES de descuento (base + personalización).
   final double originalUnitPrice;
 
+  /// Desglose de la personalización que calculó el servidor (tamaño y
+  /// adicionales). Vacío en el carrito de invitado.
+  final double sizeAdjustment;
+  final List<PriceLine> extraLines;
+
   /// Descuento de la promoción vigente, por unidad (sobre el precio base).
   final double discountPerUnit;
 
@@ -35,6 +41,8 @@ class CartLine {
     required this.quantity,
     required this.customization,
     required this.originalUnitPrice,
+    this.sizeAdjustment = 0,
+    this.extraLines = const [],
     this.discountPerUnit = 0,
     this.promotionName,
     this.isAvailable = true,
@@ -44,6 +52,20 @@ class CartLine {
   /// el valor oficial; en el modo optimista local es una estimación que
   /// el servidor corrige en cuanto responde.
   double get unitPrice => originalUnitPrice - discountPerUnit;
+
+  /// Desglose de UNA unidad (base, tamaño, adicionales y descuento).
+  PriceQuote get quote => PriceQuote(
+        basePrice: product.price,
+        size: customization.size,
+        sizeAdjustment: sizeAdjustment,
+        lines: extraLines,
+        discountPerUnit: discountPerUnit,
+        promotionName: promotionName,
+      );
+
+  /// El desglose cuadra con el precio por unidad (siempre que lo manda
+  /// el servidor); si no cuadra, no se muestra para no confundir.
+  bool get hasConsistentBreakdown => (quote.originalUnitPrice - originalUnitPrice).abs() < 0.5;
 
   double get lineSubtotal => originalUnitPrice * quantity;
   double get lineDiscount => discountPerUnit * quantity;
@@ -56,6 +78,8 @@ class CartLine {
         quantity: quantity ?? this.quantity,
         customization: customization,
         originalUnitPrice: originalUnitPrice,
+        sizeAdjustment: sizeAdjustment,
+        extraLines: extraLines,
         discountPerUnit: discountPerUnit,
         promotionName: promotionName,
         isAvailable: isAvailable,
@@ -125,13 +149,24 @@ class CartProvider extends ChangeNotifier {
       final product = Product.fromJson(i['productId'] as Map<String, dynamic>);
       final customization = ProductCustomization.fromJson(i['customization'] as Map<String, dynamic>?);
       final promotion = i['promotion'];
+      final breakdown = i['breakdown'];
       return CartLine(
         id: (i['_id'] ?? '').toString(),
         product: product,
         quantity: (i['quantity'] as num).toInt(),
         customization: customization,
-        originalUnitPrice:
-            (i['originalUnitPrice'] as num?)?.toDouble() ?? (product.price + customization.extraPrice),
+        originalUnitPrice: (i['originalUnitPrice'] as num?)?.toDouble() ?? (product.price + customization.extraPriceFor(product.price)),
+        sizeAdjustment: breakdown is Map ? ((breakdown['sizeAdjustment'] as num?)?.toDouble() ?? 0) : 0,
+        extraLines: breakdown is Map
+            ? [
+                for (final l in (breakdown['lines'] as List? ?? const []))
+                  PriceLine(
+                    (l['label'] ?? '').toString(),
+                    (l['amount'] as num?)?.toDouble() ?? 0,
+                    detail: l['detail'] as String?,
+                  ),
+              ]
+            : const [],
         discountPerUnit: (i['discountPerUnit'] as num?)?.toDouble() ?? 0,
         promotionName: promotion is Map<String, dynamic> ? promotion['name'] as String? : null,
         isAvailable: i['isAvailable'] != false,
@@ -161,15 +196,19 @@ class CartProvider extends ChangeNotifier {
     if (idx >= 0) {
       _lines[idx] = _lines[idx].copyWith(quantity: _lines[idx].quantity + quantity);
     } else {
+      // Estimación optimista con las mismas reglas del servidor (que
+      // devuelve el valor oficial en cuanto responde).
+      final quote = customization.quote(basePrice: product.price, effectivePrice: product.effectivePrice, promotionName: product.promotionName);
       _lines.add(CartLine(
         id: 'local_${product.id}_${customization.key}',
         product: product,
         quantity: quantity,
         customization: customization,
-        // Estimación optimista: el servidor devuelve el valor oficial.
-        originalUnitPrice: product.price + customization.extraPrice,
-        discountPerUnit: product.hasDiscount ? product.price - product.effectivePrice : 0,
-        promotionName: product.promotionName,
+        originalUnitPrice: quote.originalUnitPrice,
+        sizeAdjustment: quote.sizeAdjustment,
+        extraLines: quote.lines,
+        discountPerUnit: quote.discountPerUnit,
+        promotionName: quote.promotionName,
       ));
     }
     notifyListeners();
@@ -220,6 +259,9 @@ class CartProvider extends ChangeNotifier {
         'productId': product.id,
         'quantity': quantity,
         'customization': custom.toJson(),
+        // Lo que la app mostró por unidad: si el servidor calcula otra
+        // cosa, rechaza el alta (409) en vez de cobrar algo distinto.
+        'expectedUnitPrice': custom.quote(basePrice: product.price, effectivePrice: product.effectivePrice).unitPrice.round(),
       });
       if (_pendingAdds == 1) {
         _lines = _parseCart(data['cart'] as Map<String, dynamic>);
@@ -227,7 +269,7 @@ class CartProvider extends ChangeNotifier {
       }
     } on ApiException catch (e) {
       _errorMessage = e.message;
-      _lastAddError = e.message;
+      _lastAddError = e.statusCode == 409 ? 'El precio de ${product.name} cambió. Ya actualizamos tu carrito: revísalo e inténtalo de nuevo.' : e.message;
       failed = true;
     } finally {
       _pendingAdds--;

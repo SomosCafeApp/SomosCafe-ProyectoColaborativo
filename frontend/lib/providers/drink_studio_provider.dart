@@ -8,6 +8,7 @@ import '../models/cup_snapshot.dart';
 import '../models/drink_options.dart';
 import '../models/drink_recipe.dart';
 import '../models/drink_studio_stage.dart';
+import '../models/price_quote.dart';
 import '../models/product_customization.dart';
 import '../models/product_model.dart';
 import '../services/api_client.dart';
@@ -17,15 +18,9 @@ import '../widgets/drink_studio/latte_pour_session.dart';
 import 'cart_provider.dart';
 import 'recipes_provider.dart';
 
-enum StudioLoad { loading, error, ready }
+export '../models/price_quote.dart' show PriceLine, PriceQuote;
 
-/// Una línea del desglose de precio (ej. "Canela × 3" → $1.600).
-class PriceLine {
-  final String label;
-  final String? detail;
-  final double amount;
-  const PriceLine(this.label, this.amount, {this.detail});
-}
+enum StudioLoad { loading, error, ready }
 
 /// Resultado de agregar la creación al carrito.
 class StudioAddResult {
@@ -288,38 +283,23 @@ class DrinkStudioProvider extends ChangeNotifier {
   /// Toppings que de verdad van con esta bebida y esta temperatura.
   Map<String, double> get availableToppings => options?.toppingsFor('${product.name} ${product.categoryName ?? ''}', type) ?? const {};
 
-  /// Desglose de lo que suma la personalización (por unidad). La suma
-  /// de las líneas es igual a [extraPerUnit].
-  List<PriceLine> get priceLines {
-    final o = options;
-    if (o == null) return const [];
-    final lines = <PriceLine>[];
-    final sizeExtra = o.sizes[size] ?? 0;
-    if (sizeExtra != 0) lines.add(PriceLine('Tamaño $size', sizeExtra));
-    final milkExtra = o.milks[milk] ?? 0;
-    if (milkExtra != 0) lines.add(PriceLine('Leche $milk', milkExtra));
-    if (shots > 0) lines.add(PriceLine('Shots extra × $shots', shots * o.extraShotPrice, detail: '${shots * o.extraShotPrice ~/ shots} c/u'));
-    for (final t in (toppings.toList()..sort())) {
-      final q = toppingQuantity(t);
-      final base = o.toppings[t] ?? 0;
-      lines.add(PriceLine(
-        q > 1 ? '$t × $q' : t,
-        base + (q - 1) * o.toppingExtraPortionPrice,
-        detail: q > 1 ? '${q - 1} extra × \$${o.toppingExtraPortionPrice.round()}' : null,
-      ));
-    }
-    for (final y in (syrups.toList()..sort())) {
-      lines.add(PriceLine('Jarabe $y', o.syrups[y] ?? 0));
-    }
-    for (final w in (sweeteners.toList()..sort())) {
-      final price = o.sweeteners[w] ?? 0;
-      if (price != 0) lines.add(PriceLine(w, price));
-    }
-    return lines;
-  }
+  /// Precio de UNA bebida con todo su desglose: base, ajuste de tamaño,
+  /// adicionales y descuento. Mismo cálculo que el backend.
+  PriceQuote get quote => customization.quote(basePrice: product.price, effectivePrice: product.effectivePrice, promotionName: product.promotionName);
 
-  double get extraPerUnit => options?.extraPriceOf(customization) ?? 0;
-  double get unitPrice => product.effectivePrice + extraPerUnit;
+  /// Adicionales con precio (leche, shots, toppings...), sin el tamaño.
+  List<PriceLine> get priceLines => quote.lines;
+
+  /// Ajuste por tamaño (Pequeño -3.000 · Mediano 0 · Grande +5.000).
+  double get sizeAdjustment => quote.sizeAdjustment;
+
+  /// Lo que suma la personalización por unidad (tamaño + adicionales).
+  double get extraPerUnit => quote.customizationPrice;
+
+  /// Descuento de promoción por unidad.
+  double get discountPerUnit => quote.discountPerUnit;
+
+  double get unitPrice => quote.unitPrice;
   double get drinkTotal => unitPrice * quantity;
   double get pairingsTotal => pairings.values.fold(0.0, (sum, p) => sum + p.effectivePrice);
   double get total => drinkTotal + pairingsTotal;

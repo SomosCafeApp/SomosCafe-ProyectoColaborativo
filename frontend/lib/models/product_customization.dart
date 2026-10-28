@@ -1,3 +1,5 @@
+import 'price_quote.dart';
+
 /// Personalización elegida en ProductDetailPage o en el estudio de
 /// bebidas: tamaño, tipo, leche, shots extra, toppings, jarabes,
 /// endulzantes y latte art. Viaja en todo el flujo
@@ -11,24 +13,33 @@ class ProductCustomization {
   static const String defaultType = 'Caliente';
   static const String defaultMilk = 'Entera';
 
+  // Tablas de precios. Los valores de aquí son solo el RESPALDO inicial
+  // (idénticos a backend/utils/customization.js): en cuanto la app
+  // descarga /customization/options, `DrinkOptions.register()` las
+  // reemplaza con las del servidor, para que nunca haya dos versiones.
+
   /// Ajuste por tamaño sobre el precio base (puede ser negativo):
   /// Pequeño = base - 3.000 · Mediano = base · Grande = base + 5.000.
-  static const Map<String, double> sizePrices = {
+  static Map<String, double> sizePrices = {
     'Pequeño': -3000,
     'Mediano': 0,
     'Grande': 5000,
   };
 
-  static const Map<String, double> milkPrices = {
+  /// El Pequeño nunca deja la bebida por debajo de este precio.
+  static double minPriceAfterSize = 1000;
+
+  static Map<String, double> milkPrices = {
     'Entera': 0,
+    'Deslactosada': 1000,
     'Almendra': 1000,
     'Avena': 1000,
     'Soya': 2000,
   };
 
-  static const double extraShotPrice = 3000;
+  static double extraShotPrice = 3000;
 
-  static const Map<String, double> toppingPrices = {
+  static Map<String, double> toppingPrices = {
     'Crema batida': 2000,
     'Canela': 1000,
     'Chispas': 2500,
@@ -40,12 +51,23 @@ class ProductCustomization {
 
   /// Cada porción extra del mismo topping suma esto (la primera se
   /// cobra al precio de [toppingPrices]). Igual que el backend.
-  static const double toppingExtraPortionPrice = 300;
-  static const int maxToppingQuantity = 5;
+  static double toppingExtraPortionPrice = 300;
+  static int maxToppingQuantity = 5;
 
   /// Precio de un topping según sus porciones (0 = no se cobra).
   static double toppingLinePrice(double unitPrice, int quantity) =>
       quantity <= 0 ? 0 : unitPrice + (quantity - 1) * toppingExtraPortionPrice;
+
+  /// Ajuste real del tamaño [size] para un producto de precio base
+  /// [basePrice] (precio de lista, no el promocional). Pequeño nunca
+  /// cuesta más que Mediano ni baja del piso [minPriceAfterSize]. Sin
+  /// [basePrice] devuelve el ajuste crudo de la tabla.
+  static double sizeAdjustment(String size, [double? basePrice]) {
+    final raw = sizePrices[size] ?? 0;
+    if (raw >= 0 || basePrice == null) return raw;
+    final room = basePrice - minPriceAfterSize;
+    return -(room <= 0 ? 0.0 : (-raw < room ? -raw : room));
+  }
 
   /// Jarabes y endulzantes: el catálogo real lo manda el backend y se
   /// registra aquí con `DrinkOptions.register()` al abrir el estudio.
@@ -100,26 +122,62 @@ class ProductCustomization {
       sweeteners.isEmpty &&
       latteArt.isEmpty;
 
-  /// Extra por unidad que suman las opciones (sin el precio base).
-  double get extraPrice {
-    double extra = 0;
-    extra += sizePrices[size] ?? 0;
-    extra += milkPrices[milk] ?? 0;
-    extra += extraShots * extraShotPrice;
-    for (final topping in toppings) {
-      extra += toppingLinePrice(toppingPrices[topping] ?? 0, quantityOf(topping));
-    }
-    for (final syrup in syrups) {
-      extra += syrupPrices[syrup] ?? 0;
-    }
-    for (final sweetener in sweeteners) {
-      extra += sweetenerPrices[sweetener] ?? 0;
-    }
-    return extra;
+  /// Extra por unidad que suman las opciones (sin el precio base). Con
+  /// [basePrice] (precio de lista) aplica las reglas de tamaño del
+  /// producto; sin él usa la tabla de tamaños tal cual.
+  double extraPriceFor([double? basePrice]) {
+    return sizeAdjustment(size, basePrice) + priceLines().fold(0.0, (a, l) => a + l.amount);
   }
 
-  double calculateTotalPrice(double basePrice, int quantity) =>
-      (basePrice + extraPrice) * quantity;
+  double get extraPrice => extraPriceFor();
+
+  /// Adicionales con precio (sin el tamaño), en el mismo orden y con las
+  /// mismas etiquetas que el desglose del servidor.
+  List<PriceLine> priceLines() {
+    final lines = <PriceLine>[];
+    final milkExtra = milkPrices[milk] ?? 0;
+    if (milkExtra != 0) lines.add(PriceLine('Leche $milk', milkExtra));
+    if (extraShots > 0) {
+      lines.add(PriceLine('Shots extra × $extraShots', extraShots * extraShotPrice, detail: '\$${extraShotPrice.round()} c/u'));
+    }
+    for (final t in (toppings.toList()..sort())) {
+      final q = quantityOf(t);
+      lines.add(PriceLine(
+        q > 1 ? '$t × $q' : t,
+        toppingLinePrice(toppingPrices[t] ?? 0, q),
+        detail: q > 1 ? '${q - 1} extra × \$${toppingExtraPortionPrice.round()}' : null,
+      ));
+    }
+    for (final y in (syrups.toList()..sort())) {
+      lines.add(PriceLine('Jarabe $y', syrupPrices[y] ?? 0));
+    }
+    for (final w in (sweeteners.toList()..sort())) {
+      final price = sweetenerPrices[w] ?? 0;
+      if (price != 0) lines.add(PriceLine(w, price));
+    }
+    return lines;
+  }
+
+  /// Precio de una unidad con su desglose. [basePrice] es el precio de
+  /// lista; [effectivePrice] el vigente con promoción (si hay).
+  PriceQuote quote({required double basePrice, double? effectivePrice, String? promotionName}) {
+    final adj = sizeAdjustment(size, basePrice);
+    final lines = priceLines();
+    final original = basePrice + adj + lines.fold(0.0, (a, l) => a + l.amount);
+    final promo = (effectivePrice != null && effectivePrice < basePrice) ? basePrice - effectivePrice : 0.0;
+    return PriceQuote(
+      basePrice: basePrice,
+      size: size,
+      sizeAdjustment: adj,
+      lines: lines,
+      // La promoción nunca deja la unidad por debajo de $0.
+      discountPerUnit: promo > original ? original : promo,
+      promotionName: promo > 0 ? promotionName : null,
+    );
+  }
+
+  /// Total de [quantity] unidades. [basePrice] es el de lista.
+  double calculateTotalPrice(double basePrice, int quantity) => (basePrice + extraPriceFor(basePrice)) * quantity;
 
   ProductCustomization copyWith({
     String? size,

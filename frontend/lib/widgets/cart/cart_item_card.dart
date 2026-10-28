@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/cart_provider.dart';
+import '../common/price_breakdown_card.dart';
 import '../product_detail/customization_summary.dart';
 
 import '../../animations/animations.dart';
@@ -120,6 +121,7 @@ class CartItemCard extends StatelessWidget {
                     customization: line.customization,
                     color: subtitleColor,
                   ),
+                if ((!line.customization.isDefault || line.hasDiscount) && line.hasConsistentBreakdown) _LineBreakdown(line: line, color: subtitleColor),
                 const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -209,6 +211,54 @@ class CartItemCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+/// "Ver desglose": base, ajuste por tamaño, adicionales, descuento y
+/// total de la línea, con los valores que calculó el servidor.
+class _LineBreakdown extends StatefulWidget {
+  const _LineBreakdown({required this.line, required this.color});
+  final CartLine line;
+  final Color color;
+
+  @override
+  State<_LineBreakdown> createState() => _LineBreakdownState();
+}
+
+class _LineBreakdownState extends State<_LineBreakdown> {
+  bool _open = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          onTap: () => setState(() => _open = !_open),
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(_open ? 'Ocultar desglose' : 'Ver desglose', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: AppColors.primary)),
+                Icon(_open ? Icons.expand_less_rounded : Icons.expand_more_rounded, size: 16, color: AppColors.primary),
+              ],
+            ),
+          ),
+        ),
+        AnimatedSize(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          alignment: Alignment.topCenter,
+          child: _open
+              ? Padding(
+                  padding: const EdgeInsets.only(top: 4, bottom: 4),
+                  child: PriceBreakdownCard(quote: widget.line.quote, quantity: widget.line.quantity, title: 'Desglose', padding: const EdgeInsets.all(12)),
+                )
+              : const SizedBox(width: double.infinity),
+        ),
+      ],
     );
   }
 }

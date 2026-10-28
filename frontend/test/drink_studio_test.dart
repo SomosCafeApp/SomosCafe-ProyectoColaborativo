@@ -16,6 +16,8 @@ import 'package:somoscafeapp/models/product_model.dart';
 import 'package:somoscafeapp/widgets/drink_studio/latte_art_shapes.dart';
 import 'package:somoscafeapp/widgets/drink_studio/milk_badge.dart';
 import 'package:somoscafeapp/models/cup_snapshot.dart';
+import 'package:somoscafeapp/providers/cart_provider.dart';
+import 'package:somoscafeapp/models/price_quote.dart';
 import 'package:somoscafeapp/widgets/drink_studio/sweetener_packet.dart';
 import 'package:somoscafeapp/widgets/drink_studio/topping_painters.dart';
 
@@ -529,7 +531,9 @@ void main() {
       expect(canela.amount, 1000 + 2 * 300);
       expect(canela.label, 'Canela × 3');
       expect(canela.detail, '2 extra × \$300');
-      expect(lines.fold<double>(0, (a, l) => a + l.amount), s.extraPerUnit);
+      expect(s.sizeAdjustment, 5000);
+      expect(s.sizeAdjustment + lines.fold<double>(0, (a, l) => a + l.amount), s.extraPerUnit);
+      expect(s.quote.unitPrice, s.unitPrice);
       expect(s.unitPrice, 8000 + s.extraPerUnit);
     });
 
@@ -574,6 +578,107 @@ void main() {
       expect(fast.stamps.last.r, closeTo(fast.brush, 1e-9));
       expect(slow.stamps.last.r, greaterThan(slow.brush));
       expect(slow.stamps.last.r, lessThanOrEqualTo(slow.brush * 1.3));
+    });
+  });
+
+  group('precios unificados (mismas reglas que el backend)', () {
+    double unit(double base, String size, {double? effective}) => ProductCustomization(size: size).quote(basePrice: base, effectivePrice: effective).unitPrice;
+
+    test('Pequeño base-3.000 · Mediano base · Grande base+5.000', () {
+      expect(unit(12000, 'Pequeño'), 9000);
+      expect(unit(12000, 'Mediano'), 12000);
+      expect(unit(12000, 'Grande'), 17000);
+    });
+
+    test('Pequeño ≤ Mediano ≤ Grande y nunca negativo en cualquier precio base', () {
+      for (var base = 0.0; base <= 40000; base += 250) {
+        final s = unit(base, 'Pequeño'), m = unit(base, 'Mediano'), g = unit(base, 'Grande');
+        expect(s <= m && m <= g, isTrue, reason: 'base $base');
+        expect(s >= 0, isTrue, reason: 'base $base');
+        expect(m, base);
+      }
+    });
+
+    test('productos baratos: el descuento del Pequeño se recorta al piso', () {
+      expect(ProductCustomization.sizeAdjustment('Pequeño', 3500), -2500);
+      expect(ProductCustomization.sizeAdjustment('Pequeño', 1000), 0);
+      expect(ProductCustomization.sizeAdjustment('Pequeño', 500), 0);
+      expect(ProductCustomization.sizeAdjustment('Pequeño', 8000), -3000);
+      expect(ProductCustomization.sizeAdjustment('Grande', 500), 5000);
+    });
+
+    test('adicionales: leche, shots y +\$300 por porción extra de topping', () {
+      final c = ProductCustomization(
+        size: 'Grande',
+        milk: 'Deslactosada',
+        extraShots: 2,
+        toppings: {'Canela', 'Cacao en polvo'},
+        toppingQuantities: {'Canela': 3},
+      );
+      final q = c.quote(basePrice: 10000);
+      expect(q.sizeAdjustment, 5000);
+      expect(q.lines.firstWhere((l) => l.label == 'Leche Deslactosada').amount, 1000);
+      expect(q.lines.firstWhere((l) => l.label.startsWith('Shots')).amount, 6000);
+      final canela = q.lines.firstWhere((l) => l.label == 'Canela × 3');
+      expect(canela.amount, 1000 + 2 * 300);
+      expect(canela.detail, '2 extra × \$300');
+      expect(q.originalUnitPrice, 10000 + 5000 + 1000 + 6000 + 1600 + 1000);
+      expect(c.extraPriceFor(10000), q.customizationPrice);
+    });
+
+    test('el descuento se aplica al precio base y nunca deja la unidad en negativo', () {
+      final c = ProductCustomization(size: 'Grande', extraShots: 1);
+      final q = c.quote(basePrice: 10000, effectivePrice: 8000, promotionName: 'Promo');
+      expect(q.discountPerUnit, 2000);
+      expect(q.originalUnitPrice, 18000);
+      expect(q.unitPrice, 16000);
+      expect(q.total(2), 32000);
+      expect(q.subtotal(2), 36000);
+      final free = ProductCustomization(size: 'Pequeño').quote(basePrice: 4000, effectivePrice: 0);
+      expect(free.originalUnitPrice, 1000);
+      expect(free.discountPerUnit, 1000);
+      expect(free.unitPrice, 0);
+    });
+
+    test('las tablas del servidor reemplazan a las de respaldo', () {
+      final saved = (ProductCustomization.sizePrices, ProductCustomization.milkPrices, ProductCustomization.extraShotPrice);
+      addTearDown(() {
+        ProductCustomization.sizePrices = saved.$1;
+        ProductCustomization.milkPrices = saved.$2;
+        ProductCustomization.extraShotPrice = saved.$3;
+      });
+      final o = DrinkOptions.fromJson({
+        ..._optionsJson(),
+        'sizes': {'Pequeño': -2000, 'Mediano': 0, 'Grande': 4000},
+        'milks': {'Entera': 0, 'Coco': 1500},
+        'extraShot': {'price': 3500, 'max': 6},
+      });
+      o.register();
+      expect(ProductCustomization.sizeAdjustment('Pequeño', 10000), -2000);
+      expect(ProductCustomization.milkPrices['Coco'], 1500);
+      expect(ProductCustomization(extraShots: 2, size: 'Grande').quote(basePrice: 10000).customizationPrice, 4000 + 7000);
+    });
+
+    test('la línea del carrito local usa el mismo cálculo y su desglose cuadra', () {
+      final product = Product(id: '1', name: 'Latte', description: '', price: 7000, categoryName: 'Cafés calientes');
+      final c = ProductCustomization(size: 'Pequeño', milk: 'Soya', extraShots: 1, toppings: {'Canela'}, toppingQuantities: {'Canela': 2});
+      final q = c.quote(basePrice: 7000);
+      final line = CartLine(
+        id: 'l1',
+        product: product,
+        quantity: 3,
+        customization: c,
+        originalUnitPrice: q.originalUnitPrice,
+        sizeAdjustment: q.sizeAdjustment,
+        extraLines: q.lines,
+      );
+      expect(line.originalUnitPrice, 7000 - 3000 + 2000 + 3000 + 1300);
+      expect(line.hasConsistentBreakdown, isTrue);
+      expect(line.lineTotal, line.originalUnitPrice * 3);
+      expect(line.quote.total(3), line.lineTotal);
+      // Un desglose que no cuadra con el precio del servidor se oculta.
+      final off = CartLine(id: 'l2', product: product, quantity: 1, customization: c, originalUnitPrice: 99999);
+      expect(off.hasConsistentBreakdown, isFalse);
     });
   });
 }

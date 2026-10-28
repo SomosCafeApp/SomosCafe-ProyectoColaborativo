@@ -43,6 +43,9 @@ class DrinkOptions {
   final double toppingExtraPortionPrice;
   final int maxToppingQuantity;
 
+  /// Piso del tamaño Pequeño (ver backend `MIN_PRICE_AFTER_SIZE`).
+  final double minPriceAfterSize;
+
   /// Compatibilidad por topping (sin regla = va con cualquier bebida).
   final Map<String, ToppingRule> toppingCompat;
   final Map<String, double> syrups;
@@ -68,6 +71,7 @@ class DrinkOptions {
     required this.toppings,
     required this.toppingExtraPortionPrice,
     required this.maxToppingQuantity,
+    this.minPriceAfterSize = 1000,
     this.toppingCompat = const {},
     required this.syrups,
     required this.maxSyrups,
@@ -112,6 +116,7 @@ class DrinkOptions {
           ProductCustomization.toppingExtraPortionPrice,
       maxToppingQuantity:
           (toppingRules['maxQuantity'] as num?)?.toInt() ?? ProductCustomization.maxToppingQuantity,
+      minPriceAfterSize: ((json['sizeRules'] as Map?)?['minPriceAfterSize'] as num?)?.toDouble() ?? 1000,
       toppingCompat: {
         for (final e in ((toppingRules['compatibility'] as Map?) ?? const {}).entries) e.key.toString(): ToppingRule.fromJson(e.value),
       },
@@ -148,16 +153,32 @@ class DrinkOptions {
     };
   }
 
-  /// Deja los precios de jarabes y endulzantes disponibles para
-  /// `ProductCustomization.extraPrice` (carrito optimista, resúmenes).
+  /// Deja TODAS las tablas de precios del servidor disponibles para
+  /// `ProductCustomization` (detalle, carrito optimista, resúmenes), de
+  /// modo que la app nunca calcule con valores distintos a los que cobra
+  /// el backend.
   void register() {
+    ProductCustomization.sizePrices = Map<String, double>.from(sizes);
+    ProductCustomization.minPriceAfterSize = minPriceAfterSize;
+    ProductCustomization.milkPrices = Map<String, double>.from(milks);
+    ProductCustomization.extraShotPrice = extraShotPrice;
+    ProductCustomization.toppingPrices = Map<String, double>.from(toppings);
+    ProductCustomization.toppingExtraPortionPrice = toppingExtraPortionPrice;
+    ProductCustomization.maxToppingQuantity = maxToppingQuantity;
     ProductCustomization.syrupPrices = Map<String, double>.from(syrups);
     ProductCustomization.sweetenerPrices = Map<String, double>.from(sweeteners);
   }
 
   /// Extra por unidad de [c] con los precios reales del servidor.
-  double extraPriceOf(ProductCustomization c) {
-    double extra = (sizes[c.size] ?? 0) + (milks[c.milk] ?? 0) + c.extraShots * extraShotPrice;
+  /// [basePrice] (precio de lista) activa las reglas de tamaño del
+  /// producto; sin él se usa el ajuste crudo de la tabla.
+  double extraPriceOf(ProductCustomization c, {double? basePrice}) {
+    double size = sizes[c.size] ?? 0;
+    if (size < 0 && basePrice != null) {
+      final room = basePrice - minPriceAfterSize;
+      size = -(room <= 0 ? 0.0 : (-size < room ? -size : room));
+    }
+    double extra = size + (milks[c.milk] ?? 0) + c.extraShots * extraShotPrice;
     for (final t in c.toppings) {
       final qty = c.quantityOf(t);
       if (qty > 0) extra += (toppings[t] ?? 0) + (qty - 1) * toppingExtraPortionPrice;

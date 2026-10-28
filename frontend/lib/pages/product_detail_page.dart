@@ -3,9 +3,12 @@ import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/utils/cart_guard.dart';
+import '../models/price_quote.dart';
 import '../models/product_customization.dart';
 import '../models/product_model.dart';
 import '../providers/auth_provider.dart';
+import '../services/pricing_sync.dart';
+import '../widgets/common/price_breakdown_card.dart';
 import '../widgets/drink_studio/drink_studio_entry.dart';
 import '../widgets/product_detail/product_bottom_bar.dart';
 import '../widgets/product_detail/product_customization_section.dart';
@@ -42,6 +45,16 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
   final GlobalKey _imageKey = GlobalKey();
 
+  @override
+  void initState() {
+    super.initState();
+    // Precios reales del servidor (tamaños, leches, toppings...). Hasta
+    // que lleguen se usan los de respaldo, que son idénticos.
+    PricingSync.ensureLoaded().then((ok) {
+      if (ok && mounted) setState(() {});
+    });
+  }
+
   Widget _wrapHero(Widget child) => widget.heroTag == null
       ? child
       : Hero(tag: widget.heroTag!, child: child);
@@ -72,11 +85,13 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           toppings: Set<String>.from(_selectedToppings),
         );
 
-  // El descuento de la promoción aplica al precio base del producto;
-  // las personalizaciones se suman sin descuento. El backend recalcula.
-  double get _totalPrice => _customization.calculateTotalPrice(_product.effectivePrice, _quantity);
+  // Mismo cálculo que el servidor: el descuento de la promoción aplica
+  // al precio base; tamaño y adicionales se suman sin descuento.
+  PriceQuote get _quote => _customization.quote(basePrice: _product.price, effectivePrice: _product.effectivePrice, promotionName: _product.promotionName);
 
-  double get _originalPrice => _customization.calculateTotalPrice(_product.price, _quantity);
+  double get _totalPrice => _quote.total(_quantity);
+
+  double get _originalPrice => _quote.subtotal(_quantity);
 
   void _addToCart() {
     final isLoggedIn = context.read<AuthProvider>().isLoggedIn;
@@ -162,6 +177,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         primary: primary,
                         borderColor: isDark ? Colors.white24 : Colors.black12,
                         counterBg: isDark ? AppColors.darkSurfaceSubtle : AppColors.lightSurfaceSubtle,
+                        basePrice: _product.price,
                         selectedSize: _selectedSize,
                         selectedType: _selectedType,
                         selectedMilk: _selectedMilk,
@@ -176,6 +192,11 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         },
                         onToppingToggle: _toggleTopping,
                       ),
+                    // Desglose transparente del precio.
+                    if (_product.isCustomizable || _product.hasDiscount) ...[
+                      PriceBreakdownCard(quote: _quote, quantity: _quantity),
+                      const SizedBox(height: 16),
+                    ],
                     ReviewsSection(
                       productId: _product.id,
                       cardColor: cardColor,
