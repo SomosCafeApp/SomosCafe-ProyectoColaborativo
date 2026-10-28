@@ -136,6 +136,8 @@ class _ProductFormCardState extends State<ProductFormCard> {
                 _image = img;
                 _imageError = null;
               }),
+              // Volver a la imagen actual (al editar) antes de guardar.
+              onCleared: () => setState(() => _image = null),
             ),
             const SizedBox(height: 16),
             const AdminFieldLabel('Nombre'),

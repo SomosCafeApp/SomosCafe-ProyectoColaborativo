@@ -56,6 +56,37 @@ export const upload = multer({
   },
 });
 
+// Igual que upload.single("imagen"), pero los errores de multer (archivo
+// muy pesado o formato inválido) y de Cloudinary (credenciales, red) se
+// devuelven como JSON con un mensaje que la app sabe traducir. Sin esto,
+// Express respondía con una página de error y el admin solo veía un
+// "error inesperado" al subir una foto de la galería o de la cámara.
+export const uploadProductImage = (req, res, next) => {
+  upload.single("imagen")(req, res, (error) => {
+    if (!error) {
+      return next();
+    }
+
+    if (error.code === "LIMIT_FILE_SIZE") {
+      return res.status(400).json({ message: "File too large (max 5MB)" });
+    }
+
+    // Errores de formato (imageFilter) y de multer en general.
+    if (error instanceof multer.MulterError || /only jpg/i.test(error.message || "")) {
+      return res
+        .status(400)
+        .json({ message: error.message || "Invalid product image" });
+    }
+
+    // Lo demás viene del almacenamiento (Cloudinary): no se expone el
+    // detalle técnico, solo se registra en el servidor.
+    console.error("Product image upload error:", error);
+    return res.status(502).json({
+      message: "Image upload failed. Try again in a moment",
+    });
+  });
+};
+
 // ===================================
 // PAYMENT PROOF UPLOAD
 // ===================================

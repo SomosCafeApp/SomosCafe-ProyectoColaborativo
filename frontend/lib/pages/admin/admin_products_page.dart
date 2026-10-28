@@ -66,6 +66,8 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
     if (text.contains('category is inactive')) return 'La categoría seleccionada está inactiva';
     if (text.contains('only jpg')) return 'Formato no permitido. Usa JPG, PNG, WEBP o AVIF';
     if (text.contains('file too large')) return 'La imagen supera los 5 MB';
+    if (text.contains('image upload failed')) return 'No se pudo subir la imagen. Revisa tu conexión e inténtalo de nuevo.';
+    if (text.contains('invalid product image')) return 'La imagen no es válida. Elige otra foto.';
     return message ?? 'Ocurrió un error inesperado';
   }
 

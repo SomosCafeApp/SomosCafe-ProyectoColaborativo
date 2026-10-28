@@ -15,7 +15,7 @@ import {
 } from "../controllers/productController.js";
 
 import {
-    upload
+    uploadProductImage
 } from "../middlewares/uploadMiddleware.js";
 
 const router = Router();
@@ -57,7 +57,7 @@ router.post(
     "/",
     verifyToken,
     adminOnly,
-    upload.single("imagen"),
+    uploadProductImage,
     createProduct
 );
 
@@ -67,7 +67,7 @@ router.put(
     "/:id",
     verifyToken,
     adminOnly,
-    upload.single("imagen"),
+    uploadProductImage,
     updateProduct
 );
 

@@ -4,7 +4,6 @@ import '../core/constants/app_colors.dart';
 import '../core/utils/favorites_guard.dart';
 import '../models/product_model.dart';
 import '../pages/product_detail_page.dart';
-import 'drink_studio/drink_studio_entry.dart';
 import '../providers/favorites_provider.dart';
 
 import '../animations/animations.dart';
@@ -207,13 +206,6 @@ class _ProductCardState extends State<ProductCard> {
                       ),
                     ),
 
-                    // 2a. ACCESO OPCIONAL AL ESTUDIO DE BEBIDAS (solo bebidas)
-                    if (product.isDrink && product.isAvailable)
-                      Positioned(
-                        top: 46,
-                        right: 8,
-                        child: DrinkStudioButton(product: product),
-                      ),
 
                     // 2b. BADGE DE PROMOCIÓN (Abajo a la izquierda)
                     if (product.hasDiscount && (product.promotionLabel ?? '').isNotEmpty)

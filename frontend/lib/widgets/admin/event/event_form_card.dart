@@ -141,6 +141,7 @@ class _EventFormCardState extends State<EventFormCard> {
               currentImageUrl: widget.initial?.image,
               picked: _image,
               onPicked: (img) => setState(() => _image = img),
+              onCleared: () => setState(() => _image = null),
             ),
             const SizedBox(height: 16),
             const AdminFieldLabel('Nombre'),

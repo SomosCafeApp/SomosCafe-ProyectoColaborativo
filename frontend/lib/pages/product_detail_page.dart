@@ -204,7 +204,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       mutedColor: subtitleColor,
                     ),
                     // Espacio para que el botón flotante no tape el final.
-                    if (DrinkStudioFab.supports(_product)) const SizedBox(height: 72),
+                    const SizedBox(height: 72),
                   ],
                 ),
               ),
@@ -213,7 +213,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         ),
       ),
       // Minijuego opcional: ícono flotante solo en bebidas compatibles.
-      floatingActionButton: DrinkStudioFab.supports(_product) ? DrinkStudioFab(product: _product) : null,
+      floatingActionButton: DrinkStudioFab(product: _product),
       bottomNavigationBar: ProductBottomBar(
         total: _totalPrice,
         isAvailable: _product.isAvailable,

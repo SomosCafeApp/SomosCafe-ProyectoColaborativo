@@ -6,6 +6,7 @@ import '../providers/active_event_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/product_provider.dart';
 import '../widgets/chat/chat_fab.dart';
+import '../widgets/drink_studio/drink_studio_launcher.dart';
 import 'cart_tab.dart';
 import 'menu_page.dart';
 import 'login_page.dart';
@@ -181,6 +182,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           bottom: 65 + MediaQuery.of(context).padding.bottom + 16,
           child: const ChatFab(),
         ),
+        // Acceso único al minijuego Estudio de bebidas, sobre el ChatBot,
+        // en Menú y Carrito (no depende de las bebidas disponibles).
+        if (_currentIndex == 1 || _currentIndex == 3)
+          Positioned(
+            right: 22,
+            bottom: 65 + MediaQuery.of(context).padding.bottom + 16 + 56 + 12,
+            child: const DrinkStudioLauncher(),
+          ),
       ],
     );
   }

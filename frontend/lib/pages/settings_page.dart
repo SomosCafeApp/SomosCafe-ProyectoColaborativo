@@ -10,6 +10,7 @@ import 'security_page.dart';
 import 'chat_page.dart';
 import '../core/utils/studio_prefs.dart';
 import 'terms_page.dart';
+import '../widgets/drink_studio/drink_studio_launcher.dart';
 
 import '../widgets/profile/profile_sub_page_header.dart';
 import '../widgets/settings/settings_section_header.dart';
@@ -113,6 +114,20 @@ class SettingsPage extends StatefulWidget {
                   const SettingsSectionHeader(
                     title: 'Estudio de bebidas',
                   ),
+
+                  SettingsCardTile(
+                    icon: Icons.local_cafe_rounded,
+                    title: 'Abrir Estudio de bebidas',
+                    subtitle: 'Prepara y personaliza tu bebida',
+                    trailing: Icon(
+                      Icons.arrow_forward_rounded,
+                      color: primaryBrown,
+                      size: 20,
+                    ),
+                    onTap: () => openDrinkStudio(context),
+                  ),
+
+                  const SizedBox(height: 12),
 
                   ListenableBuilder(
                     listenable: StudioPrefs.instance,

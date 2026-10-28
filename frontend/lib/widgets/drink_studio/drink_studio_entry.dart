@@ -6,6 +6,7 @@ import '../../animations/animations.dart';
 import '../../core/constants/app_colors.dart';
 import '../../models/product_model.dart';
 import '../../pages/drink_studio_page.dart';
+import 'drink_studio_launcher.dart';
 import 'studio_colors.dart';
 
 /// Ícono circular para la tarjeta de una bebida: abre el estudio.
@@ -86,14 +87,13 @@ class _DrinkStudioFabState extends State<DrinkStudioFab> {
 
   @override
   Widget build(BuildContext context) {
-    if (!DrinkStudioFab.supports(widget.product)) return const SizedBox.shrink();
     return Semantics(
       button: true,
       label: 'Prepara tu bebida ${widget.product.name}',
       child: Breathing(
         scale: 1.05,
         child: PressScale(
-          onTap: () => DrinkStudioPage.open(context, widget.product),
+          onTap: () => openDrinkStudio(context, preselect: widget.product),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 320),
             curve: Curves.easeOutCubic,

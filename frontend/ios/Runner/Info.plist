@@ -68,6 +68,8 @@
 	</array>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Necesitamos acceso a tus fotos para elegir imágenes (productos o comprobantes de pago).</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Necesitamos la cámara para tomar la foto del producto, del evento o de tu perfil.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Necesitamos permiso para guardar el código QR de pago en tu galería.</string>
 </dict>
