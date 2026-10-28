@@ -1,4 +1,4 @@
-import 'dart:ui' show Offset;
+import 'dart:ui' show Canvas, Offset, PictureRecorder;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -15,6 +15,9 @@ import 'package:somoscafeapp/models/product_customization.dart';
 import 'package:somoscafeapp/models/product_model.dart';
 import 'package:somoscafeapp/widgets/drink_studio/latte_art_shapes.dart';
 import 'package:somoscafeapp/widgets/drink_studio/milk_badge.dart';
+import 'package:somoscafeapp/models/cup_snapshot.dart';
+import 'package:somoscafeapp/widgets/drink_studio/sweetener_packet.dart';
+import 'package:somoscafeapp/widgets/drink_studio/topping_painters.dart';
 
 Map<String, dynamic> _optionsJson({Map<String, num> syrups = const {}}) => {
       'sizes': {'Pequeño': -3000, 'Mediano': 0, 'Grande': 5000},
@@ -467,5 +470,110 @@ void main() {
       expect(p.stepDoneTick, before);
     });
   });
-}
 
+  group('toppings nuevos, endulzantes y desglose de precio', () {
+    setUp(() => StudioPrefs.instance.haptics = false);
+
+    Map<String, dynamic> json() => {
+          ..._optionsJson(),
+          'toppings': {'Canela': 1000, 'Cacao en polvo': 1000, 'Malvaviscos': 1800},
+          'toppingRules': {
+            'extraPortionPrice': 300,
+            'maxQuantity': 5,
+            'compatibility': {
+              'Cacao en polvo': {'keywords': ['latte', 'moca']},
+              'Malvaviscos': {'types': ['Caliente'], 'keywords': ['moca', 'chocolate', 'latte']},
+            },
+          },
+          'sweeteners': {'prices': {'Azúcar blanca': 0, 'Azúcar morena': 0, 'Estevia': 0}, 'max': 3},
+        };
+
+    DrinkStudioProvider studio({String name = 'Moca'}) {
+      final product = Product(id: '1', name: name, description: '', price: 8000, categoryName: 'Cafés calientes');
+      final p = DrinkStudioProvider(product: product, catalog: <Product>[]);
+      final o = DrinkOptions.fromJson(json());
+      p.options = o;
+      p.profile = DrinkProfile.of(product, o);
+      return p;
+    }
+
+    test('solo se ofrecen los toppings compatibles con la bebida y la temperatura', () {
+      final s = studio();
+      expect(s.availableToppings.keys, containsAll(['Canela', 'Cacao en polvo', 'Malvaviscos']));
+      s.setType('Frío');
+      expect(s.availableToppings.keys, isNot(contains('Malvaviscos')));
+      expect(s.availableToppings.keys, contains('Cacao en polvo'));
+      final tea = studio(name: 'Té chai');
+      expect(tea.availableToppings.keys, ['Canela']);
+    });
+
+    test('al pasar a frío se retiran los malvaviscos ya elegidos', () {
+      final s = studio();
+      expect(s.toggleTopping('Malvaviscos'), isTrue);
+      s.changeToppingQuantity('Malvaviscos', 1);
+      s.setType('Frío');
+      expect(s.toppings, isNot(contains('Malvaviscos')));
+      expect(s.toggleTopping('Malvaviscos'), isFalse);
+    });
+
+    test('cada porción extra suma \$300 y el desglose coincide con el total', () {
+      final s = studio();
+      s.toggleTopping('Canela');
+      s.changeToppingQuantity('Canela', 2); // 3 porciones: 1000 + 2 × 300
+      s.toggleTopping('Cacao en polvo');
+      s.setSize('Grande');
+      s.toggleSweetener('Estevia');
+      expect(s.toppingQuantity('Canela'), 3);
+      final lines = s.priceLines;
+      final canela = lines.firstWhere((l) => l.label.startsWith('Canela'));
+      expect(canela.amount, 1000 + 2 * 300);
+      expect(canela.label, 'Canela × 3');
+      expect(canela.detail, '2 extra × \$300');
+      expect(lines.fold<double>(0, (a, l) => a + l.amount), s.extraPerUnit);
+      expect(s.unitPrice, 8000 + s.extraPerUnit);
+    });
+
+    test('máximo de endulzantes y snapshot con sobres y porciones', () {
+      final s = studio();
+      expect(s.toggleSweetener('Azúcar blanca'), isTrue);
+      expect(s.toggleSweetener('Azúcar morena'), isTrue);
+      expect(s.toggleSweetener('Estevia'), isTrue);
+      s.toggleTopping('Canela');
+      s.changeToppingQuantity('Canela', 1);
+      final snap = s.snapshot;
+      expect(snap.sweeteners, ['Azúcar blanca', 'Azúcar morena', 'Estevia']);
+      expect(snap.qtyOf('Canela'), 2);
+      expect(snap.qtyOf('Malvaviscos'), 0);
+    });
+
+    test('los pintores de toppings y sobres dibujan todas las combinaciones sin fallar', () {
+      const names = ['Crema batida', 'Canela', 'Chispas', 'Caramelo', 'Cacao en polvo', 'Virutas de chocolate', 'Malvaviscos'];
+      for (final art in [false, true]) {
+        for (final top in [false, true]) {
+          for (final q in [1, 3, 5]) {
+            final canvas = Canvas(PictureRecorder());
+            ToppingPainters.paint(canvas, const Offset(150, 150), 100, top ? 100 : 40, names, {for (final n in names) n: q}, hasArt: art, topView: top);
+          }
+        }
+      }
+      for (final n in ['Azúcar blanca', 'Azúcar morena', 'Estevia', 'Panela', 'Miel', 'Otro']) {
+        SweetenerPacketPainter.paint(Canvas(PictureRecorder()), const Offset(40, 50), 36, n, angle: 0.2);
+      }
+      expect(ToppingPainters.kindOf('Virutas de chocolate'), ToppingKind.shavings);
+      expect(ToppingPainters.kindOf('Cacao en polvo'), ToppingKind.cocoa);
+      expect(ToppingPainters.kindOf('Malvaviscos'), ToppingKind.marshmallow);
+    });
+
+    test('el trazo del arte latte nunca es más fino que el base', () {
+      final fast = LattePourEngine(mask: List<bool>.filled(32 * 32, true));
+      final slow = LattePourEngine(mask: List<bool>.filled(32 * 32, true));
+      fast.pour(0, 0, 0.016);
+      slow.pour(0, 0, 0.016);
+      fast.pour(0.6, 0, 0.016); // rápido: ~37 u/s
+      slow.pour(0.6, 0, 1.5); // lento: 0,4 u/s
+      expect(fast.stamps.last.r, closeTo(fast.brush, 1e-9));
+      expect(slow.stamps.last.r, greaterThan(slow.brush));
+      expect(slow.stamps.last.r, lessThanOrEqualTo(slow.brush * 1.3));
+    });
+  });
+}

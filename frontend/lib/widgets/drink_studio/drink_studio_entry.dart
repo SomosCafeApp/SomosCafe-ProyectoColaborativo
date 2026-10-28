@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../animations/animations.dart';
@@ -48,44 +50,84 @@ class DrinkStudioButton extends StatelessWidget {
   }
 }
 
-/// Tarjeta invitación del detalle de producto (solo bebidas).
-class DrinkStudioCta extends StatelessWidget {
-  const DrinkStudioCta({super.key, required this.product});
+/// Acceso flotante al estudio, como el del ChatBot: el minijuego ya no
+/// se impone en la ficha del producto, se abre solo cuando el usuario
+/// lo desea. Solo aparece en bebidas compatibles y disponibles; se
+/// muestra extendido unos segundos para que se entienda y luego se
+/// recoge en un círculo.
+class DrinkStudioFab extends StatefulWidget {
+  const DrinkStudioFab({super.key, required this.product});
   final Product product;
+
+  /// ¿Esta bebida admite el estudio?
+  static bool supports(Product p) => p.isDrink && p.isAvailable;
+
+  @override
+  State<DrinkStudioFab> createState() => _DrinkStudioFabState();
+}
+
+class _DrinkStudioFabState extends State<DrinkStudioFab> {
+  bool _expanded = true;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer(const Duration(seconds: 4), () {
+      if (mounted) setState(() => _expanded = false);
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (!product.isDrink || !product.isAvailable) return const SizedBox.shrink();
-    return PressScale(
-      onTap: () => DrinkStudioPage.open(context, product),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          gradient: const LinearGradient(colors: [Color(0xFFB88A5C), AppColors.primary, Color(0xFF7A4F2C)], begin: Alignment.topLeft, end: Alignment.bottomRight),
-          boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 5))],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 46,
-              height: 46,
-              decoration: BoxDecoration(color: StudioColors.cream.withValues(alpha: 0.22), shape: BoxShape.circle),
-              child: const Icon(Icons.brush_rounded, color: Colors.white),
+    if (!DrinkStudioFab.supports(widget.product)) return const SizedBox.shrink();
+    return Semantics(
+      button: true,
+      label: 'Prepara tu bebida ${widget.product.name}',
+      child: Breathing(
+        scale: 1.05,
+        child: PressScale(
+          onTap: () => DrinkStudioPage.open(context, widget.product),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 320),
+            curve: Curves.easeOutCubic,
+            height: 56,
+            padding: EdgeInsets.symmetric(horizontal: _expanded ? 18 : 16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(30),
+              gradient: StudioColors.brand,
+              boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.4), blurRadius: 14, offset: const Offset(0, 6))],
             ),
-            const SizedBox(width: 12),
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Prepara tu bebida', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900)),
-                  SizedBox(height: 2),
-                  Text('Minijuego opcional: elige, vierte, mezcla y dibuja tu latte art.', style: TextStyle(color: Colors.white70, fontSize: 12, height: 1.25)),
-                ],
-              ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Stack(
+                  alignment: Alignment.center,
+                  clipBehavior: Clip.none,
+                  children: [
+                    Icon(Icons.local_cafe_rounded, size: 26, color: Colors.white),
+                    Positioned(top: -6, right: -7, child: Icon(Icons.auto_awesome_rounded, size: 13, color: AppColors.accentYellow)),
+                  ],
+                ),
+                AnimatedSize(
+                  duration: const Duration(milliseconds: 320),
+                  curve: Curves.easeOutCubic,
+                  child: _expanded
+                      ? const Padding(
+                          padding: EdgeInsets.only(left: 10),
+                          child: Text('Personaliza', maxLines: 1, style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w900)),
+                        )
+                      : const SizedBox.shrink(),
+                ),
+              ],
             ),
-            const Icon(Icons.chevron_right_rounded, color: Colors.white),
-          ],
+          ),
         ),
       ),
     );

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../models/drink_studio_stage.dart';
 import '../../providers/drink_studio_provider.dart';
+import 'art_mini_preview.dart';
 import 'art_overlays.dart';
 import 'cup_stage.dart';
 import 'milk_badge.dart';
@@ -43,6 +44,7 @@ class StudioGameArea extends StatelessWidget {
         if (s.step == StudioStep.art) ...[
           Align(alignment: const Alignment(0, -0.93), child: ArtCoachMark(pour: s.pour)),
           Align(alignment: const Alignment(0, -0.7), child: ArtDoneBanner(pour: s.pour)),
+          Positioned(left: 12, top: 10, child: ArtMiniPreview(pour: s.pour)),
         ],
         Align(
           alignment: const Alignment(0, -0.8),

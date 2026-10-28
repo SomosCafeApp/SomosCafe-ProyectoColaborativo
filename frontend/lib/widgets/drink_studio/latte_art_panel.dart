@@ -11,6 +11,7 @@ import 'latte_art_shapes.dart';
 import 'latte_pour_session.dart';
 import 'option_card.dart';
 import 'studio_colors.dart';
+import 'studio_ui.dart';
 
 /// Arte latte (opcional): el usuario elige un diseño, ve su silueta
 /// sobre el café y la rellena él mismo vertiendo la leche con el dedo.
@@ -39,11 +40,7 @@ class LatteArtPanel extends StatelessWidget {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 240),
             padding: const EdgeInsets.symmetric(vertical: 8),
-            decoration: BoxDecoration(
-              color: selected ? StudioColors.primary.withValues(alpha: dark ? 0.3 : 0.14) : StudioColors.soft(dark),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: selected ? StudioColors.primary : Colors.transparent, width: 2),
-            ),
+            decoration: StudioUi.choice(dark, selected: selected, radius: 18),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [

@@ -40,11 +40,16 @@ class StudioTray extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: StudioColors.panel(dark),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 16, offset: const Offset(0, -4))],
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.14), blurRadius: 24, offset: const Offset(0, -6))],
       ),
       child: Column(
         children: [
+          // Asa decorativa de la bandeja.
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Container(width: 38, height: 4, decoration: BoxDecoration(color: StudioColors.muted(dark).withValues(alpha: 0.3), borderRadius: BorderRadius.circular(4))),
+          ),
           Expanded(
             child: SingleChildScrollView(
               child: AnimatedSwitcher(
@@ -68,7 +73,7 @@ class StudioTray extends StatelessWidget {
                       onPressed: s.back,
                       icon: const Icon(Icons.arrow_back_rounded, size: 18),
                       label: const Text('Atrás'),
-                      style: OutlinedButton.styleFrom(foregroundColor: StudioColors.primary, minimumSize: const Size(0, 52), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18))),
+                      style: OutlinedButton.styleFrom(foregroundColor: StudioColors.primary, minimumSize: const Size(0, 54), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
                     ),
                     const SizedBox(width: 12),
                   ],
@@ -77,17 +82,24 @@ class StudioTray extends StatelessWidget {
                       tooltip: 'Reiniciar esta etapa',
                       onPressed: s.resetCurrentStep,
                       icon: const Icon(Icons.restart_alt_rounded),
-                      style: IconButton.styleFrom(foregroundColor: StudioColors.primary, minimumSize: const Size(52, 52), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18))),
+                      style: IconButton.styleFrom(foregroundColor: StudioColors.primary, minimumSize: const Size(54, 54), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
                     ),
                     const SizedBox(width: 12),
                   ],
                   Expanded(
-                    child: FilledButton.icon(
-                      onPressed: () => _next(context, s),
-                      iconAlignment: IconAlignment.end,
-                      style: FilledButton.styleFrom(backgroundColor: StudioColors.primary, minimumSize: const Size(0, 52), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18))),
-                      icon: Icon(nextStep == StudioStep.result ? Icons.check_circle_rounded : Icons.arrow_forward_rounded),
-                      label: Text(nextStep == StudioStep.result ? 'Ver mi bebida' : 'Siguiente · ${nextStep.label}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: StudioColors.brand,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [BoxShadow(color: StudioColors.primary.withValues(alpha: 0.35), blurRadius: 14, offset: const Offset(0, 6))],
+                      ),
+                      child: FilledButton.icon(
+                        onPressed: () => _next(context, s),
+                        iconAlignment: IconAlignment.end,
+                        style: FilledButton.styleFrom(backgroundColor: Colors.transparent, shadowColor: Colors.transparent, minimumSize: const Size(0, 54), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                        icon: Icon(nextStep == StudioStep.result ? Icons.check_circle_rounded : Icons.arrow_forward_rounded),
+                        label: Text(nextStep == StudioStep.result ? 'Ver mi bebida' : 'Siguiente · ${nextStep.label}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, letterSpacing: 0.1)),
+                      ),
                     ),
                   ),
                 ],

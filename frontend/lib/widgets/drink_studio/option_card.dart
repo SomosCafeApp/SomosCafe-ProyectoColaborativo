@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../animations/press_scale.dart';
 import 'studio_colors.dart';
+import 'studio_ui.dart';
 
 /// Tarjeta táctil de una opción (tamaño, leche, jarabe...). Se anima al
 /// elegirla y muestra su precio real.
@@ -34,11 +35,7 @@ class OptionCard extends StatelessWidget {
         curve: Curves.easeOutCubic,
         width: width,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: selected ? StudioColors.primary.withValues(alpha: dark ? 0.3 : 0.14) : StudioColors.soft(dark),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: selected ? StudioColors.primary : Colors.transparent, width: 1.6),
-        ),
+        decoration: StudioUi.choice(dark, selected: selected, radius: 18),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -124,12 +121,12 @@ class StagePanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: StudioColors.text(dark))),
+          Text(title, style: StudioUi.title(dark)),
           if (hint != null) ...[
-            const SizedBox(height: 3),
-            Text(hint!, style: TextStyle(fontSize: 12.5, height: 1.3, color: StudioColors.muted(dark))),
+            const SizedBox(height: 4),
+            Text(hint!, style: StudioUi.hint(dark)),
           ],
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           child,
         ],
       ),

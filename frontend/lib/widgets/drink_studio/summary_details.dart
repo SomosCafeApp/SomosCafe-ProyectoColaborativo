@@ -2,58 +2,131 @@ import 'package:flutter/material.dart';
 
 import '../../core/utils/money_format.dart';
 import '../../providers/drink_studio_provider.dart';
+import 'latte_art_shapes.dart';
 import 'studio_colors.dart';
+import 'studio_ui.dart';
+import 'sweetener_packet.dart';
+import 'topping_icon.dart';
 
-/// Detalle de la bebida preparada: solo lo que de verdad se eligió.
+/// Lo que lleva la bebida, mostrado de forma visual: datos básicos en
+/// píldoras, el arte latte, los toppings con sus porciones y los
+/// endulzantes como sobres. Solo aparece lo que de verdad se eligió.
 class SummaryDetails extends StatelessWidget {
   const SummaryDetails({super.key, required this.studio});
   final DrinkStudioProvider studio;
 
-  List<(IconData, String, String)> get _rows {
-    final s = studio;
-    String list(Iterable<String> v) => v.isEmpty ? 'Ninguno' : (v.toList()..sort()).join(', ');
-    return [
-      (Icons.straighten_rounded, 'Tamaño', s.ounces != null ? '${s.size} · ${s.ounces} oz' : s.size),
-      (Icons.thermostat_rounded, 'Tipo', s.type),
-      (Icons.water_drop_rounded, 'Leche', '${s.milk} · ${s.milkLevel < 0.02 ? 'sin leche' : s.milkLevel < 0.3 ? 'poca' : s.milkLevel < 0.65 ? 'media' : 'mucha'}'),
-      if ((s.profile?.isCoffee ?? false) && s.shots > 0) (Icons.coffee_rounded, 'Shots extra', '+${s.shots}'),
-      if (s.options!.hasSyrups) (Icons.opacity_rounded, 'Jarabes', list(s.syrups)),
-      if (s.options!.hasSweeteners) (Icons.grain_rounded, 'Endulzantes', list(s.sweeteners)),
-      if (s.options!.toppings.isNotEmpty) (Icons.auto_awesome_rounded, 'Toppings', list(s.toppings)),
-      if (s.canLatteArt) (Icons.brush_rounded, 'Decoración', s.latteArt.isEmpty ? 'Sin latte art' : s.latteArt),
-      if (s.availablePairings.isNotEmpty) (Icons.cake_rounded, 'Acompañamiento', list(s.pairings.values.map((p) => p.name))),
-    ];
-  }
-
   @override
   Widget build(BuildContext context) {
+    final s = studio;
     final dark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(color: StudioColors.soft(dark), borderRadius: BorderRadius.circular(20)),
-      child: Column(
-        children: [
-          for (final r in _rows)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 7),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(r.$1, size: 18, color: StudioColors.primary),
-                  const SizedBox(width: 10),
-                  Text(r.$2, style: TextStyle(fontSize: 13, color: StudioColors.muted(dark))),
-                  const SizedBox(width: 12),
-                  Expanded(child: Text(r.$3, textAlign: TextAlign.end, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: StudioColors.text(dark)))),
-                ],
-              ),
+    final milkAmount = s.milkLevel < 0.02 ? 'sin leche' : s.milkLevel < 0.3 ? 'poca' : s.milkLevel < 0.65 ? 'media' : 'mucha';
+    final toppings = s.toppings.toList()..sort();
+    final sweeteners = s.sweeteners.toList()..sort();
+    final syrups = s.syrups.toList()..sort();
+
+    Widget pill(IconData icon, String text) => Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(color: StudioColors.soft(dark), borderRadius: BorderRadius.circular(30)),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 16, color: StudioColors.primary),
+              const SizedBox(width: 6),
+              Text(text, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: StudioColors.text(dark))),
+            ],
+          ),
+        );
+
+    Widget card(String label, Widget child) => Container(
+          width: double.infinity,
+          margin: const EdgeInsets.only(top: 12),
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+          decoration: BoxDecoration(color: StudioColors.soft(dark), borderRadius: BorderRadius.circular(22)),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [SectionLabel(label), child]),
+        );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            pill(Icons.straighten_rounded, s.ounces != null ? '${s.size} · ${s.ounces} oz' : s.size),
+            pill(Icons.thermostat_rounded, s.type),
+            pill(Icons.water_drop_rounded, '${s.milk} · $milkAmount'),
+            if ((s.profile?.isCoffee ?? false) && s.shots > 0) pill(Icons.coffee_rounded, '+${s.shots} shot${s.shots > 1 ? 's' : ''}'),
+          ],
+        ),
+        if (s.canLatteArt)
+          card(
+            'Decoración',
+            Row(
+              children: [
+                if (s.latteArt.isNotEmpty) ...[LatteArtDisc(design: s.latteArt, size: 52), const SizedBox(width: 12)],
+                Expanded(child: Text(s.latteArt.isEmpty ? 'Sin arte latte' : 'Arte latte · ${s.latteArt}', style: StudioUi.name(dark))),
+              ],
             ),
-        ],
-      ),
+          ),
+        if (toppings.isNotEmpty)
+          card(
+            'Toppings',
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final t in toppings)
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(6, 4, 12, 4),
+                    decoration: BoxDecoration(color: StudioColors.panel(dark), borderRadius: BorderRadius.circular(30), border: Border.all(color: StudioColors.primary.withValues(alpha: 0.25))),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ToppingIcon(name: t, size: 28),
+                        const SizedBox(width: 6),
+                        Text(t, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: StudioColors.text(dark))),
+                        if (s.toppingQuantity(t) > 1) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                            decoration: BoxDecoration(color: StudioColors.primary, borderRadius: BorderRadius.circular(10)),
+                            child: Text('×${s.toppingQuantity(t)}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.white)),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        if (sweeteners.isNotEmpty)
+          card(
+            'Endulzantes · en sobre aparte',
+            Wrap(
+              spacing: 12,
+              runSpacing: 6,
+              children: [
+                for (final w in sweeteners)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SweetenerPacket(name: w, width: 22, angle: -0.1),
+                      const SizedBox(width: 4),
+                      Text(w, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: StudioColors.text(dark))),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+        if (syrups.isNotEmpty) card('Jarabes', Text(syrups.join(', '), style: StudioUi.name(dark))),
+        if (s.availablePairings.isNotEmpty && s.pairings.isNotEmpty) card('Acompañamiento', Text(s.pairings.values.map((p) => p.name).join(', '), style: StudioUi.name(dark))),
+      ],
     );
   }
 }
 
-/// Desglose de precio con cantidad y total actualizado.
+/// Desglose de precio: base, cada extra con su detalle (por ejemplo
+/// "2 extra × $300"), cantidad y total actualizado.
 class SummaryPrice extends StatelessWidget {
   const SummaryPrice({super.key, required this.studio});
   final DrinkStudioProvider studio;
@@ -62,29 +135,49 @@ class SummaryPrice extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = studio;
     final dark = Theme.of(context).brightness == Brightness.dark;
-    Widget line(String a, String b, {bool bold = false}) => Padding(
-          padding: const EdgeInsets.symmetric(vertical: 3),
-          child: Row(children: [
-            Expanded(child: Text(a, style: TextStyle(fontSize: bold ? 16 : 13, fontWeight: bold ? FontWeight.w900 : FontWeight.w500, color: StudioColors.text(dark)))),
-            Text(b, style: TextStyle(fontSize: bold ? 20 : 13, fontWeight: bold ? FontWeight.w900 : FontWeight.w700, color: bold ? StudioColors.primary : StudioColors.text(dark))),
-          ]),
+    final lines = s.priceLines;
+
+    Widget line(String a, String b, {String? detail, bool bold = false, Color? color}) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(a, style: TextStyle(fontSize: bold ? 16 : 13.5, fontWeight: bold ? FontWeight.w900 : FontWeight.w600, color: color ?? StudioColors.text(dark))),
+                    if (detail != null) Text(detail, style: TextStyle(fontSize: 11.5, color: StudioColors.muted(dark))),
+                  ],
+                ),
+              ),
+              Text(b, style: TextStyle(fontSize: bold ? 22 : 13.5, fontWeight: bold ? FontWeight.w900 : FontWeight.w800, color: bold ? StudioColors.primary : (color ?? StudioColors.text(dark)))),
+            ],
+          ),
         );
+
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: StudioColors.panel(dark), borderRadius: BorderRadius.circular(20), border: Border.all(color: StudioColors.primary.withValues(alpha: 0.35))),
+      decoration: BoxDecoration(color: StudioColors.panel(dark), borderRadius: BorderRadius.circular(24), border: Border.all(color: StudioColors.primary.withValues(alpha: 0.3))),
       child: Column(
         children: [
-          Row(children: [
-            Expanded(child: Text('Cantidad', style: TextStyle(fontWeight: FontWeight.w700, color: StudioColors.text(dark)))),
-            IconButton(onPressed: s.quantity > 1 ? () => s.changeQuantity(-1) : null, icon: const Icon(Icons.remove_circle_outline_rounded)),
-            Text('${s.quantity}', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: StudioColors.text(dark))),
-            IconButton(onPressed: () => s.changeQuantity(1), icon: const Icon(Icons.add_circle_outline_rounded)),
-          ]),
+          const Align(alignment: Alignment.centerLeft, child: SectionLabel('Resumen de precio')),
           line('Bebida base', formatCop(s.product.effectivePrice)),
-          line('Personalización', formatExtra(s.extraPerUnit)),
+          for (final l in lines) line(l.label, formatExtra(l.amount), detail: l.detail),
+          if (lines.isNotEmpty) ...[
+            const Divider(height: 18),
+            line('Precio por bebida', formatCop(s.unitPrice)),
+          ],
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Expanded(child: Text('Cantidad', style: TextStyle(fontWeight: FontWeight.w700, color: StudioColors.text(dark)))),
+              QuantityPill(value: s.quantity, onMinus: s.quantity > 1 ? () => s.changeQuantity(-1) : null, onPlus: () => s.changeQuantity(1)),
+            ],
+          ),
           if (s.quantity > 1) line('Subtotal × ${s.quantity}', formatCop(s.drinkTotal)),
           if (s.pairings.isNotEmpty) line('Acompañamientos', formatCop(s.pairingsTotal)),
-          const Divider(height: 18),
+          const Divider(height: 22),
           line('Total', formatCop(s.total), bold: true),
         ],
       ),

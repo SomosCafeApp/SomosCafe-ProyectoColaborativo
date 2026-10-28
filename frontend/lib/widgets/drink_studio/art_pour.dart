@@ -78,9 +78,15 @@ class ArtPour {
 
     // Leche: manchas recortadas a la silueta (lo que cae fuera no la
     // ensucia, solo deja un pequeño derrame abajo).
+    // Dos pasadas: un halo más tostado y translúcido (el borde difuso
+    // donde la leche se funde con el café) y el cuerpo de leche encima.
+    final halo = Paint()..color = Color.lerp(StudioColors.cream, const Color(0xFFD9A873), 0.45)!.withValues(alpha: 0.5);
     final milk = Paint()..color = StudioColors.cream.withValues(alpha: 0.97);
     canvas.save();
     canvas.clipPath(sil);
+    for (final st in s.stamps) {
+      canvas.drawCircle(Offset(st.x, st.y), st.r * 1.16, halo);
+    }
     for (final st in s.stamps) {
       canvas.drawCircle(Offset(st.x, st.y), st.r, milk);
     }

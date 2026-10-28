@@ -171,12 +171,22 @@ class LattePourEngine {
     }
   }
 
-  void _deposit(double x, double y) {
+  /// Radio del trazo según la velocidad de la mano (unidades/segundo):
+  /// al ir despacio la leche se acumula y el hilo se ensancha, como en
+  /// una jarra real; al ir rápido queda el grosor base. Nunca es menor
+  /// que [brush], así que moverse rápido no cubre menos que antes.
+  double _flowRadius(double speed) {
+    final slow = 1 - math.min(1.0, speed / 2.6);
+    return brush * (1 + 0.28 * slow * slow);
+  }
+
+  void _deposit(double x, double y, [double? radius]) {
+    final r = radius ?? brush;
     final on = isNearTarget(x, y);
     _attempts++;
     if (on) _good++;
-    _addStamp(x, y, brush, on);
-    _mark(x, y, brush);
+    _addStamp(x, y, r, on);
+    _mark(x, y, r);
     _lx = x;
     _ly = y;
     _hasLast = true;
@@ -211,8 +221,9 @@ class LattePourEngine {
         _dwell = 0;
         final n = (d / (brush * 0.5)).ceil();
         final startX = _lx, startY = _ly;
+        final radius = _flowRadius(dt > 0 ? d / dt : double.infinity);
         for (var k = 1; k <= n; k++) {
-          _deposit(startX + dx * k / n, startY + dy * k / n);
+          _deposit(startX + dx * k / n, startY + dy * k / n, radius);
         }
       }
     }

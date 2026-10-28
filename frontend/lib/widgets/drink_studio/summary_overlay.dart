@@ -6,12 +6,14 @@ import '../../providers/drink_studio_provider.dart';
 import 'cup_stage.dart';
 import 'stage_pairing_panel.dart';
 import 'studio_colors.dart';
+import 'studio_ui.dart';
 import 'summary_actions.dart';
 import 'summary_details.dart';
 
-/// Resultado final: la bebida terminada (desde arriba, o de lado con su
-/// tapa), sus datos, el precio total y las acciones. Los
-/// acompañamientos se eligen aquí, antes de agregar al carrito.
+/// Pantalla final: la bebida terminada como protagonista (desde arriba
+/// o de lado con su tapa), lo que lleva, el desglose de precio y las
+/// acciones fijas abajo. Los acompañamientos se eligen aquí, antes de
+/// agregar al carrito.
 class SummaryOverlay extends StatefulWidget {
   const SummaryOverlay({super.key, required this.onAdd, required this.onSave});
   final VoidCallback onAdd;
@@ -37,17 +39,7 @@ class _SummaryOverlayState extends State<SummaryOverlay> {
     final dark = Theme.of(context).brightness == Brightness.dark;
     final description = s.product.description.trim();
     // Por defecto: desde arriba si hay arte o toppings que lucir.
-    final top = _top ?? (s.latteArt.isNotEmpty || s.toppings.isNotEmpty);
-
-    Widget chip(String label, IconData icon, bool selected, VoidCallback onTap) => ChoiceChip(
-          avatar: Icon(icon, size: 16, color: selected ? Colors.white : StudioColors.primary),
-          label: Text(label),
-          selected: selected,
-          showCheckmark: false,
-          selectedColor: StudioColors.primary,
-          labelStyle: TextStyle(fontWeight: FontWeight.w700, color: selected ? Colors.white : StudioColors.text(dark)),
-          onSelected: (_) => onTap(),
-        );
+    final top = _top ?? (s.latteArt.isNotEmpty || s.toppings.isNotEmpty || s.sweeteners.isNotEmpty);
 
     return Material(
       color: Theme.of(context).scaffoldBackgroundColor,
@@ -55,31 +47,64 @@ class _SummaryOverlayState extends State<SummaryOverlay> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(4, 4, 12, 0),
+              padding: const EdgeInsets.fromLTRB(4, 4, 16, 0),
               child: Row(
                 children: [
                   IconButton(tooltip: 'Volver a editar', onPressed: s.adding ? null : s.back, icon: Icon(Icons.arrow_back_rounded, color: StudioColors.text(dark))),
-                  Expanded(child: Text('Tu creación está lista', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: StudioColors.text(dark)))),
+                  Expanded(child: Text('Tu bebida está lista', style: StudioUi.title(dark))),
+                  const Icon(Icons.check_circle_rounded, color: StudioColors.primary),
                 ],
               ),
             ),
             Expanded(
               child: ListView(
-                padding: EdgeInsets.fromLTRB(16, 0, 16, 24 + MediaQuery.viewInsetsOf(context).bottom),
+                padding: EdgeInsets.fromLTRB(16, 4, 16, 16 + MediaQuery.viewInsetsOf(context).bottom),
                 children: [
-                  SizedBox(
-                    height: 290,
-                    child: CupStage(snapshot: s.snapshot, view: top ? CupView.top : CupView.side, lidOn: !top, ambient: false),
+                  // ── Héroe: la bebida terminada ──
+                  Container(
+                    height: 330,
+                    clipBehavior: Clip.antiAlias,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(32),
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: dark ? const [Color(0xFF3A2C22), Color(0xFF2A2019)] : const [Color(0xFFFFF3E0), Color(0xFFF1DCC0)],
+                      ),
+                      boxShadow: [BoxShadow(color: StudioColors.primary.withValues(alpha: 0.18), blurRadius: 24, offset: const Offset(0, 10))],
+                    ),
+                    child: Stack(
+                      children: [
+                        Positioned.fill(
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(8, 12, 8, 36),
+                            child: CupStage(snapshot: s.snapshot, view: top ? CupView.top : CupView.side, lidOn: !top, ambient: false),
+                          ),
+                        ),
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          bottom: 10,
+                          child: Center(child: _ViewToggle(top: top, onChanged: (v) => setState(() => _top = v))),
+                        ),
+                      ],
+                    ),
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      chip('Desde arriba', Icons.visibility_outlined, top, () => setState(() => _top = true)),
-                      const SizedBox(width: 8),
-                      chip('De lado', Icons.local_cafe_outlined, !top, () => setState(() => _top = false)),
-                    ],
+                  const SizedBox(height: 16),
+                  Text(s.product.name, textAlign: TextAlign.center, style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, letterSpacing: -0.4, color: StudioColors.text(dark))),
+                  const SizedBox(height: 6),
+                  Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(color: StudioColors.primary.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20)),
+                      child: const Text('Creación personalizada', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: StudioColors.primary)),
+                    ),
                   ),
-                  const SizedBox(height: 12),
+                  if (description.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Text(description, textAlign: TextAlign.center, style: StudioUi.hint(dark)),
+                  ],
+                  const SizedBox(height: 16),
                   TextField(
                     controller: _name,
                     maxLength: 18,
@@ -90,33 +115,72 @@ class _SummaryOverlayState extends State<SummaryOverlay> {
                       hintText: s.product.name,
                       counterText: '',
                       prefixIcon: const Icon(Icons.edit_rounded, color: StudioColors.primary),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                      filled: true,
+                      fillColor: StudioColors.soft(dark),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(18), borderSide: BorderSide.none),
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  Text(s.product.name, textAlign: TextAlign.center, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: StudioColors.text(dark))),
-                  const SizedBox(height: 2),
-                  const Text('Creación personalizada', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w700, color: StudioColors.primary)),
-                  if (description.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Text(description, textAlign: TextAlign.center, style: TextStyle(fontSize: 13, height: 1.35, color: StudioColors.muted(dark))),
-                  ],
                   const SizedBox(height: 16),
                   SummaryDetails(studio: s),
                   if (s.availablePairings.isNotEmpty) ...[
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
                     const PairingPanel(),
                   ],
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 14),
                   SummaryPrice(studio: s),
-                  const SizedBox(height: 16),
-                  SummaryActions(studio: s, onAdd: widget.onAdd, onSave: widget.onSave),
                 ],
               ),
+            ),
+            // Acciones siempre a la vista.
+            Container(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+              decoration: BoxDecoration(
+                color: StudioColors.panel(dark),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 18, offset: const Offset(0, -4))],
+              ),
+              child: SummaryActions(studio: s, onAdd: widget.onAdd, onSave: widget.onSave),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Interruptor "Desde arriba / De lado" flotando sobre la bebida.
+class _ViewToggle extends StatelessWidget {
+  const _ViewToggle({required this.top, required this.onChanged});
+  final bool top;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    Widget item(String label, IconData icon, bool value) {
+      final on = top == value;
+      return GestureDetector(
+        onTap: () => onChanged(value),
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(gradient: on ? StudioColors.brand : null, borderRadius: BorderRadius.circular(30)),
+          child: Row(
+            children: [
+              Icon(icon, size: 16, color: on ? Colors.white : StudioColors.primary),
+              const SizedBox(width: 6),
+              Text(label, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: on ? Colors.white : StudioColors.text(dark))),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(color: StudioColors.panel(dark).withValues(alpha: 0.92), borderRadius: BorderRadius.circular(30), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.12), blurRadius: 8)]),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [item('Desde arriba', Icons.visibility_outlined, true), item('De lado', Icons.local_cafe_outlined, false)]),
     );
   }
 }

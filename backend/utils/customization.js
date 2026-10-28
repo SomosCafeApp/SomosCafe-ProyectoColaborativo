@@ -37,7 +37,43 @@ export const TOPPING_PRICES = {
     "Crema batida": 2000,
     "Canela": 1000,
     "Chispas": 2500,
-    "Caramelo": 1500
+    "Caramelo": 1500,
+    "Cacao en polvo": 1000,
+    "Virutas de chocolate": 2000,
+    "Malvaviscos": 1800
+};
+
+// Compatibilidad de cada topping con la bebida. Un topping sin regla
+// va con cualquier bebida. Claves de cada regla:
+//   types:    solo con esas temperaturas ("Caliente" / "Frío").
+//   keywords: el nombre o la categoría de la bebida debe contener
+//             alguna de estas palabras.
+//   exclude:  no va si el nombre o la categoría contiene alguna.
+// OJO: las reglas son criterio de cafetería (p. ej. los malvaviscos se
+// derriten en frío); confírmalas con el negocio.
+const CHOCOLATE_KEYWORDS = [
+    "chocolate", "moca", "mocha", "cacao"
+];
+
+const MILK_COFFEE_KEYWORDS = [
+    "latte", "capuch", "cappuc", "moca", "mocha", "macchiato",
+    "flat white", "cortado", "con leche", "frappe", "frappé",
+    "malteada", "batido", "chocolate"
+];
+
+// Los cuatro toppings originales (Crema batida, Canela, Chispas y
+// Caramelo) no tienen regla a propósito: ya se pueden pedir con
+// cualquier bebida desde el detalle del producto y no se debe romper
+// ese flujo. Solo los toppings nuevos se restringen.
+export const TOPPING_RULES = {
+    "Cacao en polvo": { keywords: MILK_COFFEE_KEYWORDS },
+    "Virutas de chocolate": {
+        keywords: [...MILK_COFFEE_KEYWORDS, ...CHOCOLATE_KEYWORDS]
+    },
+    "Malvaviscos": {
+        types: ["Caliente"],
+        keywords: [...CHOCOLATE_KEYWORDS, "latte"]
+    }
 };
 
 // Jarabes y endulzantes: hoy NO existen en la base de datos ni en el
@@ -52,9 +88,19 @@ export const TOPPING_EXTRA_PORTION_PRICE = 300;
 export const MAX_TOPPING_QUANTITY = 5;
 
 export const SYRUP_PRICES = {};
-export const SWEETENER_PRICES = {};
+
+// Endulzantes: se entregan en un sobre individual junto a la bebida.
+// Todos van incluidos en el precio (0). OJO: el negocio aún no definió
+// si alguno se cobra; si es así, basta con cambiar el valor aquí.
+export const SWEETENER_PRICES = {
+    "Azúcar blanca": 0,
+    "Azúcar morena": 0,
+    "Estevia": 0,
+    "Panela": 0,
+    "Miel": 0
+};
 export const MAX_SYRUPS = 3;
-export const MAX_SWEETENERS = 2;
+export const MAX_SWEETENERS = 3;
 
 // Latte art: solo tres diseños predefinidos (decoración, no cuesta).
 export const LATTE_ART_DESIGNS = ["Corazón", "Hoja", "Cisne", "Tulipán", "Rosetta", "Estrella"];
@@ -90,6 +136,32 @@ export const DEFAULT_CUSTOMIZATION = {
     syrups: [],
     sweeteners: [],
     latteArt: ""
+};
+
+// ¿El topping [name] va con esta bebida? [product] puede ser null (se
+// asume que sí); [type] es "Caliente" o "Frío".
+export const isToppingCompatible = (name, product, type) => {
+
+    const rule = TOPPING_RULES[name];
+
+    if (!rule) return true;
+
+    if (rule.types && type && !rule.types.includes(type)) return false;
+
+    const text = `${product?.name || ""} ${product?.categoryId?.name || ""}`
+        .toLowerCase();
+
+    if (!product) return true;
+
+    if (rule.exclude && rule.exclude.some(k => text.includes(k))) {
+        return false;
+    }
+
+    if (rule.keywords && !rule.keywords.some(k => text.includes(k))) {
+        return false;
+    }
+
+    return true;
 };
 
 // Toppings: acepta la lista antigua ["Canela"] (1 porción cada uno)
@@ -418,6 +490,14 @@ export const resolveCustomization = (product, raw) => {
         };
     }
 
+    for (const topping of customization.toppings) {
+        if (!isToppingCompatible(topping, product, customization.type)) {
+            return {
+                error: `${topping} no va con esta bebida`
+            };
+        }
+    }
+
     return result;
 
 };
@@ -432,7 +512,8 @@ export const getCustomizationOptions = () => ({
     toppings: { ...TOPPING_PRICES },
     toppingRules: {
         extraPortionPrice: TOPPING_EXTRA_PORTION_PRICE,
-        maxQuantity: MAX_TOPPING_QUANTITY
+        maxQuantity: MAX_TOPPING_QUANTITY,
+        compatibility: JSON.parse(JSON.stringify(TOPPING_RULES))
     },
     syrups: { prices: { ...SYRUP_PRICES }, max: MAX_SYRUPS },
     sweeteners: { prices: { ...SWEETENER_PRICES }, max: MAX_SWEETENERS },

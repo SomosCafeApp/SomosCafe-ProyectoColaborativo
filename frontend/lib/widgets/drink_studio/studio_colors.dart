@@ -32,6 +32,19 @@ class StudioColors {
     return accents[h % accents.length];
   }
 
+  /// Crema batida: luz, tono medio y sombras (los usa el pintor de toppings).
+  static const Color cream1 = Color(0xFFFFFEFA);
+  static const Color cream2 = Color(0xFFFFF4E0);
+  static const Color cream3 = Color(0xFFEAD3AE);
+  static const Color cream4 = Color(0xFFD2B084);
+
+  /// Degradado de marca para botones principales y cabeceras.
+  static const LinearGradient brand = LinearGradient(
+    colors: [Color(0xFFB88257), AppColors.primary, Color(0xFF7E5230)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
   static Color panel(bool dark) => dark ? AppColors.darkSurface : AppColors.lightSurface;
   static Color soft(bool dark) => dark ? AppColors.darkSurfaceSubtle : AppColors.lightSurfaceSubtle;
   static Color text(bool dark) => dark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;

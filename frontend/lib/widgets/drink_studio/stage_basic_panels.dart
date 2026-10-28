@@ -10,6 +10,7 @@ import '../../animations/press_scale.dart';
 import 'milk_badge.dart';
 import 'option_card.dart';
 import 'studio_colors.dart';
+import 'studio_ui.dart';
 
 /// Tamaño: las onzas cambian alto, ancho y capacidad del vaso.
 class SizePanel extends StatelessWidget {
@@ -39,12 +40,7 @@ class SizePanel extends StatelessWidget {
                     duration: const Duration(milliseconds: 240),
                     curve: Curves.easeOutCubic,
                     padding: const EdgeInsets.fromLTRB(6, 12, 6, 12),
-                    decoration: BoxDecoration(
-                      color: s.size == keys[i] ? StudioColors.primary.withValues(alpha: dark ? 0.3 : 0.14) : StudioColors.soft(dark),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: s.size == keys[i] ? StudioColors.primary : Colors.transparent, width: 2),
-                      boxShadow: s.size == keys[i] ? [BoxShadow(color: StudioColors.primary.withValues(alpha: 0.25), blurRadius: 12, offset: const Offset(0, 4))] : null,
-                    ),
+                    decoration: StudioUi.choice(dark, selected: s.size == keys[i], radius: 20),
                     child: Column(
                       children: [
                         SizedBox(height: 46, child: Align(alignment: Alignment.bottomCenter, child: MiniCup(scale: keys.length < 2 ? 1 : 0.7 + 0.6 * i / (keys.length - 1)))),
@@ -97,11 +93,7 @@ class BasePanel extends StatelessWidget {
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 240),
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        decoration: BoxDecoration(
-                          color: s.type == t ? StudioColors.primary.withValues(alpha: dark ? 0.3 : 0.14) : StudioColors.soft(dark),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: s.type == t ? StudioColors.primary : Colors.transparent, width: 2),
-                        ),
+                        decoration: StudioUi.choice(dark, selected: s.type == t, radius: 20),
                         child: Column(
                           children: [
                             Icon(t == 'Frío' ? Icons.ac_unit_rounded : Icons.local_fire_department_rounded, size: 32, color: t == 'Frío' ? const Color(0xFF5FA8C8) : const Color(0xFFE8772E)),
@@ -238,11 +230,7 @@ class MilkPanel extends StatelessWidget {
                         duration: const Duration(milliseconds: 240),
                         width: w,
                         padding: const EdgeInsets.symmetric(vertical: 10),
-                        decoration: BoxDecoration(
-                          color: s.milk == m.key ? StudioColors.primary.withValues(alpha: dark ? 0.3 : 0.14) : StudioColors.soft(dark),
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(color: s.milk == m.key ? StudioColors.primary : Colors.transparent, width: 2),
-                        ),
+                        decoration: StudioUi.choice(dark, selected: s.milk == m.key, radius: 18),
                         child: Column(
                           children: [
                             SizedBox(width: 40, height: 40, child: CustomPaint(painter: MilkIllustrationPainter(milkKindOf(m.key)))),

@@ -7,6 +7,7 @@ import '../../models/cup_snapshot.dart';
 import 'art_pour.dart';
 import 'studio_colors.dart';
 import 'surface_decor.dart';
+import 'sweetener_packet.dart';
 import 'watercolor.dart';
 
 /// Vista desde arriba: plato, vaso con su aro de marca y, en el centro,
@@ -32,8 +33,10 @@ class TopViewPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final side = math.min(size.width, size.height);
-    final c = Offset(size.width / 2, size.height / 2);
-    final r = side / 2 * 0.86 * (0.9 + 0.1 * (snap.sizeFactor / 1.14).clamp(0.7, 1.0).toDouble());
+    final hasPackets = snap.sweeteners.isNotEmpty;
+    // Con endulzantes, la taza se achica un poco para dejar sitio a sus sobres.
+    final c = hasPackets ? Offset(size.width * 0.46, size.height * 0.46) : Offset(size.width / 2, size.height / 2);
+    final r = side / 2 * 0.86 * (hasPackets ? 0.84 : 1.0) * (0.9 + 0.1 * (snap.sizeFactor / 1.14).clamp(0.7, 1.0).toDouble());
 
     // Plato con sombra y textura de acuarela.
     canvas.drawCircle(
@@ -90,12 +93,11 @@ class TopViewPainter extends CustomPainter {
     canvas.save();
     canvas.clipPath(Path()..addOval(surface));
     SurfaceDecor.syrups(canvas, c, sr, sr, snap.syrups);
-    SurfaceDecor.sweeteners(canvas, c, sr, sr, snap.sweeteners);
     if (snap.latteArt.isNotEmpty) ArtPour.crema(canvas, c, sr, sr, snap.baseColor);
     SurfaceDecor.art(canvas, c, sr, sr, snap.latteArt, 1);
     canvas.restore();
 
-    SurfaceDecor.toppings(canvas, c, sr, sr, snap.toppings, hasArt: snap.latteArt.isNotEmpty, topView: true);
+    SurfaceDecor.toppings(canvas, c, sr, sr, snap.toppings, hasArt: snap.latteArt.isNotEmpty, topView: true, qty: snap.toppingQty);
 
     if (effect != PourKind.none && effectT > 0 && effectT < 1) {
       SurfaceDecor.pour(canvas, c, sr, sr, snap, effect, effectT, effectSeed, time);
@@ -113,6 +115,16 @@ class TopViewPainter extends CustomPainter {
         ..strokeWidth = 3
         ..color = Colors.white.withValues(alpha: 0.6),
     );
+    // Sobres de endulzante apoyados junto al plato.
+    if (hasPackets) {
+      final n = snap.sweeteners.length;
+      final w = math.min(r * 0.36, size.width * 0.13);
+      final h = w * SweetenerPacketPainter.aspect;
+      for (var i = n - 1; i >= 0; i--) {
+        final center = Offset(size.width - w * 0.85 - i * w * 0.5, size.height - h * 0.62 - i * w * 0.05);
+        SweetenerPacketPainter.paint(canvas, center, w, snap.sweeteners[i], angle: -0.22 + i * 0.16);
+      }
+    }
     Watercolor.grain(canvas, size);
   }
 

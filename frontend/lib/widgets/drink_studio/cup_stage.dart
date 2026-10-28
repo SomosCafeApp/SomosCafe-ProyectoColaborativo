@@ -283,7 +283,7 @@ class _CupStageState extends State<CupStage> with TickerProviderStateMixin {
   Offset _unitOf(PointerEvent e, Size box) {
     final s = widget.snapshot;
     final g = CupGeo(box, _factor, tilt: 1);
-    final (c, rx, ry) = g.surface(s.fill);
+    final (c, rx, ry) = g.visibleSurface(s.fill);
     var p = e.localPosition;
     if (e.kind == PointerDeviceKind.touch || e.kind == PointerDeviceKind.stylus) p = p.translate(0, -_fingerLift);
     return Offset((p.dx - c.dx) / (rx * ArtPour.kx), (p.dy - c.dy) / (ry * ArtPour.ky));

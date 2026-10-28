@@ -31,7 +31,7 @@ class StudioTopBar extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(s.product.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: StudioColors.text(dark))),
+                    Text(s.product.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, letterSpacing: -0.2, color: StudioColors.text(dark))),
                     Text('Prepara tu bebida', style: TextStyle(fontSize: 12, color: StudioColors.muted(dark))),
                   ],
                 ),
@@ -44,8 +44,12 @@ class StudioTopBar extends StatelessWidget {
                 child: Container(
                   key: ValueKey(s.total),
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(color: StudioColors.primary.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(14)),
-                  child: Text(formatCop(s.total), style: const TextStyle(fontWeight: FontWeight.w900, color: StudioColors.primary)),
+                  decoration: BoxDecoration(
+                    gradient: StudioColors.brand,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [BoxShadow(color: StudioColors.primary.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 3))],
+                  ),
+                  child: Text(formatCop(s.total), style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 0.1)),
                 ),
               ),
             ],
@@ -60,8 +64,9 @@ class StudioTopBar extends StatelessWidget {
                   Expanded(
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 350),
-                      height: 3,
-                      color: i <= s.stepIndex ? StudioColors.primary : StudioColors.soft(dark),
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(color: i <= s.stepIndex ? StudioColors.primary : StudioColors.soft(dark), borderRadius: BorderRadius.circular(4)),
                     ),
                   ),
                 _Dot(

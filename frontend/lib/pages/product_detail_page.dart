@@ -152,11 +152,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       },
                     ),
                     const SizedBox(height: 16),
-                    // Minijuego opcional (solo bebidas); la compra normal sigue igual.
-                    if (_product.isDrink && _product.isAvailable) ...[
-                      DrinkStudioCta(product: _product),
-                      const SizedBox(height: 16),
-                    ],
                     // Postres: sin menú de personalización.
                     if (_product.isCustomizable)
                       ProductCustomizationSection(
@@ -187,6 +182,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       textColor: textColor,
                       mutedColor: subtitleColor,
                     ),
+                    // Espacio para que el botón flotante no tape el final.
+                    if (DrinkStudioFab.supports(_product)) const SizedBox(height: 72),
                   ],
                 ),
               ),
@@ -194,6 +191,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           ],
         ),
       ),
+      // Minijuego opcional: ícono flotante solo en bebidas compatibles.
+      floatingActionButton: DrinkStudioFab.supports(_product) ? DrinkStudioFab(product: _product) : null,
       bottomNavigationBar: ProductBottomBar(
         total: _totalPrice,
         isAvailable: _product.isAvailable,

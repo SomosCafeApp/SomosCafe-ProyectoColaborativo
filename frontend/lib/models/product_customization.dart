@@ -33,6 +33,9 @@ class ProductCustomization {
     'Canela': 1000,
     'Chispas': 2500,
     'Caramelo': 1500,
+    'Cacao en polvo': 1000,
+    'Virutas de chocolate': 2000,
+    'Malvaviscos': 1800,
   };
 
   /// Cada porción extra del mismo topping suma esto (la primera se

@@ -11,7 +11,10 @@ import {
     DEFAULT_CUSTOMIZATION,
     SIZE_PRICES,
     TOPPING_EXTRA_PORTION_PRICE,
-    MAX_TOPPING_QUANTITY
+    MAX_TOPPING_QUANTITY,
+    TOPPING_PRICES,
+    SWEETENER_PRICES,
+    isToppingCompatible
 } from "../utils/customization.js";
 
 const latte = { name: "Latte", categoryId: { name: "Cafés calientes" } };
@@ -178,4 +181,72 @@ test("las opciones exponen las reglas de toppings", () => {
     assert.equal(o.toppingRules.extraPortionPrice, 300);
     assert.equal(o.toppingRules.maxQuantity, MAX_TOPPING_QUANTITY);
     assert.equal(o.sizes["Pequeño"], -3000);
+});
+
+const mocha = { name: "Moca", categoryId: { name: "Cafés calientes" } };
+const chocolate = { name: "Chocolate caliente", categoryId: { name: "Bebidas calientes" } };
+const lemonade = { name: "Limonada de coco", categoryId: { name: "Bebidas frías" } };
+
+test("nuevos toppings: cacao, virutas de chocolate y malvaviscos", () => {
+    for (const name of ["Cacao en polvo", "Virutas de chocolate", "Malvaviscos"]) {
+        assert.ok(name in TOPPING_PRICES, name);
+    }
+    const { customization, error } = normalizeCustomization({
+        toppings: { "Cacao en polvo": 2, "Malvaviscos": 3 }
+    });
+    assert.equal(error, undefined);
+    assert.equal(
+        customizationPrice(customization),
+        (1000 + 300) + (1800 + 2 * 300)
+    );
+});
+
+test("cada porción extra de cualquier topping suma exactamente $300", () => {
+    for (const name of Object.keys(TOPPING_PRICES)) {
+        const one = customizationPrice(normalizeCustomization({ toppings: { [name]: 1 } }).customization);
+        for (let q = 2; q <= MAX_TOPPING_QUANTITY; q++) {
+            const many = customizationPrice(normalizeCustomization({ toppings: { [name]: q } }).customization);
+            assert.equal(many - one, (q - 1) * 300, `${name} x${q}`);
+        }
+    }
+});
+
+test("endulzantes: blanca, morena, estevia y otros se aceptan y no cuestan extra", () => {
+    for (const name of ["Azúcar blanca", "Azúcar morena", "Estevia"]) {
+        assert.ok(name in SWEETENER_PRICES, name);
+    }
+    const { customization, error } = normalizeCustomization({
+        sweeteners: ["Estevia", "Azúcar morena"]
+    });
+    assert.equal(error, undefined);
+    assert.deepEqual(customization.sweeteners, ["Azúcar morena", "Estevia"]);
+    assert.equal(customizationPrice(customization), 0);
+    assert.ok(customizationKey(customization).includes("|w:Azúcar morena,Estevia"));
+    assert.ok(normalizeCustomization({ sweeteners: ["Azúcar blanca", "Azúcar morena", "Estevia", "Miel"] }).error);
+    assert.deepEqual(getCustomizationOptions().sweeteners.max, 3);
+});
+
+test("compatibilidad: malvaviscos solo en caliente y bebidas de chocolate o con espuma", () => {
+    assert.equal(isToppingCompatible("Malvaviscos", chocolate, "Caliente"), true);
+    assert.equal(isToppingCompatible("Malvaviscos", chocolate, "Frío"), false);
+    assert.equal(isToppingCompatible("Malvaviscos", lemonade, "Caliente"), false);
+    assert.equal(isToppingCompatible("Cacao en polvo", latte, "Caliente"), true);
+    assert.equal(isToppingCompatible("Cacao en polvo", tea, "Caliente"), false);
+    assert.equal(isToppingCompatible("Canela", tea, "Caliente"), true);
+    assert.equal(isToppingCompatible("Chispas", lemonade, "Frío"), true);
+    assert.equal(isToppingCompatible("Cacao en polvo", lemonade, "Frío"), false);
+    assert.equal(isToppingCompatible("Virutas de chocolate", mocha, "Frío"), true);
+});
+
+test("el servidor rechaza un topping que no va con la bebida", () => {
+    assert.ok(resolveCustomization(lemonade, { toppings: ["Malvaviscos"] }).error);
+    assert.ok(resolveCustomization(latte, { type: "Frío", toppings: ["Malvaviscos"] }).error);
+    assert.equal(resolveCustomization(chocolate, { toppings: ["Malvaviscos"] }).error, undefined);
+    assert.equal(resolveCustomization(latte, { toppings: ["Cacao en polvo", "Canela"] }).error, undefined);
+});
+
+test("las opciones exponen la compatibilidad de toppings", () => {
+    const rules = getCustomizationOptions().toppingRules.compatibility;
+    assert.deepEqual(rules["Malvaviscos"].types, ["Caliente"]);
+    assert.ok(Array.isArray(rules["Cacao en polvo"].keywords));
 });

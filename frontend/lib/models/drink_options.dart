@@ -1,5 +1,34 @@
 import 'product_customization.dart';
 
+/// Regla de compatibilidad de un topping con la bebida (la define el
+/// backend en `TOPPING_RULES`; aquí solo se aplica para no mostrar
+/// ingredientes que el pedido luego rechazaría).
+class ToppingRule {
+  final List<String> types;
+  final List<String> keywords;
+  final List<String> exclude;
+
+  const ToppingRule({this.types = const [], this.keywords = const [], this.exclude = const []});
+
+  factory ToppingRule.fromJson(dynamic raw) {
+    if (raw is! Map) return const ToppingRule();
+    List<String> list(String k) => (raw[k] as List?)?.map((e) => e.toString().toLowerCase()).toList() ?? const [];
+    return ToppingRule(
+      types: (raw['types'] as List?)?.map((e) => e.toString()).toList() ?? const [],
+      keywords: list('keywords'),
+      exclude: list('exclude'),
+    );
+  }
+
+  /// [text] es nombre + categoría de la bebida en minúsculas.
+  bool allows({required String text, required String type}) {
+    if (types.isNotEmpty && !types.contains(type)) return false;
+    if (exclude.any(text.contains)) return false;
+    if (keywords.isNotEmpty && !keywords.any(text.contains)) return false;
+    return true;
+  }
+}
+
 /// Opciones reales de personalización que manda el backend
 /// (GET /api/customization/options). Es la misma fuente que usa el
 /// servidor para validar y cobrar, así que el estudio de bebidas nunca
@@ -13,6 +42,9 @@ class DrinkOptions {
   final Map<String, double> toppings;
   final double toppingExtraPortionPrice;
   final int maxToppingQuantity;
+
+  /// Compatibilidad por topping (sin regla = va con cualquier bebida).
+  final Map<String, ToppingRule> toppingCompat;
   final Map<String, double> syrups;
   final int maxSyrups;
   final Map<String, double> sweeteners;
@@ -36,6 +68,7 @@ class DrinkOptions {
     required this.toppings,
     required this.toppingExtraPortionPrice,
     required this.maxToppingQuantity,
+    this.toppingCompat = const {},
     required this.syrups,
     required this.maxSyrups,
     required this.sweeteners,
@@ -79,6 +112,9 @@ class DrinkOptions {
           ProductCustomization.toppingExtraPortionPrice,
       maxToppingQuantity:
           (toppingRules['maxQuantity'] as num?)?.toInt() ?? ProductCustomization.maxToppingQuantity,
+      toppingCompat: {
+        for (final e in ((toppingRules['compatibility'] as Map?) ?? const {}).entries) e.key.toString(): ToppingRule.fromJson(e.value),
+      },
       syrups: _prices(syrups['prices']),
       maxSyrups: (syrups['max'] as num?)?.toInt() ?? 0,
       sweeteners: _prices(sweeteners['prices']),
@@ -101,6 +137,16 @@ class DrinkOptions {
   /// Falta el catálogo de jarabes / endulzantes en la base de datos.
   bool get hasSyrups => syrups.isNotEmpty && maxSyrups > 0;
   bool get hasSweeteners => sweeteners.isNotEmpty && maxSweeteners > 0;
+
+  /// Toppings que van con una bebida de nombre y categoría [drinkText]
+  /// servida en [type] ("Caliente" / "Frío"), con su precio.
+  Map<String, double> toppingsFor(String drinkText, String type) {
+    final text = drinkText.toLowerCase();
+    return {
+      for (final e in toppings.entries)
+        if (toppingCompat[e.key] == null || toppingCompat[e.key]!.allows(text: text, type: type)) e.key: e.value,
+    };
+  }
 
   /// Deja los precios de jarabes y endulzantes disponibles para
   /// `ProductCustomization.extraPrice` (carrito optimista, resúmenes).

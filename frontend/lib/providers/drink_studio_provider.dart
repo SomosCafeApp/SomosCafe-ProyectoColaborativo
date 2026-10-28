@@ -19,6 +19,14 @@ import 'recipes_provider.dart';
 
 enum StudioLoad { loading, error, ready }
 
+/// Una línea del desglose de precio (ej. "Canela × 3" → $1.600).
+class PriceLine {
+  final String label;
+  final String? detail;
+  final double amount;
+  const PriceLine(this.label, this.amount, {this.detail});
+}
+
 /// Resultado de agregar la creación al carrito.
 class StudioAddResult {
   final bool drinkAdded;
@@ -227,7 +235,7 @@ class DrinkStudioProvider extends ChangeNotifier {
       StudioStep.base,
       StudioStep.milk,
       if (canLatteArt && o.latteArtDesigns.isNotEmpty) StudioStep.art,
-      if (o.toppings.isNotEmpty || o.hasSyrups || o.hasSweeteners) StudioStep.toppings,
+      if (availableToppings.isNotEmpty || o.hasSyrups || o.hasSweeteners) StudioStep.toppings,
       StudioStep.result,
     ];
   }
@@ -277,6 +285,39 @@ class DrinkStudioProvider extends ChangeNotifier {
         latteArt: latteArt,
       );
 
+  /// Toppings que de verdad van con esta bebida y esta temperatura.
+  Map<String, double> get availableToppings => options?.toppingsFor('${product.name} ${product.categoryName ?? ''}', type) ?? const {};
+
+  /// Desglose de lo que suma la personalización (por unidad). La suma
+  /// de las líneas es igual a [extraPerUnit].
+  List<PriceLine> get priceLines {
+    final o = options;
+    if (o == null) return const [];
+    final lines = <PriceLine>[];
+    final sizeExtra = o.sizes[size] ?? 0;
+    if (sizeExtra != 0) lines.add(PriceLine('Tamaño $size', sizeExtra));
+    final milkExtra = o.milks[milk] ?? 0;
+    if (milkExtra != 0) lines.add(PriceLine('Leche $milk', milkExtra));
+    if (shots > 0) lines.add(PriceLine('Shots extra × $shots', shots * o.extraShotPrice, detail: '${shots * o.extraShotPrice ~/ shots} c/u'));
+    for (final t in (toppings.toList()..sort())) {
+      final q = toppingQuantity(t);
+      final base = o.toppings[t] ?? 0;
+      lines.add(PriceLine(
+        q > 1 ? '$t × $q' : t,
+        base + (q - 1) * o.toppingExtraPortionPrice,
+        detail: q > 1 ? '${q - 1} extra × \$${o.toppingExtraPortionPrice.round()}' : null,
+      ));
+    }
+    for (final y in (syrups.toList()..sort())) {
+      lines.add(PriceLine('Jarabe $y', o.syrups[y] ?? 0));
+    }
+    for (final w in (sweeteners.toList()..sort())) {
+      final price = o.sweeteners[w] ?? 0;
+      if (price != 0) lines.add(PriceLine(w, price));
+    }
+    return lines;
+  }
+
   double get extraPerUnit => options?.extraPriceOf(customization) ?? 0;
   double get unitPrice => product.effectivePrice + extraPerUnit;
   double get drinkTotal => unitPrice * quantity;
@@ -293,8 +334,9 @@ class DrinkStudioProvider extends ChangeNotifier {
         milkLevel: milkLevel,
         milkColor: DrinkProfile.milkColorFor(milk),
         toppings: toppings.toList()..sort(),
+        toppingQty: {for (final t in toppings) t: toppingQty[t] ?? 1},
         syrups: syrups.toList()..sort(),
-        sweeteners: sweeteners.length,
+        sweeteners: sweeteners.toList()..sort(),
         latteArt: latteArt,
         label: cupLabel,
       );
@@ -313,6 +355,15 @@ class DrinkStudioProvider extends ChangeNotifier {
 
   void setType(String v) {
     type = v;
+    // Un topping que no va con la nueva temperatura (p. ej. malvaviscos
+    // en frío) se retira para no pedir algo que el servidor rechazaría.
+    final ok = availableToppings.keys.toSet();
+    for (final t in toppings.toList()) {
+      if (!ok.contains(t)) {
+        toppings.remove(t);
+        toppingQty.remove(t);
+      }
+    }
     notifyListeners();
   }
 
@@ -360,6 +411,7 @@ class DrinkStudioProvider extends ChangeNotifier {
 
   /// Tocar la tarjeta: añade 1 porción o retira el topping completo.
   bool toggleTopping(String n) {
+    if (!toppings.contains(n) && !availableToppings.containsKey(n)) return false;
     if (toppings.remove(n)) {
       toppingQty.remove(n);
     } else {

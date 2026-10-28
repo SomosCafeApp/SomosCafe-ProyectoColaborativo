@@ -17,8 +17,14 @@ class CupSnapshot {
   final double milkLevel;
   final Color milkColor;
   final List<String> toppings;
+
+  /// Porciones de cada topping (ausente = 1). Más porciones = más
+  /// volumen de crema, más chispas, más hilos de caramelo...
+  final Map<String, int> toppingQty;
   final List<String> syrups;
-  final int sweeteners;
+
+  /// Endulzantes elegidos: cada uno se dibuja como un sobre junto a la taza.
+  final List<String> sweeteners;
   final String latteArt;
 
   /// Nombre impreso en la etiqueta del vaso.
@@ -34,8 +40,9 @@ class CupSnapshot {
     this.milkLevel = 0,
     this.milkColor = const Color(0xFFF7EEDC),
     this.toppings = const [],
+    this.toppingQty = const {},
     this.syrups = const [],
-    this.sweeteners = 0,
+    this.sweeteners = const [],
     this.latteArt = '',
     this.label = '',
   });
@@ -51,11 +58,15 @@ class CupSnapshot {
         milkLevel: milkLevel,
         milkColor: milkColor,
         toppings: toppings,
+        toppingQty: toppingQty,
         syrups: syrups,
         sweeteners: sweeteners,
         latteArt: latteArt,
         label: label,
       );
+
+  /// Porciones de [name] (mínimo 1 si está elegido).
+  int qtyOf(String name) => toppings.contains(name) ? (toppingQty[name] ?? 1).clamp(1, 9).toInt() : 0;
 
   /// Qué tan lleno está el vaso (0..1): base de café + leche.
   double get fill {

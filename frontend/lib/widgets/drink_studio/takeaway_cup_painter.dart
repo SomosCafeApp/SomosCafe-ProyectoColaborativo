@@ -9,6 +9,7 @@ import 'cup_geometry.dart';
 import 'latte_pour_session.dart';
 import 'studio_colors.dart';
 import 'surface_decor.dart';
+import 'sweetener_packet.dart';
 import 'watercolor.dart';
 
 /// Vaso de cafetería para llevar con la marca Somos Café: franja
@@ -78,10 +79,34 @@ class TakeawayCupPainter extends CustomPainter {
     if (lid < 1) _steam(canvas, g);
     _lid(canvas, g);
     _lidSteam(canvas, g);
+    _packets(canvas, g, size);
     _jug(canvas, g);
     _celebrate(canvas);
 
     Watercolor.grain(canvas, size);
+  }
+
+  // ───────────── Sobres de endulzante ─────────────
+
+  /// Cada endulzante elegido es un sobre individual apoyado junto a la
+  /// base del vaso (se esconde al acercar la cámara para el arte latte).
+  void _packets(Canvas canvas, CupGeo g, Size size) {
+    final names = snap.sweeteners;
+    final visible = (1 - tilt * 2.5).clamp(0.0, 1.0).toDouble();
+    if (names.isEmpty || visible <= 0) return;
+
+    final free = size.width - (g.cx + g.botW / 2) - 6;
+    final n = names.length;
+    final w = math.min(g.topW * 0.27, free / (0.9 + 0.62 * (n - 1) + 0.2)).clamp(14.0, 60.0).toDouble();
+    if (w <= 14.5 && free < 30) return;
+    final h = w * SweetenerPacketPainter.aspect;
+
+    if (visible < 1) canvas.saveLayer(null, Paint()..color = Colors.white.withValues(alpha: visible));
+    for (var i = n - 1; i >= 0; i--) {
+      final center = Offset(g.cx + g.botW / 2 + w * 0.75 + i * w * 0.62, g.baseY - h * 0.42 - i * w * 0.05);
+      SweetenerPacketPainter.paint(canvas, center, w, names[i], angle: 0.2 - i * 0.14);
+    }
+    if (visible < 1) canvas.restore();
   }
 
   // ───────────── Cuerpo ─────────────
@@ -324,7 +349,7 @@ class TakeawayCupPainter extends CustomPainter {
 
     // Nivel real del líquido: cuanto más vacío, más abajo se ve.
     final surfaceColor = snap.surfaceColor;
-    final (center, rx, ry) = g.surface(snap.fill);
+    final (center, rx, ry) = g.visibleSurface(snap.fill);
 
     canvas.save();
     canvas.clipPath(Path()..addOval(rim.deflate(1.5)));
@@ -334,8 +359,33 @@ class TakeawayCupPainter extends CustomPainter {
       Paint()..color = Color.lerp(surfaceColor, snap.baseColor, 0.18)!.withValues(alpha: 0.5),
     );
 
+    // Superficie bien definida: borde más oscuro de crema, menisco claro y
+    // un reflejo suave arriba a la izquierda.
+    final surf = Rect.fromCenter(center: center, width: rx * 2, height: ry * 2);
+    canvas.drawOval(
+      surf,
+      Paint()..shader = RadialGradient(colors: [Colors.transparent, Colors.black.withValues(alpha: 0.16)], stops: const [0.72, 1]).createShader(surf),
+    );
+    canvas.drawOval(
+      surf.deflate(rx * 0.02),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = math.max(1.2, rx * 0.035)
+        ..color = Color.lerp(surfaceColor, Colors.white, 0.45)!.withValues(alpha: 0.6),
+    );
+    canvas.drawArc(
+      surf.deflate(rx * 0.14),
+      math.pi * 1.08,
+      math.pi * 0.32,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..strokeWidth = math.max(1.2, rx * 0.04)
+        ..color = Colors.white.withValues(alpha: 0.28),
+    );
+
     SurfaceDecor.syrups(canvas, center, rx, ry, snap.syrups);
-    SurfaceDecor.sweeteners(canvas, center, rx, ry, snap.sweeteners);
     _art(canvas, center, rx, ry);
 
     if (cold > 0) _iceTop(canvas, center, rx, ry);
@@ -349,7 +399,7 @@ class TakeawayCupPainter extends CustomPainter {
     Watercolor.ink(canvas, Path()..addOval(rim.inflate(g.topW * 0.018)), StudioColors.ink.withValues(alpha: 0.6), width: 1.6);
 
     // Toppings (la crema sobresale del borde).
-    SurfaceDecor.toppings(canvas, center, rx, ry, snap.toppings, hasArt: snap.latteArt.isNotEmpty);
+    SurfaceDecor.toppings(canvas, center, rx, ry, snap.toppings, hasArt: snap.latteArt.isNotEmpty, qty: snap.toppingQty);
 
     _surface = (center, rx, ry);
   }

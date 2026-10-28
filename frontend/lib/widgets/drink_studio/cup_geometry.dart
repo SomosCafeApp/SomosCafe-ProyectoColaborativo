@@ -9,7 +9,7 @@ class CupGeo {
   /// más, la superficie de la bebida se ve con mayor perspectiva y el
   /// vaso crece (asomándose por abajo) para que en el arte latte la
   /// superficie sea lo bastante grande para verter con el dedo.
-  CupGeo(Size size, double factor, {double tilt = 0}) {
+  CupGeo(Size size, double factor, {this.tilt = 0}) {
     final unit = math.min(size.height, size.width * 1.35);
     cupH = unit * 0.5 * factor * (1 + 0.5 * tilt);
     topW = cupH * 0.66;
@@ -20,8 +20,11 @@ class CupGeo {
     final restTop = size.height * 0.9 - unit * 0.5 * factor;
     topY = restTop + (size.height * 0.58 - restTop) * tilt;
     baseY = topY + cupH;
-    rimRy = topW * (0.17 + 0.2 * tilt);
+    rimRy = topW * (0.17 + 0.25 * tilt);
   }
+
+  /// Acercamiento de la cámara (0..1).
+  final double tilt;
 
   late final double cupH, topW, botW, cx, baseY, topY, rimRy;
 
@@ -46,6 +49,11 @@ class CupGeo {
   /// Superficie de la bebida dentro de la boca: centro y radios. Cuanto
   /// más vacío el vaso ([fill] 0..1), más abajo y más pequeña se ve.
   /// La usan el painter y el gesto del vertido: así coinciden siempre.
+  /// Superficie tal como se ve: al acercar la cámara para el arte latte
+  /// el café se muestra siempre casi a ras del borde, para que el diseño
+  /// quede grande, centrado y completo aunque la taza lleve poca leche.
+  (Offset, double, double) visibleSurface(double fill) => surface(fill + (math.max(fill, 0.88) - fill) * tilt);
+
   (Offset, double, double) surface(double fill) {
     final shrink = 1 - 0.14 * (1 - fill);
     return (Offset(cx, topY + (1 - fill) * rimRy * 0.9), rimRx * 0.97 * shrink, rimRy * 0.95 * shrink);
