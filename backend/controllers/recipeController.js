@@ -4,10 +4,10 @@ import DrinkRecipe from "../models/drinkRecipeModel.js";
 import Product from "../models/productModel.js";
 import {
     resolveCustomization,
-    customizationPrice,
     customizationKey,
     isCustomizableProduct
 } from "../utils/customization.js";
+import { customizationPriceFor } from "../utils/pricing.js";
 
 // ===================================
 // RECETAS DEL ESTUDIO DE BEBIDAS
@@ -53,7 +53,7 @@ const formatRecipe = (recipe, product) => {
         available: product.isAvailable === true && !check.error,
         extraPrice: check.error
             ? 0
-            : customizationPrice(check.customization)
+            : customizationPriceFor(check.customization, product.price)
     };
 };
 

@@ -183,8 +183,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           child: const ChatFab(),
         ),
         // Acceso único al minijuego Estudio de bebidas, sobre el ChatBot,
-        // en Menú y Carrito (no depende de las bebidas disponibles).
-        if (_currentIndex == 1 || _currentIndex == 3)
+        // en Menú (no depende de las bebidas disponibles). En Carrito
+        // vive en el encabezado: ahí el panel fijo del total ocupa el
+        // lugar donde flotaría y taparía el precio.
+        if (_currentIndex == 1)
           Positioned(
             right: 22,
             bottom: 65 + MediaQuery.of(context).padding.bottom + 16 + 56 + 12,

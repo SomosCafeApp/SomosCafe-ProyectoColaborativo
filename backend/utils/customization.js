@@ -12,6 +12,9 @@
 // Ajuste de precio por tamaño respecto al precio base del producto
 // (el base corresponde al tamaño Mediano). Puede ser NEGATIVO:
 //   Pequeño = base - 3.000 · Mediano = base · Grande = base + 5.000
+// Piso del tamaño Pequeño (ver utils/pricing.js: sizeAdjustment).
+export const MIN_PRICE_AFTER_SIZE = 1000;
+
 export const SIZE_PRICES = {
     "Pequeño": -3000,
     "Mediano": 0,
@@ -518,6 +521,7 @@ export const getCustomizationOptions = () => ({
     syrups: { prices: { ...SYRUP_PRICES }, max: MAX_SYRUPS },
     sweeteners: { prices: { ...SWEETENER_PRICES }, max: MAX_SWEETENERS },
     sizeOunces: { ...SIZE_OUNCES },
+    sizeRules: { minPriceAfterSize: MIN_PRICE_AFTER_SIZE },
     latteArt: {
         keywords: [...LATTE_ART_KEYWORDS],
         designs: [...LATTE_ART_DESIGNS]

@@ -4,9 +4,13 @@ import Product from "../models/productModel.js";
 import {
     DEFAULT_CUSTOMIZATION,
     resolveCustomization,
-    customizationPrice,
     customizationKey
 } from "../utils/customization.js";
+
+import {
+    customizationBreakdown,
+    clampDiscount
+} from "../utils/pricing.js";
 
 import {
     getDiscountResolver,
@@ -48,14 +52,21 @@ const buildCartResponse = (cart, resolver) => {
                     }
                     : { ...DEFAULT_CUSTOMIZATION };
 
-            const extra = customizationPrice(customization);
+            const breakdown = customizationBreakdown(
+                customization,
+                item.productId.price
+            );
+            const extra = breakdown.customizationPrice;
             const originalUnitPrice = item.productId.price + extra;
 
             const applied =
                 resolver(item.productId._id, item.productId.price);
 
-            const discountPerUnit =
-                applied ? applied.discountPerUnit : 0;
+            // La promoción nunca deja la unidad por debajo de $0.
+            const discountPerUnit = clampDiscount(
+                applied ? applied.discountPerUnit : 0,
+                originalUnitPrice
+            );
 
             const unitPrice = originalUnitPrice - discountPerUnit;
             const lineTotal = unitPrice * item.quantity;
@@ -73,6 +84,11 @@ const buildCartResponse = (cart, resolver) => {
                 customization,
                 customizationKey: item.customizationKey,
                 customizationPrice: extra,
+                breakdown: {
+                    size: breakdown.size,
+                    sizeAdjustment: breakdown.sizeAdjustment,
+                    lines: breakdown.lines
+                },
                 originalUnitPrice,
                 discountPerUnit,
                 promotion: applied

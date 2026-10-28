@@ -17,9 +17,13 @@ import Point from "../models/pointsModel.js";
 import Notification from "../models/notificationModel.js";
 
 import {
-    resolveCustomization,
-    customizationPrice
+    resolveCustomization
 } from "../utils/customization.js";
+
+import {
+    customizationPriceFor,
+    clampDiscount
+} from "../utils/pricing.js";
 
 import { getDiscountResolver } from "../utils/promotions.js";
 
@@ -450,16 +454,23 @@ export const createOrder = async (req, res) => {
                 return res.status(400).json({ message: error });
             }
 
-            const extra = customizationPrice(customization);
+            const extra = customizationPriceFor(
+                customization,
+                product.price
+            );
 
-            const itemSubtotal =
-                (product.price + extra) * quantity;
+            const originalUnitPrice = product.price + extra;
+
+            const itemSubtotal = originalUnitPrice * quantity;
 
             const applied =
                 resolveDiscount(product._id, product.price);
 
-            const discountPerUnit =
-                applied ? applied.discountPerUnit : 0;
+            // La promoción nunca deja la unidad por debajo de $0.
+            const discountPerUnit = clampDiscount(
+                applied ? applied.discountPerUnit : 0,
+                originalUnitPrice
+            );
 
             const itemDiscount = discountPerUnit * quantity;
 

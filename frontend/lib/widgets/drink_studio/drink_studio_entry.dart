@@ -119,9 +119,9 @@ class _DrinkStudioFabState extends State<DrinkStudioFab> {
                   duration: const Duration(milliseconds: 320),
                   curve: Curves.easeOutCubic,
                   child: _expanded
-                      ? const Padding(
-                          padding: EdgeInsets.only(left: 10),
-                          child: Text('Personaliza', maxLines: 1, style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w900)),
+                      ? Padding(
+                          padding: const EdgeInsets.only(left: 10),
+                          child: Text(DrinkStudioFab.supports(widget.product) ? 'Personaliza' : 'Estudio de bebidas', maxLines: 1, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w900)),
                         )
                       : const SizedBox.shrink(),
                 ),

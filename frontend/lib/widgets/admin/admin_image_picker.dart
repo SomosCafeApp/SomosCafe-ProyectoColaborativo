@@ -195,7 +195,7 @@ class _AdminImagePickerState extends State<AdminImagePicker> {
               onPressed: _busy ? null : widget.onCleared,
               icon: const Icon(Icons.undo_rounded, size: 16),
               label: Text(
-                (currentUrl ?? '').isNotEmpty ? 'Quitar selección (conservar la actual)' : 'Quitar selección',
+                (currentUrl ?? '').isNotEmpty ? 'Quitar nueva imagen' : 'Quitar selección',
                 style: const TextStyle(fontSize: 12),
               ),
             ),

@@ -110,7 +110,10 @@ class _DrinkPickerSheet extends StatelessWidget {
 /// en la pantalla (no en las tarjetas de bebidas), así que siempre está
 /// disponible aunque cambie el menú.
 class DrinkStudioLauncher extends StatelessWidget {
-  const DrinkStudioLauncher({super.key});
+  /// [onDark]: borde claro para que se distinga sobre un fondo marrón
+  /// (encabezado del carrito).
+  const DrinkStudioLauncher({super.key, this.onDark = false});
+  final bool onDark;
 
   @override
   Widget build(BuildContext context) {
@@ -129,6 +132,7 @@ class DrinkStudioLauncher extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: StudioColors.brand,
+                border: onDark ? Border.all(color: Colors.white.withValues(alpha: 0.85), width: 2) : null,
                 boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.4), blurRadius: 10, offset: const Offset(0, 4))],
               ),
               child: const Stack(

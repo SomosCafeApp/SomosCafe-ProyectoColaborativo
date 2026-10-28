@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/drink_studio/drink_studio_launcher.dart';
 import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
 import '../providers/cart_provider.dart';
@@ -65,6 +66,8 @@ class CartPage extends StatelessWidget {
                         ],
                       ),
                     ),
+                    // Acceso al minijuego Estudio de bebidas (no tapa el total).
+                    const DrinkStudioLauncher(onDark: true),
                     if (totalItems > 0)
                       TextButton(
                         onPressed: () => cart.clearCart(),
