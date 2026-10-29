@@ -2,52 +2,17 @@ import Promotion from "../models/promotionModel.js";
 import Product from "../models/productModel.js";
 import User from "../models/userModel.js";
 import { decorateProduct, buildDiscountResolver } from "../utils/promotions.js";
-import {
-    notifyUsers,
-    notifyAllCustomers,
-    formatMoney,
-    formatDate
-} from "../utils/notify.js";
+import { announcePromotion } from "../utils/announce.js";
 
 // ===================================
 // NOTIFY NEW PROMOTION (push + pantalla de notificaciones)
 // ===================================
-// Se usa al crear una promoción y cuando una promoción pasa de
-// inactiva a activa. Solo avisa si está activa y no ha vencido. Si
-// está dirigida a usuarios concretos (userIds) solo les avisa a
-// ellos; si no, a todos los clientes. Nunca lanza error y no hay que
-// esperarla (no retrasa la respuesta).
+// Delegado en utils/announce.js: solo avisa si ya está guardada, activa,
+// vigente y empezó; una sola vez por vigencia y respetando las
+// preferencias y la segmentación (userIds). Las que empiezan más
+// adelante las anuncia la tarea programada el día de inicio.
 const notifyNewPromotion = (promotion) => {
-
-    if (
-        !promotion.isActive ||
-        promotion.endDate <= new Date()
-    ) {
-        return;
-    }
-
-    const discountText =
-        promotion.discountType === "percentage"
-            ? `${promotion.discountValue}% de descuento`
-            : `${formatMoney(promotion.discountValue)} de descuento`;
-
-    const startsLater =
-        promotion.startDate > new Date()
-            ? ` Disponible desde el ${formatDate(promotion.startDate)}.`
-            : " ¡Aprovéchala!";
-
-    const payload = {
-        title: "Nueva promoción",
-        message: `${promotion.name}: ${discountText}.${startsLater}`,
-        type: "PROMOTION",
-        relatedId: promotion._id
-    };
-
-    if (promotion.userIds.length > 0) {
-        notifyUsers(promotion.userIds, payload);
-    } else {
-        notifyAllCustomers(payload);
-    }
+    announcePromotion(promotion);
 };
 
 // ===================================
@@ -94,6 +59,75 @@ export const getPromotions = async (req, res) => {
 
             error: error.message
 
+        });
+
+    }
+
+};
+
+// ===================================
+// GET AVAILABLE PROMOTION (cliente)
+// ===================================
+// Detalle de una promoción para el cliente que toca su notificación.
+// Solo si está activa, vigente y disponible para él (userIds vacío =
+// todos). Nunca expone el código ni a otros usuarios.
+export const getAvailablePromotion = async (req, res) => {
+
+    try {
+
+        const now = new Date();
+
+        const promotion = await Promotion.findOne({
+            _id: req.params.id,
+            isActive: true,
+            startDate: { $lte: now },
+            endDate: { $gte: now }
+        })
+            .populate("productIds", "name price images isAvailable")
+            .lean();
+
+        const allowed =
+            promotion &&
+            (promotion.userIds.length === 0 ||
+                promotion.userIds.some(
+                    id => String(id) === String(req.user.id)
+                ));
+
+        if (!allowed) {
+            return res.status(404).json({
+                message: "Esta promoción ya no está disponible"
+            });
+        }
+
+        return res.status(200).json({
+            message: "Promoción obtenida correctamente",
+            promotion: {
+                id: promotion._id,
+                name: promotion.name,
+                description: promotion.description || "",
+                discountType: promotion.discountType,
+                discountValue: promotion.discountValue,
+                minimumPurchase: promotion.minimumPurchase || 0,
+                maximumDiscount: promotion.maximumDiscount ?? null,
+                startDate: promotion.startDate,
+                endDate: promotion.endDate,
+                products: (promotion.productIds || [])
+                    .filter(p => p.isAvailable !== false)
+                    .map(p => ({
+                        id: p._id,
+                        name: p.name,
+                        price: p.price,
+                        image: p.images?.[0] || ""
+                    }))
+            }
+        });
+
+    } catch (error) {
+
+        console.error("Get available promotion error:", error);
+
+        return res.status(500).json({
+            message: "Error al obtener la promoción"
         });
 
     }

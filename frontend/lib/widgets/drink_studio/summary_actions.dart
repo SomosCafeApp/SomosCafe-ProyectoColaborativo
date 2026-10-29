@@ -1,18 +1,16 @@
 import 'package:flutter/material.dart';
 
-import '../../core/utils/money_format.dart';
 import '../../models/drink_studio_stage.dart';
 import '../../providers/drink_studio_provider.dart';
 import '../common/styled_confirm_dialog.dart';
 import 'studio_colors.dart';
 
-/// Acciones de la pantalla final: volver a personalizar, agregar al
-/// carrito y, en pequeño, guardar la receta o empezar de nuevo.
+/// Acciones de la pantalla de resultado: volver a personalizar, guardar
+/// la imagen del latte y empezar de nuevo. Ninguna toca compras.
 class SummaryActions extends StatelessWidget {
-  const SummaryActions({super.key, required this.studio, required this.onAdd, required this.onSave});
+  const SummaryActions({super.key, required this.studio, required this.onSaveArt});
   final DrinkStudioProvider studio;
-  final VoidCallback onAdd;
-  final VoidCallback onSave;
+  final VoidCallback onSaveArt;
 
   /// Elegir qué parte de la bebida volver a personalizar.
   Future<void> _edit(BuildContext context) {
@@ -55,7 +53,7 @@ class SummaryActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final busy = studio.adding;
+    const busy = false;
     final minor = TextButton.styleFrom(foregroundColor: StudioColors.primary, visualDensity: VisualDensity.compact, textStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13));
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -85,10 +83,10 @@ class SummaryActions extends StatelessWidget {
                   boxShadow: busy ? const [] : [BoxShadow(color: StudioColors.primary.withValues(alpha: 0.35), blurRadius: 14, offset: const Offset(0, 6))],
                 ),
                 child: FilledButton.icon(
-                  onPressed: busy ? null : onAdd,
+                  onPressed: onSaveArt,
                   style: FilledButton.styleFrom(backgroundColor: Colors.transparent, disabledBackgroundColor: Colors.transparent, shadowColor: Colors.transparent, minimumSize: const Size(0, 54), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
-                  icon: busy ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2.4, color: Colors.white)) : const Icon(Icons.shopping_bag_rounded),
-                  label: Text(busy ? 'Agregando…' : 'Agregar · ${formatCop(studio.total)}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+                  icon: const Icon(Icons.download_rounded),
+                  label: Text('Guardar mi latte', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
                 ),
               ),
             ),
@@ -97,8 +95,7 @@ class SummaryActions extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            TextButton.icon(onPressed: busy ? null : onSave, icon: const Icon(Icons.bookmark_add_outlined, size: 17), label: const Text('Guardar receta'), style: minor),
-            TextButton.icon(onPressed: busy ? null : () => _reset(context), icon: const Icon(Icons.refresh_rounded, size: 17), label: const Text('Empezar de nuevo'), style: minor),
+            TextButton.icon(onPressed: busy ? null : () => _reset(context), icon: const Icon(Icons.refresh_rounded, size: 17), label: const Text('Jugar de nuevo'), style: minor),
           ],
         ),
       ],

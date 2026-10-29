@@ -7,6 +7,7 @@ class ReviewItemCard extends StatelessWidget {
 
   /// Foto de perfil del autor (vacía = se muestran sus iniciales).
   final String profileImage;
+  final String avatarPreset;
   final String comment;
   final String date;
   final int stars;
@@ -18,6 +19,7 @@ class ReviewItemCard extends StatelessWidget {
     super.key,
     required this.name,
     this.profileImage = '',
+    this.avatarPreset = '',
     required this.comment,
     required this.date,
     required this.stars,
@@ -44,6 +46,7 @@ class ReviewItemCard extends StatelessWidget {
               // Avatar circular: foto de perfil o, si no tiene, la inicial
               UserAvatar(
                 imageUrl: profileImage,
+                avatarPreset: avatarPreset,
                 initials: initial,
                 size: 36,
                 fontSize: 14,

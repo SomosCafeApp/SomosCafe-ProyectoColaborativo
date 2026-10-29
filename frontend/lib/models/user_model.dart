@@ -7,6 +7,11 @@ class AppUser {
   final String phone;
   final int points;
   final String profileImage;
+
+  /// 'none' | 'preset' | 'photo' y la clave del avatar predefinido
+  /// (grano, taza, barista, latte, cafetera). Ver backend utils/avatars.js.
+  final String avatarType;
+  final String avatarPreset;
   final bool isActive;
   final bool isEmailVerified;
 
@@ -26,6 +31,8 @@ class AppUser {
     required this.phone,
     required this.points,
     required this.profileImage,
+    this.avatarType = 'none',
+    this.avatarPreset = '',
     required this.isActive,
     required this.isEmailVerified,
     this.birthDate,
@@ -42,12 +49,26 @@ class AppUser {
       phone: json['phone'] as String? ?? '',
       points: (json['points'] as num?)?.toInt() ?? 0,
       profileImage: json['profileImage'] as String? ?? '',
+      avatarType: _resolveAvatarType(json),
+      avatarPreset: json['avatarPreset'] as String? ?? '',
       isActive: json['isActive'] as bool? ?? true,
       isEmailVerified: json['isEmailVerified'] as bool? ?? false,
       birthDate: json['birthDate'] as String?,
       hasPassword: json['hasPassword'] as bool? ?? true,
     );
   }
+
+  /// Misma regla que el backend: sesiones guardadas antes de existir los
+  /// avatares no traen avatarType; si tienen foto, es una foto.
+  static String _resolveAvatarType(Map<String, dynamic> json) {
+    final type = json['avatarType'] as String? ?? '';
+    if (type == 'preset' && (json['avatarPreset'] as String? ?? '').isNotEmpty) return 'preset';
+    if (type == 'photo' && (json['profileImage'] as String? ?? '').isNotEmpty) return 'photo';
+    if (type == 'none') return 'none';
+    return (json['profileImage'] as String? ?? '').isNotEmpty ? 'photo' : 'none';
+  }
+
+  bool get hasPresetAvatar => avatarType == 'preset' && avatarPreset.isNotEmpty;
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -58,6 +79,8 @@ class AppUser {
         'phone': phone,
         'points': points,
         'profileImage': profileImage,
+        'avatarType': avatarType,
+        'avatarPreset': avatarPreset,
         'isActive': isActive,
         'isEmailVerified': isEmailVerified,
         'birthDate': birthDate,

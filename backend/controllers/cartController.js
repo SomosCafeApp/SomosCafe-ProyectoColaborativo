@@ -1,3 +1,5 @@
+import mongoose from "mongoose";
+
 import Cart from "../models/cartModel.js";
 import Product from "../models/productModel.js";
 
@@ -185,104 +187,150 @@ export const getCart = async (req, res) => {
 // personalización, se acumula la cantidad. Si la personalización es
 // distinta, se crea una línea nueva.
 
-export const addToCart = async (req, res) => {
+// Núcleo de "agregar al carrito", compartido por el endpoint REST y
+// por el ChatBot. Toda validación (producto real, disponibilidad,
+// cantidad, personalización) y todo precio se resuelven aquí, en el
+// servidor. Devuelve { status, body } sin tocar la respuesta HTTP.
+export const addItemForUser = async (userId, input = {}) => {
 
-    try {
+    const {
+        productId,
+        quantity,
+        customization: rawCustomization
+    } = input;
 
-        const {
+    if (!productId) {
+        return {
+            status: 400,
+            body: { message: "El ID del producto es obligatorio" }
+        };
+    }
+
+    if (!mongoose.isValidObjectId(productId)) {
+        return {
+            status: 400,
+            body: { message: "El ID del producto no es válido" }
+        };
+    }
+
+    const productQuantity = quantity || 1;
+
+    if (
+        !Number.isInteger(productQuantity) ||
+        productQuantity < 1
+    ) {
+        return {
+            status: 400,
+            body: { message: "La cantidad debe ser un número entero positivo" }
+        };
+    }
+
+    const product = await Product
+        .findById(productId)
+        .populate("categoryId", "name");
+
+    if (!product) {
+        return {
+            status: 404,
+            body: { message: "Producto no encontrado" }
+        };
+    }
+
+    if (!product.isAvailable) {
+        return {
+            status: 400,
+            body: { message: "El producto no está disponible por el momento" }
+        };
+    }
+
+    // Postres: se ignora cualquier personalización enviada.
+    const { customization, error } =
+        resolveCustomization(product, rawCustomization);
+
+    if (error) {
+        return { status: 400, body: { message: error } };
+    }
+
+    const key = customizationKey(customization);
+
+    let cart = await Cart.findOne({ userId });
+
+    if (!cart) {
+        cart = new Cart({ userId, items: [] });
+    }
+
+    await upgradeLegacyItems(cart);
+
+    const existingItem = cart.items.find(item =>
+        item.productId.toString() === productId.toString() &&
+        item.customizationKey === key
+    );
+
+    if (existingItem) {
+        existingItem.quantity += productQuantity;
+    } else {
+        cart.items.push({
             productId,
-            quantity,
-            customization: rawCustomization
-        } = req.body;
-
-        if (!productId) {
-            return res.status(400).json({
-                message: "El ID del producto es obligatorio"
-            });
-        }
-
-        const productQuantity = quantity || 1;
-
-        if (
-            !Number.isInteger(productQuantity) ||
-            productQuantity < 1
-        ) {
-            return res.status(400).json({
-                message: "La cantidad debe ser un número entero positivo"
-            });
-        }
-
-        const product = await Product
-            .findById(productId)
-            .populate("categoryId", "name");
-
-        if (!product) {
-            return res.status(404).json({
-                message: "Producto no encontrado"
-            });
-        }
-
-        if (!product.isAvailable) {
-            return res.status(400).json({
-                message: "El producto no está disponible por el momento"
-            });
-        }
-
-        // Postres: se ignora cualquier personalización enviada.
-        const { customization, error } =
-            resolveCustomization(product, rawCustomization);
-
-        if (error) {
-            return res.status(400).json({ message: error });
-        }
-
-        const key = customizationKey(customization);
-
-        let cart = await Cart.findOne({
-            userId: req.user.id
+            quantity: productQuantity,
+            customization,
+            customizationKey: key
         });
+    }
 
-        if (!cart) {
-            cart = new Cart({
-                userId: req.user.id,
-                items: []
-            });
-        }
+    await cart.save();
 
-        await upgradeLegacyItems(cart);
+    await cart.populate("items.productId");
 
-        const existingItem = cart.items.find(item =>
-            item.productId.toString() === productId.toString() &&
-            item.customizationKey === key
-        );
+    const response = buildCartResponse(
+        cart,
+        await getDiscountResolver(userId)
+    );
 
-        if (existingItem) {
-            existingItem.quantity += productQuantity;
-        } else {
-            cart.items.push({
-                productId,
-                quantity: productQuantity,
-                customization,
-                customizationKey: key
-            });
-        }
-
-        await cart.save();
-
-        await cart.populate("items.productId");
-
-        const response = buildCartResponse(
-            cart,
-            await getDiscountResolver(req.user.id)
-        );
-
-        return res.status(200).json({
+    return {
+        status: 200,
+        body: {
             message: "Producto agregado al carrito correctamente",
             cart: response,
             subtotal: response.subtotal,
             discount: response.discount,
             total: response.total
-        });
+        }
+    };
+};
+
+// Vacía el carrito del usuario (usado por el ChatBot tras confirmar).
+export const clearCartForUser = async (userId) => {
+
+    const cart = await Cart.findOne({ userId });
+
+    if (!cart) return false;
+
+    cart.items = [];
+    await cart.save();
+
+    return true;
+};
+
+// Carrito actual con precios calculados (para que el ChatBot informe
+// el total real, nunca uno inventado).
+export const getCartSummaryForUser = async (userId) => {
+
+    const cart = await Cart.findOne({ userId });
+
+    if (!cart) return { items: [], subtotal: 0, discount: 0, total: 0 };
+
+    await cart.populate("items.productId");
+
+    return buildCartResponse(cart, await getDiscountResolver(userId));
+};
+
+export const addToCart = async (req, res) => {
+
+    try {
+
+        const { status, body } = await addItemForUser(req.user.id, req.body);
+
+        return res.status(status).json(body);
 
     } catch (error) {
 

@@ -182,16 +182,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           bottom: 65 + MediaQuery.of(context).padding.bottom + 16,
           child: const ChatFab(),
         ),
-        // Acceso único al minijuego Estudio de bebidas, sobre el ChatBot,
-        // en Menú (no depende de las bebidas disponibles). En Carrito
-        // vive en el encabezado: ahí el panel fijo del total ocupa el
-        // lugar donde flotaría y taparía el precio.
-        if (_currentIndex == 1)
-          Positioned(
-            right: 22,
-            bottom: 65 + MediaQuery.of(context).padding.bottom + 16 + 56 + 12,
-            child: const DrinkStudioLauncher(),
-          ),
+        // Acceso a DrinkStudio: el MISMO ícono, en la MISMA posición, en
+        // las cinco pantallas (Inicio, Menú, Buscar, Carrito y Perfil).
+        // Va sobre el botón del ChatBot, centrado en su misma columna.
+        Positioned(
+          right: 16 + (56 - DrinkStudioLauncher.size) / 2,
+          bottom: 65 + MediaQuery.of(context).padding.bottom + 16 + 56 + 12,
+          child: const DrinkStudioLauncher(),
+        ),
       ],
     );
   }

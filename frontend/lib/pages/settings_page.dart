@@ -112,13 +112,13 @@ class SettingsPage extends StatefulWidget {
                   // ESTUDIO DE BEBIDAS
 
                   const SettingsSectionHeader(
-                    title: 'Estudio de bebidas',
+                    title: 'DrinkStudio',
                   ),
 
                   SettingsCardTile(
                     icon: Icons.local_cafe_rounded,
-                    title: 'Abrir Estudio de bebidas',
-                    subtitle: 'Prepara y personaliza tu bebida',
+                    title: 'Abrir DrinkStudio',
+                    subtitle: 'Prepara tu latte y crea tu arte',
                     trailing: Icon(
                       Icons.arrow_forward_rounded,
                       color: primaryBrown,

@@ -92,7 +92,7 @@ class ChatProductCard extends StatelessWidget {
                         ? Image.network(
                             product.imageUrl,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => _fallbackImage(imageBg),
+                            errorBuilder: (_, _, _) => _fallbackImage(imageBg),
                           )
                         : _fallbackImage(imageBg),
                   ),
@@ -186,6 +186,51 @@ class ChatProductCard extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Botones de una tarjeta de producto del chat: elegir/agregar (sigue la
+/// conversación y pide confirmación antes de tocar el carrito) y ver
+/// los detalles del producto.
+class ChatProductActions extends StatelessWidget {
+  final Product product;
+  final String selectLabel;
+  final VoidCallback onSelect;
+
+  const ChatProductActions({
+    super.key,
+    required this.product,
+    required this.selectLabel,
+    required this.onSelect,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Row(
+        children: [
+          Expanded(
+            child: OutlinedButton(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => ProductDetailPage(product: product)),
+              ),
+              style: OutlinedButton.styleFrom(minimumSize: const Size(0, 44)),
+              child: const Text('Ver detalles'),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: FilledButton(
+              onPressed: onSelect,
+              style: FilledButton.styleFrom(backgroundColor: AppColors.primary, minimumSize: const Size(0, 44)),
+              child: Text(selectLabel),
+            ),
+          ),
+        ],
       ),
     );
   }

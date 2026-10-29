@@ -4,6 +4,7 @@ class Review {
   final String userId;
   final String userName;
   final String userProfileImage;
+  final String userAvatarPreset;
   final String productId;
   final int rating;
   final String comment;
@@ -15,6 +16,7 @@ class Review {
     required this.userId,
     required this.userName,
     required this.userProfileImage,
+    this.userAvatarPreset = '',
     required this.productId,
     required this.rating,
     required this.comment,
@@ -28,6 +30,7 @@ class Review {
     String userId = '';
     String userName = 'Usuario';
     String userProfileImage = '';
+    String userAvatarPreset = '';
 
     final rawUser = json['userId'];
     if (rawUser is Map<String, dynamic>) {
@@ -37,6 +40,12 @@ class Review {
       final fullName = [name, lastName].where((s) => s.isNotEmpty).join(' ');
       userName = fullName.isNotEmpty ? fullName : 'Usuario';
       userProfileImage = rawUser['profileImage'] as String? ?? '';
+      // Avatar predefinido: tiene prioridad sobre la foto (misma regla
+      // que el backend, utils/avatars.js).
+      if (rawUser['avatarType'] == 'preset') {
+        userAvatarPreset = rawUser['avatarPreset'] as String? ?? '';
+        if (userAvatarPreset.isNotEmpty) userProfileImage = '';
+      }
     } else if (rawUser != null) {
       userId = rawUser.toString();
     }
@@ -61,6 +70,7 @@ class Review {
       userId: userId,
       userName: userName,
       userProfileImage: userProfileImage,
+      userAvatarPreset: userAvatarPreset,
       productId: productId,
       rating: (json['rating'] as num?)?.toInt() ?? 0,
       comment: json['comment'] as String? ?? '',

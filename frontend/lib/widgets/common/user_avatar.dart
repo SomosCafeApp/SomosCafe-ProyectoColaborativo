@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
+import 'avatar_art.dart';
 
 /// Avatar de un usuario: su foto de perfil si tiene; si no (o si la
 /// imagen no carga), sus iniciales. Se usa en reseñas, perfil y datos
@@ -11,6 +12,10 @@ class UserAvatar extends StatelessWidget {
 
   /// Texto que se muestra cuando no hay foto (ej. "JP").
   final String initials;
+
+  /// Clave de un avatar predefinido (grano, taza, barista, latte,
+  /// cafetera). Si viene, tiene prioridad sobre la foto y las iniciales.
+  final String avatarPreset;
 
   final double size;
 
@@ -26,6 +31,7 @@ class UserAvatar extends StatelessWidget {
     super.key,
     required this.imageUrl,
     required this.initials,
+    this.avatarPreset = '',
     this.size = 40,
     this.borderRadius,
     this.backgroundColor = AppColors.primary,
@@ -54,6 +60,21 @@ class UserAvatar extends StatelessWidget {
         ),
       ),
     );
+
+    if (AvatarPresets.isValid(avatarPreset)) {
+      final art = AvatarArt(presetKey: avatarPreset, size: size);
+      if (border == null && borderRadius == null) return art;
+      return Container(
+        width: size,
+        height: size,
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(borderRadius ?? size / 2),
+          border: border,
+        ),
+        child: art,
+      );
+    }
 
     return Container(
       width: size,

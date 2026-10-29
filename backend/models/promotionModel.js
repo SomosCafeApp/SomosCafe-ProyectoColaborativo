@@ -127,6 +127,13 @@ const promotionSchema = new mongoose.Schema(
         // ===================================
         // ACTIVE STATUS
         // ===================================
+        // Fecha en que se anunció a los clientes (null = aún no). La
+        // tarea programada anuncia las que empiezan más adelante.
+        launchNotifiedAt: {
+            type: Date,
+            default: null
+        },
+
         isActive: {
             type: Boolean,
             default: true

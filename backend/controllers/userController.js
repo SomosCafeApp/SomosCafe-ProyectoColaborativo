@@ -1,4 +1,5 @@
 import { formatBirthDate } from "../utils/userFormat.js";
+import { avatarFields, isValidPreset } from "../utils/avatars.js";
 import User from "../models/userModel.js";
 
 // ===================================
@@ -14,8 +15,22 @@ export const registerUser = async (req, res) => {
             lastName,
             email,
             password,
-            phone
+            phone,
+            avatarPreset
         } = req.body;
+
+        // Avatar predefinido elegido al registrarse (opcional). Una
+        // foto de galería se sube después de iniciar sesión.
+        if (
+            avatarPreset !== undefined &&
+            avatarPreset !== null &&
+            avatarPreset !== "" &&
+            !isValidPreset(avatarPreset)
+        ) {
+            return res.status(400).json({
+                message: "El avatar elegido no es válido"
+            });
+        }
 
         // ===================================
         // VALIDATE REQUIRED DATA
@@ -258,6 +273,16 @@ export const registerUser = async (req, res) => {
                 profileImage:
                     "",
 
+                avatarType:
+                    avatarPreset ? "preset" : "none",
+
+                avatarPreset:
+                    avatarPreset || "",
+
+                // Con avatar predefinido no hay foto que reponer.
+                profileImageRemoved:
+                    Boolean(avatarPreset),
+
                 isActive:
                     true,
 
@@ -300,8 +325,7 @@ export const registerUser = async (req, res) => {
             points:
                 user.points,
 
-            profileImage:
-                user.profileImage,
+            ...avatarFields(user),
 
             isActive:
                 user.isActive,

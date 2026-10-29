@@ -1,19 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/utils/money_format.dart';
 import '../../models/drink_studio_stage.dart';
 import '../../providers/drink_studio_provider.dart';
 import 'studio_colors.dart';
 import 'studio_prefs_tiles.dart';
 import '../../core/utils/studio_prefs.dart';
 
-/// Encabezado del estudio: cerrar, nombre, guardar receta, total
-/// actualizado y los pasos numerados (se puede volver a los ya vistos).
+/// Encabezado del estudio: cerrar, nombre y los pasos numerados (se
+/// puede volver a los ya vistos). DrinkStudio es un juego: no hay precios.
 class StudioTopBar extends StatelessWidget {
-  const StudioTopBar({super.key, required this.onClose, required this.onSave});
+  const StudioTopBar({super.key, required this.onClose});
   final VoidCallback onClose;
-  final VoidCallback onSave;
 
   @override
   Widget build(BuildContext context) {
@@ -32,26 +30,11 @@ class StudioTopBar extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(s.product.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, letterSpacing: -0.2, color: StudioColors.text(dark))),
-                    Text('Prepara tu bebida', style: TextStyle(fontSize: 12, color: StudioColors.muted(dark))),
+                    Text('Prepara tu latte', style: TextStyle(fontSize: 12, color: StudioColors.muted(dark))),
                   ],
                 ),
               ),
               IconButton(tooltip: 'Ajustes del estudio', onPressed: () => showStudioSettingsSheet(context), icon: Icon(Icons.tune_rounded, color: StudioColors.muted(dark))),
-              IconButton(tooltip: 'Guardar receta', onPressed: onSave, icon: const Icon(Icons.bookmark_add_outlined, color: StudioColors.primary)),
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 250),
-                transitionBuilder: (c, a) => ScaleTransition(scale: a, child: c),
-                child: Container(
-                  key: ValueKey(s.total),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    gradient: StudioColors.brand,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [BoxShadow(color: StudioColors.primary.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 3))],
-                  ),
-                  child: Text(formatCop(s.total), style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 0.1)),
-                ),
-              ),
             ],
           ),
         ),

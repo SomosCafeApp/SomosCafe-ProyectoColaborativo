@@ -75,11 +75,39 @@ const userSchema = new mongoose.Schema(
             default: ""
         },
 
+        // Tipo de avatar: "none" | "preset" | "photo" (ver utils/avatars.js).
+        // Vacío en cuentas anteriores: se deduce de profileImage.
+        avatarType: {
+            type: String,
+            enum: ["", "none", "preset", "photo"],
+            default: ""
+        },
+
+        // Clave del avatar predefinido (solo si avatarType = "preset").
+        avatarPreset: {
+            type: String,
+            default: ""
+        },
+
         // true cuando el usuario eliminó su foto a propósito. Evita que
         // al volver a entrar con Google se le reponga la foto de Google.
         profileImageRemoved: {
             type: Boolean,
             default: false
+        },
+
+        // ===================================
+        // PREFERENCIAS DE COMUNICACIÓN
+        // ===================================
+        // Se respetan al crear notificaciones de novedades:
+        //   promotions -> promociones y cupones
+        //   news       -> productos nuevos y eventos
+        // Los avisos importantes (pedidos, pagos, cuenta) NO se pueden
+        // desactivar.
+
+        notificationPrefs: {
+            promotions: { type: Boolean, default: true },
+            news: { type: Boolean, default: true }
         },
 
         // ===================================

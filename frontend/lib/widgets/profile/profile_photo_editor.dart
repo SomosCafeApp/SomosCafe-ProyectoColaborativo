@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/utils/image_picking.dart';
+import '../../models/avatar_choice.dart';
+import '../../pages/avatar_picker_page.dart';
 import '../../providers/auth_provider.dart';
 import '../common/styled_confirm_dialog.dart';
 import '../common/user_avatar.dart';
@@ -18,16 +19,29 @@ class ProfilePhotoEditor extends StatelessWidget {
   Future<void> _change(BuildContext context) async {
     final auth = context.read<AuthProvider>();
     final messenger = ScaffoldMessenger.of(context);
+    final user = auth.user;
 
-    // La foto se muestra pequeña: no hace falta subirla en alta resolución.
-    final image = await pickGalleryImage(context, maxSide: 800);
-    if (image == null) return;
+    // Si se cancela la pantalla (o se sale sin confirmar) no cambia nada:
+    // el avatar anterior se conserva.
+    final choice = await AvatarPickerPage.open(
+      context,
+      currentPreset: user?.avatarPreset ?? '',
+      currentImageUrl: user?.profileImage ?? '',
+      initials: UserAvatar.initialsFor(user?.name ?? '', user?.lastName ?? ''),
+    );
+    if (choice == null) return;
 
-    final ok = await auth.updateProfileImage(image);
+    final bool ok;
+    if (choice.isPreset) {
+      ok = await auth.updateAvatarPreset(choice.presetKey!);
+    } else {
+      ok = await auth.updateProfileImage(choice.image!);
+    }
+
     messenger.showSnackBar(SnackBar(
       content: Text(ok
-          ? 'Foto de perfil actualizada'
-          : auth.errorMessage ?? 'No se pudo actualizar la foto'),
+          ? 'Avatar actualizado'
+          : auth.errorMessage ?? 'No se pudo actualizar el avatar'),
     ));
   }
 
@@ -38,8 +52,8 @@ class ProfilePhotoEditor extends StatelessWidget {
     final confirmed = await showStyledConfirmDialog(
       context,
       icon: Icons.no_photography_outlined,
-      title: 'Eliminar foto',
-      message: 'Se quitará tu foto de perfil y volverán a verse tus iniciales.',
+      title: 'Quitar avatar',
+      message: 'Se quitará tu avatar y volverán a verse tus iniciales.',
       confirmLabel: 'Eliminar',
     );
     if (!confirmed) return;
@@ -47,8 +61,8 @@ class ProfilePhotoEditor extends StatelessWidget {
     final ok = await auth.removeProfileImage();
     messenger.showSnackBar(SnackBar(
       content: Text(ok
-          ? 'Foto de perfil eliminada'
-          : auth.errorMessage ?? 'No se pudo eliminar la foto'),
+          ? 'Avatar eliminado'
+          : auth.errorMessage ?? 'No se pudo eliminar el avatar'),
     ));
   }
 
@@ -57,7 +71,7 @@ class ProfilePhotoEditor extends StatelessWidget {
     final auth = context.watch<AuthProvider>();
     final user = auth.user;
     final busy = auth.isUpdatingPhoto;
-    final hasPhoto = (user?.profileImage ?? '').isNotEmpty;
+    final hasPhoto = (user?.profileImage ?? '').isNotEmpty || (user?.hasPresetAvatar ?? false);
 
     return Column(
       children: [
@@ -67,6 +81,7 @@ class ProfilePhotoEditor extends StatelessWidget {
             children: [
               UserAvatar(
                 imageUrl: user?.profileImage ?? '',
+                avatarPreset: user?.avatarPreset ?? '',
                 initials: UserAvatar.initialsFor(user?.name ?? '', user?.lastName ?? ''),
                 size: 104,
                 fontSize: 34,
@@ -111,7 +126,7 @@ class ProfilePhotoEditor extends StatelessWidget {
             TextButton(
               onPressed: busy ? null : () => _change(context),
               child: Text(
-                hasPhoto ? 'Cambiar foto' : 'Subir foto',
+                hasPhoto ? 'Cambiar avatar' : 'Elegir avatar',
                 style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
               ),
             ),
@@ -120,7 +135,7 @@ class ProfilePhotoEditor extends StatelessWidget {
                 onPressed: busy ? null : () => _remove(context),
                 icon: const Icon(Icons.delete_outline_rounded, size: 18, color: _danger),
                 label: const Text(
-                  'Eliminar foto',
+                  'Quitar avatar',
                   style: TextStyle(color: _danger, fontWeight: FontWeight.bold),
                 ),
               ),

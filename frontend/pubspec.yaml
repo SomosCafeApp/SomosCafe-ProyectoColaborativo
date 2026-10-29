@@ -57,6 +57,12 @@ dependencies:
   firebase_messaging: ^15.2.10
   flutter_local_notifications: ^19.4.2
   
+  # ChatBot por voz: dictado (voz a texto) y lectura de respuestas
+  # (texto a voz). Usan el motor del teléfono: no requieren claves ni
+  # servicios externos.
+  speech_to_text: ^7.0.0
+  flutter_tts: ^4.2.0
+
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8

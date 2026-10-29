@@ -5,7 +5,7 @@ class AppNotification {
   final String id;
   final String title;
   final String message;
-  final String type; // GENERAL | ORDER | PROMOTION | SYSTEM | REWARD | EVENT
+  final String type; // GENERAL | ORDER | PROMOTION | SYSTEM | REWARD | EVENT | PRODUCT
   final bool isRead;
   final String? relatedId; // id del pedido, etc. (puede ser null)
   final DateTime? createdAt;

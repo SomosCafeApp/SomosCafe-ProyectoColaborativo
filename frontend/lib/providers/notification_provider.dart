@@ -37,6 +37,15 @@ class NotificationProvider extends ChangeNotifier {
   PushStatus? _pushStatus;
   bool _registeringDevice = false;
 
+  // ----- Preferencias de comunicación (guardadas en la cuenta) -----
+  // Promociones y cupones / novedades (productos y eventos). Los avisos
+  // importantes (pedidos, pagos) no se pueden desactivar.
+  bool _promotionsPref = true;
+  bool _newsPref = true;
+
+  bool get promotionsPref => _promotionsPref;
+  bool get newsPref => _newsPref;
+
   List<AppNotification> get notifications => _notifications;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
@@ -57,6 +66,7 @@ class NotificationProvider extends ChangeNotifier {
 
     if (token != null && !wasLoggedIn) {
       fetchNotifications();
+      loadPreferences();
       _registerDevice();
       _startPolling();
     } else if (token != null && _pushStatus == PushStatus.failed) {
@@ -68,6 +78,8 @@ class NotificationProvider extends ChangeNotifier {
       _notifications = [];
       _pushStatus = null;
       _pushEnabled = true;
+      _promotionsPref = true;
+      _newsPref = true;
       notifyListeners();
     }
   }
@@ -128,6 +140,49 @@ class NotificationProvider extends ChangeNotifier {
       _pushEnabled = previous;
       notifyListeners();
       return PushStatus.failed;
+    }
+  }
+
+  Future<void> loadPreferences() async {
+    final token = _token;
+    if (token == null) return;
+    try {
+      final data = await ApiClient.get('/account/notification-preferences', token: token);
+      final prefs = data['preferences'];
+      if (prefs is Map<String, dynamic>) {
+        _promotionsPref = prefs['promotions'] != false;
+        _newsPref = prefs['news'] != false;
+        notifyListeners();
+      }
+    } on ApiException {
+      // Sin red: se quedan los valores actuales.
+    }
+  }
+
+  /// Cambia una preferencia (optimista; si el servidor falla se revierte).
+  /// Devuelve false si no se pudo guardar.
+  Future<bool> setPreference({bool? promotions, bool? news}) async {
+    final token = _token;
+    if (token == null) return false;
+
+    final prevPromotions = _promotionsPref;
+    final prevNews = _newsPref;
+    if (promotions != null) _promotionsPref = promotions;
+    if (news != null) _newsPref = news;
+    notifyListeners();
+
+    try {
+      await ApiClient.patch('/account/notification-preferences', token: token, body: {
+        if (promotions != null) 'promotions': promotions,
+        if (news != null) 'news': news,
+      });
+      return true;
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
+      _promotionsPref = prevPromotions;
+      _newsPref = prevNews;
+      notifyListeners();
+      return false;
     }
   }
 

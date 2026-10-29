@@ -19,6 +19,8 @@ class NotificationUiMapper {
       iconBgColor: style.bgColor,
       iconColor: style.color,
       isUnread: !notification.isRead,
+      type: notification.type,
+      relatedId: notification.relatedId,
     );
   }
 
@@ -47,6 +49,12 @@ class NotificationUiMapper {
           icon: Icons.event_outlined,
           bgColor: const Color(0xFFE3F2FD),
           color: const Color(0xFF1565C0),
+        );
+      case 'PRODUCT':
+        return _NotificationStyle(
+          icon: Icons.local_cafe_outlined,
+          bgColor: const Color(0xFFF4EFEA),
+          color: const Color(0xFF8C6239),
         );
       case 'SYSTEM':
         return _NotificationStyle(

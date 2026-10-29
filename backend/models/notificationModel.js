@@ -61,7 +61,8 @@ const notificationSchema = new mongoose.Schema(
                 "PROMOTION",
                 "SYSTEM",
                 "REWARD",
-                "EVENT"
+                "EVENT",
+                "PRODUCT"
             ],
 
             default: "GENERAL"
@@ -90,6 +91,22 @@ const notificationSchema = new mongoose.Schema(
 
             default: null
 
+        },
+
+        // ===================================
+        // DEDUPE KEY
+        // ===================================
+        // Identifica la novedad (producto nuevo, promoción con su
+        // vigencia...). El índice único (userId + dedupeKey) garantiza
+        // que un mismo usuario reciba UNA sola notificación por novedad
+        // aunque se guarde, actualice o reactive varias veces.
+
+        dedupeKey: {
+
+            type: String,
+
+            default: null
+
         }
 
     },
@@ -100,6 +117,16 @@ const notificationSchema = new mongoose.Schema(
 
         collection: "notifications"
 
+    }
+);
+
+notificationSchema.index(
+    { userId: 1, dedupeKey: 1 },
+    {
+        unique: true,
+        partialFilterExpression: {
+            dedupeKey: { $type: "string" }
+        }
     }
 );
 

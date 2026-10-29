@@ -2,6 +2,8 @@
     <uses-permission android:name="android.permission.INTERNET"/>
     <!-- Mostrar notificaciones (obligatorio en Android 13+). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- ChatBot por voz: reconocer lo que dice el cliente (micrófono). -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <!-- Guardar el QR de pago en la galería (solo Android 9 o menor). -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29"/>
 
@@ -52,6 +54,14 @@
 
          In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
     <queries>
+        <!-- ChatBot por voz: reconocimiento de voz y lectura de respuestas
+             (speech_to_text y flutter_tts). -->
+        <intent>
+            <action android:name="android.speech.RecognitionService"/>
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE"/>
+        </intent>
         <!-- url_launcher: abrir enlaces https (WhatsApp, wa.me) -->
         <intent>
             <action android:name="android.intent.action.VIEW"/>

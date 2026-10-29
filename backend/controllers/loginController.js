@@ -2,6 +2,7 @@ import { formatBirthDate } from "../utils/userFormat.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
+import { avatarFields } from "../utils/avatars.js";
 import User from "../models/userModel.js";
 
 // ===================================
@@ -210,8 +211,7 @@ export const loginUser = async (req, res) => {
                 points:
                     user.points,
 
-                profileImage:
-                    user.profileImage,
+                ...avatarFields(user),
 
                 isActive:
                     user.isActive,

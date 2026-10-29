@@ -23,6 +23,7 @@ import {
 } from "../utils/mailer.js";
 import { validatePasswordPolicy } from "../utils/passwordPolicy.js";
 import { formatBirthDate } from "../utils/userFormat.js";
+import { avatarFields, isValidPreset } from "../utils/avatars.js";
 
 // ===================================
 // ACCOUNT (usuario ya logueado)
@@ -37,6 +38,11 @@ const MAX_CODE_ATTEMPTS = 5;
 const PHONE_REGEX = /^[0-9+()\-\s]{7,20}$/;
 const BIRTH_DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
+const notificationPrefsOf = (user) => ({
+    promotions: user.notificationPrefs?.promotions !== false,
+    news: user.notificationPrefs?.news !== false
+});
+
 const userResponse = (user) => ({
     id: user._id,
     name: user.name,
@@ -45,11 +51,12 @@ const userResponse = (user) => ({
     role: user.role,
     phone: user.phone,
     points: user.points,
-    profileImage: user.profileImage,
+    ...avatarFields(user),
     isActive: user.isActive,
     isEmailVerified: user.isEmailVerified,
     hasPassword: Boolean(user.password),
-    birthDate: formatBirthDate(user.birthDate)
+    birthDate: formatBirthDate(user.birthDate),
+    notificationPrefs: notificationPrefsOf(user)
 });
 
 // "AAAA-MM-DD" → Date a las 12:00 UTC, o null si no es una fecha real.
@@ -510,6 +517,8 @@ export const deleteAccount = async (req, res) => {
                     email: `deleted-${userId}@deleted.invalid`,
                     phone: "",
                     profileImage: "",
+                    avatarType: "none",
+                    avatarPreset: "",
                     birthDate: null,
                     points: 0,
                     isActive: false,
@@ -577,6 +586,8 @@ export const updateProfileImage = async (req, res) => {
 
         user.profileImage = newImage;
         user.profileImageRemoved = false;
+        user.avatarType = "photo";
+        user.avatarPreset = "";
         await user.save();
 
         if (isOwnProfileImage(oldImage)) {
@@ -621,6 +632,8 @@ export const deleteProfileImage = async (req, res) => {
 
         user.profileImage = "";
         user.profileImageRemoved = true;
+        user.avatarType = "none";
+        user.avatarPreset = "";
         await user.save();
 
         if (isOwnProfileImage(oldImage)) {
@@ -639,6 +652,137 @@ export const deleteProfileImage = async (req, res) => {
         return res.status(500).json({
             message: "Error al eliminar la foto de perfil",
             error: error.message
+        });
+
+    }
+
+};
+
+
+// ===================================
+// SET PRESET AVATAR
+// ===================================
+// Body: { avatarPreset: "grano" | "taza" | "barista" | "latte" | "cafetera" }
+// Elegir un avatar predefinido reemplaza la foto propia (si la había,
+// se borra de Cloudinary). profileImageRemoved evita que al volver a
+// entrar con Google se le reponga la foto de Google encima del avatar.
+export const updateAvatarPreset = async (req, res) => {
+
+    try {
+
+        const { avatarPreset } = req.body || {};
+
+        if (!isValidPreset(avatarPreset)) {
+            return res.status(400).json({
+                message: "El avatar elegido no es válido"
+            });
+        }
+
+        const user = await findAccount(req, res);
+        if (!user) return;
+
+        const oldImage = user.profileImage;
+
+        user.avatarType = "preset";
+        user.avatarPreset = avatarPreset;
+        user.profileImage = "";
+        user.profileImageRemoved = true;
+        await user.save();
+
+        if (isOwnProfileImage(oldImage)) {
+            await deleteCloudinaryImage(oldImage);
+        }
+
+        return res.status(200).json({
+            message: "Avatar actualizado correctamente",
+            user: userResponse(user)
+        });
+
+    } catch (error) {
+
+        console.error("Update avatar preset error:", error);
+
+        return res.status(500).json({
+            message: "Error al actualizar el avatar",
+            error: error.message
+        });
+
+    }
+
+};
+
+// ===================================
+// NOTIFICATION PREFERENCES
+// ===================================
+// Promociones/cupones y novedades (productos, eventos) se pueden
+// silenciar; los avisos importantes (pedidos, pagos) nunca.
+export const getNotificationPreferences = async (req, res) => {
+
+    try {
+
+        const user = await findAccount(req, res);
+        if (!user) return;
+
+        return res.status(200).json({
+            preferences: notificationPrefsOf(user)
+        });
+
+    } catch (error) {
+
+        console.error("Get notification prefs error:", error);
+
+        return res.status(500).json({
+            message: "Error al obtener las preferencias"
+        });
+
+    }
+
+};
+
+export const updateNotificationPreferences = async (req, res) => {
+
+    try {
+
+        const { promotions, news } = req.body || {};
+
+        if (
+            (promotions !== undefined && typeof promotions !== "boolean") ||
+            (news !== undefined && typeof news !== "boolean")
+        ) {
+            return res.status(400).json({
+                message: "Las preferencias deben ser verdadero o falso"
+            });
+        }
+
+        if (promotions === undefined && news === undefined) {
+            return res.status(400).json({
+                message: "Indica al menos una preferencia"
+            });
+        }
+
+        const user = await findAccount(req, res);
+        if (!user) return;
+
+        const current = notificationPrefsOf(user);
+
+        user.notificationPrefs = {
+            promotions: promotions ?? current.promotions,
+            news: news ?? current.news
+        };
+
+        await user.save();
+
+        return res.status(200).json({
+            message: "Preferencias actualizadas",
+            preferences: notificationPrefsOf(user)
+        });
+
+    } catch (error) {
+
+        console.error("Update notification prefs error:", error);
+
+        return res.status(500).json({
+            message: "Error al actualizar las preferencias"
         });
 
     }

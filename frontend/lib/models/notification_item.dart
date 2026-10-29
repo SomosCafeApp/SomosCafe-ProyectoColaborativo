@@ -10,6 +10,11 @@ class NotificationItem {
   final Color iconColor;
   final bool isUnread;
 
+  /// Tipo y elemento relacionado: permiten abrir el producto, la
+  /// promoción, el cupón o el evento al tocar la notificación.
+  final String type;
+  final String? relatedId;
+
   NotificationItem({
     required this.id,
     required this.title,
@@ -19,5 +24,7 @@ class NotificationItem {
     required this.iconBgColor,
     required this.iconColor,
     this.isUnread = false,
+    this.type = 'GENERAL',
+    this.relatedId,
   });
 }

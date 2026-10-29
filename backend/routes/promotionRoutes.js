@@ -13,6 +13,7 @@ import {
     deletePromotion,
     validatePromotion,
     getPromoOfTheDay,
+    getAvailablePromotion,
     setPromoOfTheDay
 } from "../controllers/promotionController.js";
 
@@ -34,6 +35,13 @@ router.post(
 router.get(
     "/promo-of-the-day",
     getPromoOfTheDay
+);
+
+// PROMOCIÓN VIGENTE PARA EL CLIENTE (al tocar su notificación)
+router.get(
+    "/available/:id",
+    verifyToken,
+    getAvailablePromotion
 );
 
 // ===================================

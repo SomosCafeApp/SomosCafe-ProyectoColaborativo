@@ -61,6 +61,20 @@ const chatSchema = new mongoose.Schema(
       default: []
     },
 
+    // Contexto de la conversación (producto elegido, cantidad, tamaño,
+    // temperatura, qué se está esperando). Lo gestiona el planificador.
+    state: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {}
+    },
+
+    // Propuesta de acción esperando confirmación del cliente
+    // (agregar al carrito / vaciar carrito). Un solo uso, con vencimiento.
+    pending: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null
+    },
+
     isActive: {
       type: Boolean,
       default: true

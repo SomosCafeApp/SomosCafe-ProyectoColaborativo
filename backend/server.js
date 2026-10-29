@@ -23,6 +23,7 @@ import pointRoutes from "./routes/pointsRoutes.js";
 import couponRoutes from "./routes/couponRoutes.js";
 import accountRoutes from "./routes/accountRoutes.js";
 import { startRewardsJobs } from "./jobs/rewardsJobs.js";
+import { startNewsJobs } from "./jobs/newsJobs.js";
 import promotionRoutes from "./routes/promotionRoutes.js";
 import reviewsRoutes from "./routes/reviewsRoutes.js";
 import emailVerificationRoutes from "./routes/emailVerificationRoutes.js";
@@ -228,5 +229,8 @@ app.listen(
 
         // Avisos de cupones por vencer y cupón de cumpleaños.
         startRewardsJobs();
+
+        // Anuncia las promociones programadas el día que empiezan.
+        startNewsJobs();
     }
 );

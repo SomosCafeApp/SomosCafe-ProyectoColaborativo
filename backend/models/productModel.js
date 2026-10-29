@@ -63,6 +63,13 @@ const productSchema = new mongoose.Schema(
         isAvailable: {
             type: Boolean,
             default: true
+        },
+
+        // Fecha en que se anunció como producto nuevo (null = aún no).
+        // Evita repetir el aviso si se oculta y se vuelve a mostrar.
+        launchNotifiedAt: {
+            type: Date,
+            default: null
         }
     },
     {

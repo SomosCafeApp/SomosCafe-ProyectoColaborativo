@@ -15,7 +15,6 @@ import 'addresses_page.dart';
 import 'favorites_page.dart';
 import 'notifications_page.dart';
 import 'orders_page.dart';
-import 'recipes_page.dart';
 import 'rewards_page.dart';
 import 'settings_page.dart';
 
@@ -54,6 +53,7 @@ class ProfilePage extends StatelessWidget {
               userLastName: auth.user?.lastName ?? '',
               userEmail: auth.user?.email ?? '',
               profileImage: auth.user?.profileImage ?? '',
+              avatarPreset: auth.user?.avatarPreset ?? '',
             ),
 
             Padding(
@@ -117,26 +117,6 @@ class ProfilePage extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (_) => const NotificationsPage(),
-                      ),
-                    ),
-                  ),
-
-                  // MIS RECETAS (estudio de bebidas)
-                  ProfileOptionCard(
-                    cardColor: cardColor,
-                    textColor: textColor,
-                    subtitleColor: subtitleColor,
-                    icon: Icons.local_cafe_outlined,
-                    iconBgColor: isDark
-                        ? const Color(0xFF33261D)
-                        : AppColors.catWarm,
-                    iconColor: AppColors.primary,
-                    title: 'Mis recetas',
-                    subtitle: 'Bebidas recientes y guardadas',
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const RecipesPage(),
                       ),
                     ),
                   ),

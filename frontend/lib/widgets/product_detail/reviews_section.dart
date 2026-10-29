@@ -400,6 +400,7 @@ class _ReviewsSectionState extends State<ReviewsSection> {
                     child: ReviewItemCard(
                       name: review.userName,
                       profileImage: review.userProfileImage,
+                      avatarPreset: review.userAvatarPreset,
                       comment: review.comment,
                       date: _formatDate(
                         review.createdAt,

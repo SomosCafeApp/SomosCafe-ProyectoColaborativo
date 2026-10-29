@@ -14,7 +14,7 @@ import {
     userCouponStatus,
     couponDiscountText
 } from "../utils/coupons.js";
-import { notifyAllCustomers } from "../utils/notify.js";
+import { announceCoupon } from "../utils/announce.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -26,24 +26,11 @@ const isExhausted = (coupon) =>
 // ===================================
 // NOTIFY NEW COUPON (push + pantalla de notificaciones)
 // ===================================
-// Avisa a todos los clientes activos cuando se agrega un cupón o
-// cuando el admin lo reactiva. No se espera (no retrasa la respuesta)
-// y nunca lanza error.
-const notifyCoupon = (coupon, { reactivated = false } = {}) => {
-
-    const discountText = couponDiscountText(coupon);
-
-    notifyAllCustomers({
-        title: reactivated
-            ? "¡Volvió un cupón!"
-            : "Nuevo cupón disponible",
-        message:
-            `${coupon.name}: ${discountText}. ` +
-            `Canjéalo por ${coupon.pointsCost} puntos.`,
-        type: "REWARD",
-        relatedId: coupon._id
-    });
-
+// Delegado en utils/announce.js: solo cupones públicos canjeables con
+// puntos, activos y con cupo; una vez por cupón (o una por día al
+// reactivarlo) y respetando las preferencias de cada cliente.
+const notifyCoupon = (coupon, options = {}) => {
+    announceCoupon(coupon, options);
 };
 
 // ===================================

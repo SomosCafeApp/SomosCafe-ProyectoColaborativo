@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/utils/notification_ui_mapper.dart';
+import '../core/utils/push_router.dart';
 import '../providers/notification_provider.dart';
 import '../services/push_service.dart';
 import '../widgets/profile/profile_sub_page_header.dart';
@@ -43,6 +44,13 @@ class _NotificationsPageState extends State<NotificationsPage> {
     messenger.showSnackBar(SnackBar(content: Text(message)));
   }
 
+  Future<void> _onPreference({bool? promotions, bool? news}) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final ok = await context.read<NotificationProvider>().setPreference(promotions: promotions, news: news);
+    if (!mounted || ok) return;
+    messenger.showSnackBar(const SnackBar(content: Text('No se pudo guardar. Revisa tu conexión e inténtalo de nuevo.')));
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -74,7 +82,13 @@ class _NotificationsPageState extends State<NotificationsPage> {
                     else
                       NotificationsRecentSection(
                         recentActivity: recentActivity,
-                        onItemTap: (id) => context.read<NotificationProvider>().markAsRead(id),
+                        onItemTap: (id) {
+                          context.read<NotificationProvider>().markAsRead(id);
+                          final tapped = recentActivity.where((n) => n.id == id);
+                          if (tapped.isNotEmpty) {
+                            PushRouter.openContent(type: tapped.first.type, relatedId: tapped.first.relatedId);
+                          }
+                        },
                         onItemDismissed: (id) => context.read<NotificationProvider>().deleteNotification(id),
                         onMarkAllRead: () => context.read<NotificationProvider>().markAllAsRead(),
                       ),
@@ -84,6 +98,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
                     NotificationsPushSection(
                       pushNotifications: notificationProvider.pushActive,
                       onPushChanged: _onPushChanged,
+                      promotions: notificationProvider.promotionsPref,
+                      onPromotionsChanged: (v) => _onPreference(promotions: v),
+                      news: notificationProvider.newsPref,
+                      onNewsChanged: (v) => _onPreference(news: v),
                     ),
 
                     const SizedBox(height: 24),

@@ -7,6 +7,7 @@ class ProfileHeader extends StatelessWidget {
   final String userLastName;
   final String userEmail;
   final String profileImage;
+  final String avatarPreset;
 
   const ProfileHeader({
     super.key,
@@ -14,6 +15,7 @@ class ProfileHeader extends StatelessWidget {
     required this.userEmail,
     required this.userLastName,
     this.profileImage = '',
+    this.avatarPreset = '',
   });
 
   @override
@@ -49,6 +51,7 @@ class ProfileHeader extends StatelessWidget {
           // Foto de perfil, o las iniciales (Ej: "JD") si no tiene
           UserAvatar(
             imageUrl: profileImage,
+            avatarPreset: avatarPreset,
             initials: initials,
             size: 72,
             borderRadius: 22,

@@ -15,26 +15,28 @@ import '../services/api_client.dart';
 import '../services/api_exception.dart';
 import '../widgets/drink_studio/latte_art_shapes.dart';
 import '../widgets/drink_studio/latte_pour_session.dart';
-import 'cart_provider.dart';
-import 'recipes_provider.dart';
 
 export '../models/price_quote.dart' show PriceLine, PriceQuote;
 
 enum StudioLoad { loading, error, ready }
 
-/// Resultado de agregar la creación al carrito.
-class StudioAddResult {
-  final bool drinkAdded;
-  final String? error;
-  const StudioAddResult({required this.drinkAdded, this.error});
-}
 
 /// Estado del estudio de bebidas: UNA sola pantalla donde cada acción
 /// actualiza el vaso al instante. Las opciones y precios vienen del
 /// backend; los acompañamientos son los postres reales del menú.
 class DrinkStudioProvider extends ChangeNotifier {
-  DrinkStudioProvider({required this.product, required List<Product> catalog}) : _catalog = catalog {
-    // Cambiar vibración / efectos / animaciones repinta el estudio al instante.
+  /// DrinkStudio es un minijuego INDEPENDIENTE: prepara un latte propio.
+  /// No usa productos del catálogo, no tiene precio y terminar la
+  /// partida jamás agrega nada al carrito ni cambia un producto.
+  DrinkStudioProvider.latte()
+      : product = Product(
+          id: 'drinkstudio-latte',
+          name: 'Latte',
+          description: '',
+          price: 0,
+          categoryName: 'Cafés',
+        ),
+        _catalog = const [] {
     StudioPrefs.instance.addListener(_onPrefs);
     StudioPrefs.instance.load();
   }
@@ -581,39 +583,5 @@ class DrinkStudioProvider extends ChangeNotifier {
   void dismissLastRecipe() {
     lastRecipe = null;
     notifyListeners();
-  }
-
-  /// Guarda lo preparado como receta (acción voluntaria del usuario).
-  Future<String?> saveRecipe(RecipesProvider recipes, {String? name}) =>
-      recipes.saveRecipe(product.id, customization, milkLevel, name: name ?? (cupName.trim().isEmpty ? null : cupName.trim()));
-
-  // ───────────── Carrito ─────────────
-
-  /// Agrega la bebida (con su configuración) y los acompañamientos como
-  /// líneas reales del carrito. El servidor valida y recalcula todo. Si
-  /// la bebida entra, queda registrada como receta reciente.
-  Future<StudioAddResult> addToCart(CartProvider cart, RecipesProvider recipes) async {
-    adding = true;
-    notifyListeners();
-    try {
-      await cart.addToCart(product, quantity: quantity, customization: customization);
-      if (cart.lastAddError != null) {
-        return StudioAddResult(drinkAdded: false, error: cart.lastAddError);
-      }
-      recipes.recordRecent(product.id, customization, milkLevel);
-      for (final p in pairings.values) {
-        await cart.addToCart(p);
-        if (cart.lastAddError != null) {
-          return StudioAddResult(
-            drinkAdded: true,
-            error: 'Tu bebida se agregó, pero ${p.name} no: ${cart.lastAddError}',
-          );
-        }
-      }
-      return const StudioAddResult(drinkAdded: true);
-    } finally {
-      adding = false;
-      notifyListeners();
-    }
   }
 }

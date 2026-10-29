@@ -9,7 +9,10 @@ import {
     changePasswordWithCode,
     deleteAccount,
     updateProfileImage,
-    deleteProfileImage
+    deleteProfileImage,
+    updateAvatarPreset,
+    getNotificationPreferences,
+    updateNotificationPreferences
 } from "../controllers/accountController.js";
 
 import { uploadAvatarImage } from "../middlewares/uploadMiddleware.js";
@@ -25,6 +28,13 @@ router.patch("/profile", verifyToken, updateProfile);
 // subida para que nadie sin sesión pueda subir archivos.
 router.put("/profile-image", verifyToken, uploadAvatarImage, updateProfileImage);
 router.delete("/profile-image", verifyToken, deleteProfileImage);
+
+// AVATAR PREDEFINIDO (uno de los cinco de Somos Café)
+router.put("/avatar", verifyToken, updateAvatarPreset);
+
+// PREFERENCIAS DE NOTIFICACIONES (promociones / novedades)
+router.get("/notification-preferences", verifyToken, getNotificationPreferences);
+router.patch("/notification-preferences", verifyToken, updateNotificationPreferences);
 
 // CONTRASEÑA - método 1: contraseña actual + nueva
 router.post("/password", verifyToken, changePasswordWithCurrent);

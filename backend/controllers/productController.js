@@ -7,6 +7,7 @@ import Inventory from "../models/inventoryModel.js";
 import Promotion from "../models/promotionModel.js";
 import Order from "../models/orderModel.js";
 import { deleteCloudinaryImage } from "../utils/cloudinary.js";
+import { announceProduct } from "../utils/announce.js";
 import { getDiscountResolver, decorateProduct } from "../utils/promotions.js";
 
 const CATEGORY_FIELDS = "name description image isActive";
@@ -271,6 +272,10 @@ export const createProduct = async (req, res) => {
 
         await newProduct.save();
 
+        // Ya guardado: avisa a los clientes (no se espera). Solo si
+        // quedó disponible; uno creado oculto se anuncia al publicarlo.
+        announceProduct(newProduct);
+
         await newProduct.populate("categoryId", CATEGORY_FIELDS);
 
         return res.status(201).json({
@@ -311,6 +316,8 @@ export const updateProduct = async (req, res) => {
                 message: "Producto no encontrado"
             });
         }
+
+        const wasAvailable = product.isAvailable;
 
         const {
             name,
@@ -385,6 +392,11 @@ export const updateProduct = async (req, res) => {
         }
 
         await product.save();
+
+        // Pasó de oculto a disponible por primera vez: es una novedad.
+        if (!wasAvailable && product.isAvailable) {
+            announceProduct(product);
+        }
 
         // La imagen anterior se borra de Cloudinary solo si ningún
         // pedido la conserva en su historial.

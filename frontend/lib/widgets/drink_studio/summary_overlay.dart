@@ -2,22 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/cup_snapshot.dart';
+import '../../core/utils/art_saver.dart';
 import '../../providers/drink_studio_provider.dart';
 import 'cup_stage.dart';
-import 'stage_pairing_panel.dart';
 import 'studio_colors.dart';
 import 'studio_ui.dart';
 import 'summary_actions.dart';
 import 'summary_details.dart';
 
-/// Pantalla final: la bebida terminada como protagonista (desde arriba
-/// o de lado con su tapa), lo que lleva, el desglose de precio y las
-/// acciones fijas abajo. Los acompañamientos se eligen aquí, antes de
-/// agregar al carrito.
+/// Pantalla de resultado: el latte terminado como protagonista (desde
+/// arriba o de lado con su tapa), lo que lleva y las acciones. Es un
+/// resultado ARTÍSTICO: no tiene precio ni carrito. Lo único que se
+/// puede hacer con él es guardarlo como imagen en la galería.
 class SummaryOverlay extends StatefulWidget {
-  const SummaryOverlay({super.key, required this.onAdd, required this.onSave});
-  final VoidCallback onAdd;
-  final VoidCallback onSave;
+  const SummaryOverlay({super.key});
 
   @override
   State<SummaryOverlay> createState() => _SummaryOverlayState();
@@ -25,6 +23,15 @@ class SummaryOverlay extends StatefulWidget {
 
 class _SummaryOverlayState extends State<SummaryOverlay> {
   bool? _top;
+  final GlobalKey _artKey = GlobalKey();
+
+  Future<void> _saveArt() async {
+    final message = await saveBoundaryToGallery(_artKey);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
   late final TextEditingController _name = TextEditingController(text: context.read<DrinkStudioProvider>().cupName);
 
   @override
@@ -37,7 +44,6 @@ class _SummaryOverlayState extends State<SummaryOverlay> {
   Widget build(BuildContext context) {
     final s = context.watch<DrinkStudioProvider>();
     final dark = Theme.of(context).brightness == Brightness.dark;
-    final description = s.product.description.trim();
     // Por defecto: desde arriba si hay arte o toppings que lucir.
     final top = _top ?? (s.latteArt.isNotEmpty || s.toppings.isNotEmpty || s.sweeteners.isNotEmpty);
 
@@ -50,8 +56,8 @@ class _SummaryOverlayState extends State<SummaryOverlay> {
               padding: const EdgeInsets.fromLTRB(4, 4, 16, 0),
               child: Row(
                 children: [
-                  IconButton(tooltip: 'Volver a editar', onPressed: s.adding ? null : s.back, icon: Icon(Icons.arrow_back_rounded, color: StudioColors.text(dark))),
-                  Expanded(child: Text('Tu bebida está lista', style: StudioUi.title(dark))),
+                  IconButton(tooltip: 'Volver a editar', onPressed: s.back, icon: Icon(Icons.arrow_back_rounded, color: StudioColors.text(dark))),
+                  Expanded(child: Text('¡Tu latte está listo!', style: StudioUi.title(dark))),
                   const Icon(Icons.check_circle_rounded, color: StudioColors.primary),
                 ],
               ),
@@ -61,7 +67,9 @@ class _SummaryOverlayState extends State<SummaryOverlay> {
                 padding: EdgeInsets.fromLTRB(16, 4, 16, 16 + MediaQuery.viewInsetsOf(context).bottom),
                 children: [
                   // ── Héroe: la bebida terminada ──
-                  Container(
+                  RepaintBoundary(
+                    key: _artKey,
+                    child: Container(
                     height: 330,
                     clipBehavior: Clip.antiAlias,
                     decoration: BoxDecoration(
@@ -90,20 +98,17 @@ class _SummaryOverlayState extends State<SummaryOverlay> {
                       ],
                     ),
                   ),
+                  ),
                   const SizedBox(height: 16),
-                  Text(s.product.name, textAlign: TextAlign.center, style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, letterSpacing: -0.4, color: StudioColors.text(dark))),
+                  Text(s.cupLabel, textAlign: TextAlign.center, style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, letterSpacing: -0.4, color: StudioColors.text(dark))),
                   const SizedBox(height: 6),
                   Center(
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                       decoration: BoxDecoration(color: StudioColors.primary.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20)),
-                      child: const Text('Creación personalizada', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: StudioColors.primary)),
+                      child: const Text('Hecho en DrinkStudio', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: StudioColors.primary)),
                     ),
                   ),
-                  if (description.isNotEmpty) ...[
-                    const SizedBox(height: 10),
-                    Text(description, textAlign: TextAlign.center, style: StudioUi.hint(dark)),
-                  ],
                   const SizedBox(height: 16),
                   TextField(
                     controller: _name,
@@ -122,12 +127,6 @@ class _SummaryOverlayState extends State<SummaryOverlay> {
                   ),
                   const SizedBox(height: 16),
                   SummaryDetails(studio: s),
-                  if (s.availablePairings.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    const PairingPanel(),
-                  ],
-                  const SizedBox(height: 14),
-                  SummaryPrice(studio: s),
                 ],
               ),
             ),
@@ -139,7 +138,7 @@ class _SummaryOverlayState extends State<SummaryOverlay> {
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
                 boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 18, offset: const Offset(0, -4))],
               ),
-              child: SummaryActions(studio: s, onAdd: widget.onAdd, onSave: widget.onSave),
+              child: SummaryActions(studio: s, onSaveArt: _saveArt),
             ),
           ],
         ),

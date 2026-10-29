@@ -9,7 +9,6 @@ import '../models/product_model.dart';
 import '../providers/auth_provider.dart';
 import '../services/pricing_sync.dart';
 import '../widgets/common/price_breakdown_card.dart';
-import '../widgets/drink_studio/drink_studio_entry.dart';
 import '../widgets/product_detail/product_bottom_bar.dart';
 import '../widgets/product_detail/product_customization_section.dart';
 import '../widgets/product_detail/product_detail_header.dart';
@@ -213,7 +212,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         ),
       ),
       // Minijuego opcional: ícono flotante solo en bebidas compatibles.
-      floatingActionButton: DrinkStudioFab(product: _product),
       bottomNavigationBar: ProductBottomBar(
         total: _totalPrice,
         isAvailable: _product.isAvailable,

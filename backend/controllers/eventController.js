@@ -2,10 +2,7 @@ import mongoose from "mongoose";
 
 import Event from "../models/eventModel.js";
 import { deleteCloudinaryImage } from "../utils/cloudinary.js";
-import {
-    notifyAllCustomers,
-    formatDate
-} from "../utils/notify.js";
+import { announceEvent } from "../utils/announce.js";
 
 // ===================================
 // HELPERS
@@ -41,34 +38,10 @@ const hasEnded = (endDate) =>
 // ===================================
 // NOTIFY EVENT (push + pantalla de notificaciones)
 // ===================================
-// Avisa a todos los clientes de un evento. Se usa al crear un evento
-// activo y cuando un evento pasa de inactivo a activo (reactivación).
-// Solo avisa si está activo y no ha terminado. Nunca lanza error y no
-// hay que esperarla (no retrasa la respuesta).
+// Delegado en utils/announce.js: avisa solo si el evento ya está
+// guardado, activo y no ha terminado; una vez por vigencia.
 const notifyEvent = (event, title) => {
-
-    if (
-        !event.isActive ||
-        hasEnded(event.endDate)
-    ) {
-        return;
-    }
-
-    const where =
-        event.location
-            ? ` en ${event.location}`
-            : "";
-
-    notifyAllCustomers({
-        title,
-        message:
-            `${event.name}${where} ` +
-            `(${formatDate(event.startDate)}). ` +
-            "¡Te esperamos!",
-        type: "EVENT",
-        relatedId: event._id
-    });
-
+    announceEvent(event, title);
 };
 
 // ===================================

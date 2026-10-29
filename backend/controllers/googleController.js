@@ -1,3 +1,4 @@
+import { avatarFields } from "../utils/avatars.js";
 import { formatBirthDate } from "../utils/userFormat.js";
 import { OAuth2Client } from "google-auth-library";
 import jwt from "jsonwebtoken";
@@ -344,6 +345,8 @@ export const loginWithGoogle =
 
                     user.profileImage =
                         googleUser.profileImage;
+                    user.avatarType = "photo";
+                    user.avatarPreset = "";
 
                 }
 
@@ -384,6 +387,11 @@ export const loginWithGoogle =
 
                         profileImage:
                             googleUser.profileImage,
+
+                        avatarType:
+                            googleUser.profileImage
+                                ? "photo"
+                                : "none",
 
                         role:
                             "USER",
@@ -475,8 +483,7 @@ export const loginWithGoogle =
                     points:
                         user.points,
 
-                    profileImage:
-                        user.profileImage,
+                    ...avatarFields(user),
 
                     hasPassword:
                     Boolean(user.password),

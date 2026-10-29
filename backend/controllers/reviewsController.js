@@ -124,7 +124,7 @@ export const getProductReviews = async (req, res) => {
         })
             .populate(
                 "userId",
-                "name lastName profileImage"
+                "name lastName profileImage avatarType avatarPreset"
             )
             .sort({
 
@@ -425,7 +425,7 @@ export const createReview = async (req, res) => {
 
         await newReview.populate(
             "userId",
-            "name lastName profileImage"
+            "name lastName profileImage avatarType avatarPreset"
         );
 
         await newReview.populate(
@@ -606,7 +606,7 @@ export const updateReview = async (req, res) => {
 
         await review.populate(
             "userId",
-            "name lastName profileImage"
+            "name lastName profileImage avatarType avatarPreset"
         );
 
         await review.populate(

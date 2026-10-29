@@ -247,6 +247,9 @@ class AuthProvider extends ChangeNotifier with WidgetsBindingObserver {
 
       _pendingVerificationEmail = null;
       _setLoading(false);
+      // Foto de galería elegida al registrarse: se sube ahora que ya
+      // hay sesión (no bloquea el inicio de sesión si falla).
+      unawaited(_uploadPendingAvatar());
       return true;
     } on ApiException catch (e) {
       _errorMessage = e.message;
@@ -270,12 +273,14 @@ class AuthProvider extends ChangeNotifier with WidgetsBindingObserver {
     required String email,
     required String password,
     String? phone,
+    String? avatarPreset,
   }) async {
     _setLoading(true);
     _errorMessage = null;
 
     try {
       await ApiClient.post('/users/register', body: {
+        if (avatarPreset != null && avatarPreset.isNotEmpty) 'avatarPreset': avatarPreset,
         'name': name.trim(),
         'lastName': lastName.trim(),
         'email': email.trim(),
@@ -418,6 +423,26 @@ class AuthProvider extends ChangeNotifier with WidgetsBindingObserver {
 
   /// Sube (o reemplaza) la foto de perfil. El backend la recorta a un
   /// cuadrado y devuelve el usuario actualizado. Devuelve true si salió bien.
+  /// Foto de galería elegida al registrarse. Todavía no hay sesión (hay
+  /// que verificar el correo), así que se guarda en memoria y se sube
+  /// automáticamente en el primer inicio de sesión.
+  PickedImage? _pendingAvatarImage;
+
+  void setPendingAvatarImage(PickedImage? image) => _pendingAvatarImage = image;
+
+  Future<void> _uploadPendingAvatar() async {
+    final image = _pendingAvatarImage;
+    if (image == null || _token == null) return;
+    _pendingAvatarImage = null;
+    await updateProfileImage(image);
+  }
+
+  /// Elige uno de los cinco avatares predefinidos (guardado en la
+  /// cuenta: se conserva al cerrar sesión o cambiar de dispositivo).
+  Future<bool> updateAvatarPreset(String presetKey) => _photoCall(
+        () => ApiClient.put('/account/avatar', body: {'avatarPreset': presetKey}, token: _token),
+      );
+
   Future<bool> updateProfileImage(PickedImage image) => _photoCall(
         () => ApiClient.sendMultipart(
           'PUT',
