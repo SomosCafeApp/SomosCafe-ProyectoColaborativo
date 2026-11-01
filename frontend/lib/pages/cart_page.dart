@@ -10,7 +10,11 @@ import '../widgets/cart/cart_empty_state.dart';
 class CartPage extends StatelessWidget {
   final VoidCallback? onExploreMenu;
 
-  const CartPage({super.key, this.onExploreMenu});
+  /// true cuando el carrito se abre encima de otra pantalla (p. ej. al
+  /// comprar desde DrinkStudio): muestra una flecha para volver.
+  final bool showBack;
+
+  const CartPage({super.key, this.onExploreMenu, this.showBack = false});
 
   @override
   Widget build(BuildContext context) {
@@ -38,6 +42,14 @@ class CartPage extends StatelessWidget {
                 width: double.infinity,
                 child: Row(
                   children: [
+                    if (showBack) ...[
+                      IconButton(
+                        tooltip: 'Volver',
+                        onPressed: () => Navigator.of(context).maybePop(),
+                        icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+                      ),
+                      const SizedBox(width: 4),
+                    ],
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(

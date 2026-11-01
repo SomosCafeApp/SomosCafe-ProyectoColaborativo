@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../animations/selection_pulse.dart';
 import '../../animations/press_scale.dart';
 import '../../core/utils/money_format.dart';
 import '../../core/utils/studio_prefs.dart';
@@ -116,7 +117,7 @@ class _ToppingsPanelState extends State<ToppingsPanel> {
                     StudioHaptics.select();
                     if (!on) s.toggleTopping(e.key);
                   },
-                  child: AnimatedContainer(
+                  child: SelectionPulse(selected: on, radius: 20, child: AnimatedContainer(
                     duration: const Duration(milliseconds: 240),
                     curve: Curves.easeOutCubic,
                     width: w,
@@ -128,6 +129,8 @@ class _ToppingsPanelState extends State<ToppingsPanel> {
                         Row(
                           children: [
                             ToppingIcon(name: e.key, size: 40),
+                            const SizedBox(width: 8),
+                            ToppingSwatch(name: e.key, size: 30),
                             const Spacer(),
                             AnimatedScale(
                               scale: on ? 1 : 0,
@@ -186,7 +189,7 @@ class _ToppingsPanelState extends State<ToppingsPanel> {
                         ),
                       ],
                     ),
-                  ),
+                  )),
                 );
               }),
           ],

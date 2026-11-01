@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
 import 'admin_add_button.dart';
+import '../../animations/animations.dart';
 
 /// Shell genérico de "lista + botón agregar + formulario" para el panel
 /// admin (Promociones y Eventos). Cada pantalla solo aporta su propio
@@ -50,7 +51,7 @@ class AdminCrudSection<T> extends StatelessWidget {
         if (isLoading && items.isEmpty)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 32),
-            child: Center(child: CircularProgressIndicator()),
+            child: CoffeeCupLoader(),
           )
         else if (items.isEmpty)
           Padding(

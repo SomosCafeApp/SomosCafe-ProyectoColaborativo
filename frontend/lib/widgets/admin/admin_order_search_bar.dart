@@ -38,6 +38,7 @@ class AdminOrderSearchBar extends StatelessWidget {
         suffixIcon: searchQuery.isEmpty
             ? null
             : IconButton(
+        tooltip: 'Cerrar',
                 icon: Icon(Icons.close, color: subtitleColor, size: 18),
                 onPressed: onClear,
               ),

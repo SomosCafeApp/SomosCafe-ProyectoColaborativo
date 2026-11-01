@@ -97,6 +97,7 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
+        tooltip: 'Volver',
           icon: Icon(Icons.arrow_back, color: textColor),
           onPressed: () => Navigator.of(context).maybePop(),
         ),

@@ -7,53 +7,58 @@ import '../../core/utils/studio_prefs.dart';
 import '../../core/utils/money_format.dart';
 import '../../providers/drink_studio_provider.dart';
 import '../../animations/press_scale.dart';
+import '../../animations/selection_pulse.dart';
 import 'milk_badge.dart';
 import 'option_card.dart';
 import 'studio_colors.dart';
 import 'studio_ui.dart';
 
-/// Tamaño: las onzas cambian alto, ancho y capacidad del vaso.
-class SizePanel extends StatelessWidget {
-  const SizePanel({super.key});
+/// Temperatura: caliente o frío, con su transformación de vapor ↔ nieve.
+class TemperaturePanel extends StatelessWidget {
+  const TemperaturePanel({super.key});
 
   @override
   Widget build(BuildContext context) {
     final s = context.watch<DrinkStudioProvider>();
     final o = s.options!;
     final dark = Theme.of(context).brightness == Brightness.dark;
-    final keys = o.sizes.keys.toList();
     return StagePanel(
-      title: '¿De qué tamaño la quieres?',
-      hint: 'Mira cómo crece o se encoge tu vaso.',
+      title: '¿Caliente o frío?',
+      hint: 'Mira cómo el vapor se vuelve nieve (y al revés).',
       child: Row(
         children: [
-          for (var i = 0; i < keys.length; i++)
+          for (final t in o.types)
             Expanded(
               child: Padding(
-                padding: EdgeInsets.only(left: i == 0 ? 0 : 10),
-                child: PressScale(
-                  onTap: () {
-                    StudioHaptics.select();
-                    s.setSize(keys[i]);
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 240),
-                    curve: Curves.easeOutCubic,
-                    padding: const EdgeInsets.fromLTRB(6, 12, 6, 12),
-                    decoration: StudioUi.choice(dark, selected: s.size == keys[i], radius: 20),
-                    child: Column(
-                      children: [
-                        SizedBox(height: 46, child: Align(alignment: Alignment.bottomCenter, child: MiniCup(scale: keys.length < 2 ? 1 : 0.7 + 0.6 * i / (keys.length - 1)))),
-                        const SizedBox(height: 6),
-                        Text(
-                          o.ouncesOf(keys[i]) != null ? '${o.ouncesOf(keys[i])} oz' : keys[i],
-                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: StudioColors.text(dark)),
-                        ),
-                        Text(keys[i], style: TextStyle(fontSize: 12, color: StudioColors.muted(dark))),
-                        const SizedBox(height: 4),
-                        Text(formatExtra(o.sizes[keys[i]]!), style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: StudioColors.primary)),
-                      ],
-                    ),
+                padding: EdgeInsets.only(right: t == o.types.last ? 0 : 10),
+                child: Semantics(
+                  button: true,
+                  selected: s.type == t,
+                  label: '$t. ${t == 'Frío' ? 'Hielo y frescura' : 'Vapor y calor'}',
+                  child: PressScale(
+                    onTap: () {
+                      StudioHaptics.select();
+                      s.setType(t);
+                    },
+                    child: SelectionPulse(selected: s.type == t, radius: 20, child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 240),
+                      curve: Curves.easeOutCubic,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      decoration: StudioUi.choice(dark, selected: s.type == t, radius: 20),
+                      child: Column(
+                        children: [
+                          AnimatedScale(
+                            scale: s.type == t ? 1.12 : 1,
+                            duration: const Duration(milliseconds: 260),
+                            curve: Curves.easeOutBack,
+                            child: Icon(t == 'Frío' ? Icons.ac_unit_rounded : Icons.local_fire_department_rounded, size: 34, color: t == 'Frío' ? const Color(0xFF5FA8C8) : const Color(0xFFE8772E)),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(t, style: TextStyle(fontWeight: FontWeight.w900, color: StudioColors.text(dark))),
+                          Text(t == 'Frío' ? 'Hielo y frescura' : 'Vapor y calor', style: TextStyle(fontSize: 11.5, color: StudioColors.muted(dark))),
+                        ],
+                      ),
+                    )),
                   ),
                 ),
               ),
@@ -64,7 +69,7 @@ class SizePanel extends StatelessWidget {
   }
 }
 
-/// Base: temperatura (con efectos de escarcha o calor) y shots de espresso.
+/// Base de la bebida: tamaño (las onzas cambian el vaso) y shots de espresso.
 class BasePanel extends StatelessWidget {
   const BasePanel({super.key});
 
@@ -73,35 +78,47 @@ class BasePanel extends StatelessWidget {
     final s = context.watch<DrinkStudioProvider>();
     final o = s.options!;
     final dark = Theme.of(context).brightness == Brightness.dark;
+    final keys = o.sizes.keys.toList();
     return StagePanel(
       title: 'Prepara la base',
-      hint: s.isCoffee ? 'Elige la temperatura y vierte shots extra de espresso.' : 'Elige la temperatura de tu bebida.',
+      hint: s.isCoffee ? 'Elige el tamaño y vierte shots extra de espresso.' : 'Elige el tamaño de tu bebida.',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              for (final t in o.types)
+              for (var i = 0; i < keys.length; i++)
                 Expanded(
                   child: Padding(
-                    padding: EdgeInsets.only(right: t == o.types.last ? 0 : 10),
-                    child: PressScale(
-                      onTap: () {
-                        StudioHaptics.select();
-                        s.setType(t);
-                      },
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 240),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        decoration: StudioUi.choice(dark, selected: s.type == t, radius: 20),
-                        child: Column(
-                          children: [
-                            Icon(t == 'Frío' ? Icons.ac_unit_rounded : Icons.local_fire_department_rounded, size: 32, color: t == 'Frío' ? const Color(0xFF5FA8C8) : const Color(0xFFE8772E)),
-                            const SizedBox(height: 4),
-                            Text(t, style: TextStyle(fontWeight: FontWeight.w900, color: StudioColors.text(dark))),
-                            Text(t == 'Frío' ? 'Hielo y frescura' : 'Vapor y calor', style: TextStyle(fontSize: 11.5, color: StudioColors.muted(dark))),
-                          ],
-                        ),
+                    padding: EdgeInsets.only(left: i == 0 ? 0 : 10),
+                    child: Semantics(
+                      button: true,
+                      selected: s.size == keys[i],
+                      label: 'Tamaño ${keys[i]}',
+                      child: PressScale(
+                        onTap: () {
+                          StudioHaptics.select();
+                          s.setSize(keys[i]);
+                        },
+                        child: SelectionPulse(selected: s.size == keys[i], radius: 20, child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 240),
+                          curve: Curves.easeOutCubic,
+                          padding: const EdgeInsets.fromLTRB(6, 12, 6, 12),
+                          decoration: StudioUi.choice(dark, selected: s.size == keys[i], radius: 20),
+                          child: Column(
+                            children: [
+                              SizedBox(height: 46, child: Align(alignment: Alignment.bottomCenter, child: MiniCup(scale: keys.length < 2 ? 1 : 0.7 + 0.6 * i / (keys.length - 1)))),
+                              const SizedBox(height: 6),
+                              Text(
+                                o.ouncesOf(keys[i]) != null ? '${o.ouncesOf(keys[i])} oz' : keys[i],
+                                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: StudioColors.text(dark)),
+                              ),
+                              Text(keys[i], style: TextStyle(fontSize: 12, color: StudioColors.muted(dark))),
+                              const SizedBox(height: 4),
+                              Text(formatExtra(o.sizes[keys[i]]!), style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: StudioColors.primary)),
+                            ],
+                          ),
+                        )),
                       ),
                     ),
                   ),

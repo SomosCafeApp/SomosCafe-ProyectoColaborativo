@@ -48,6 +48,7 @@ class HeaderSection extends StatelessWidget {
             backgroundColor: Colors.white.withAlpha(64),
             radius: 18,
             child: IconButton(
+        tooltip: 'Volver',
               padding: EdgeInsets.zero,
               icon: const Icon(Icons.arrow_back, color: Colors.white, size: 18),
               onPressed: () async {

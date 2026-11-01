@@ -40,8 +40,17 @@
              el backend y que crea PushService en Flutter). -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:resource="@drawable/notification_icon"
             android:value="somoscafe_default" />
+        <!-- Icono pequeño de la barra de estado: silueta blanca sobre fondo
+             transparente (Android pinta solo el canal alfa). Se usa cuando
+             el mensaje no trae su propio icono. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/notification_icon" />
+        <!-- Color con el que Android tiñe el icono y el acento. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/notification_accent" />
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

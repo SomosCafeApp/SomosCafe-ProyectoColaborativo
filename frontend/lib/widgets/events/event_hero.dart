@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../models/app_event.dart';
+import '../../animations/animations.dart';
 
 /// Imagen principal del evento con sombra, esquinas redondeadas y una
 /// etiqueta de estado ("En curso", "Próximamente", "Finalizado").
@@ -40,7 +41,7 @@ class EventHero extends StatelessWidget {
                     errorBuilder: (_, _, _) => const _Banner(),
                     loadingBuilder: (context, child, progress) => progress == null
                         ? child
-                        : const SizedBox(height: 240, child: Center(child: CircularProgressIndicator())),
+                        : const SizedBox(height: 240, child: CoffeeCupLoader()),
                   )
                 : const _Banner(),
             Positioned(

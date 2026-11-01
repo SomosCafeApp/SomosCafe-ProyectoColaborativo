@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../animations/animations.dart';
 
 /// Abre el comprobante de pago a pantalla completa (con zoom).
 void showPaymentProof(BuildContext context, String url) {
@@ -30,7 +31,7 @@ class PaymentProofViewer extends StatelessWidget {
             url,
             fit: BoxFit.contain,
             loadingBuilder: (context, child, progress) =>
-                progress == null ? child : const Center(child: CircularProgressIndicator()),
+                progress == null ? child : const CoffeeCupLoader(),
             errorBuilder: (_, _, _) => const Padding(
               padding: EdgeInsets.all(24),
               child: Text(

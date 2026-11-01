@@ -97,6 +97,7 @@ class CartItemCard extends StatelessWidget {
                       ),
                     ),
                     IconButton(
+        tooltip: 'Eliminar',
                       constraints: const BoxConstraints(),
                       padding: EdgeInsets.zero,
                       icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),

@@ -11,6 +11,7 @@ import '../../widgets/admin/admin_order_filter_chips.dart';
 import '../../widgets/admin/admin_search_bar.dart';
 import '../../widgets/admin/confirm_action_dialog.dart';
 import '../../widgets/profile/profile_sub_page_header.dart';
+import '../../animations/animations.dart';
 
 class AdminOrdersPage extends StatefulWidget {
   const AdminOrdersPage({super.key});
@@ -184,7 +185,7 @@ class _AdminOrdersPageState extends State<AdminOrdersPage> {
             ),
           ),
           Expanded(
-            child: RefreshIndicator(
+            child: BrandRefresh(
               onRefresh: () => provider.fetchOrders(),
               child: _buildBody(
                 provider,
@@ -209,7 +210,7 @@ class _AdminOrdersPageState extends State<AdminOrdersPage> {
 
     if (provider.isLoading && provider.orders.isEmpty) {
       return const Center(
-        child: CircularProgressIndicator(),
+        child: CoffeeCupLoader(),
       );
     }
 

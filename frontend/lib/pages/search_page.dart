@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../widgets/common/state_view.dart';
 import '../core/constants/app_colors.dart';
 import '../models/product_model.dart';
 import '../core/utils/cart_guard.dart';
@@ -107,10 +108,10 @@ class _SearchPageState extends State<SearchPage> {
     }
 
     if (_filteredProducts.isEmpty) {
-      return const SearchStateMessage(
-        icon: Icons.search_off,
+      return const StateView(
+        kind: StateKind.noResults,
         title: 'No se encontraron resultados',
-        subtitle: 'Intenta buscando con otra palabra',
+        message: 'Intenta buscando con otra palabra',
       );
     }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../widgets/common/state_view.dart';
 import '../core/constants/app_colors.dart';
 import '../core/utils/cart_guard.dart';
 import '../core/utils/menu_category_request.dart';
@@ -218,36 +219,19 @@ class _MenuPageState extends State<MenuPage> {
     }
 
     if (productProvider.errorMessage != null && productProvider.products.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.wifi_off_rounded, size: 42, color: AppColors.primary.withValues(alpha: 0.6)),
-              const SizedBox(height: 12),
-              Text(
-                productProvider.errorMessage!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 13),
-              ),
-              const SizedBox(height: 12),
-              ElevatedButton(
-                onPressed: () => productProvider.fetchProducts(),
-                style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-                child: const Text('Reintentar', style: TextStyle(color: Colors.white)),
-              ),
-            ],
-          ),
-        ),
+      return StateView(
+        kind: StateView.kindForError(productProvider.errorMessage),
+        message: productProvider.errorMessage,
+        actionLabel: 'Reintentar',
+        onAction: () => productProvider.fetchProducts(),
       );
     }
 
     if (products.isEmpty) {
-      return const Center(child: Text('No hay productos en esta categoría'));
+      return const StateView(kind: StateKind.empty, title: 'Sin productos', message: 'No hay productos en esta categoría por ahora.');
     }
 
-    return RefreshIndicator(
+    return BrandRefresh(
       onRefresh: () => productProvider.fetchProducts(),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),

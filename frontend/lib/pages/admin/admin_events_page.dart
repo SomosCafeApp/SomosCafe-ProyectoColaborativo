@@ -9,6 +9,7 @@ import '../../widgets/admin/confirm_action_dialog.dart';
 import '../../widgets/admin/event/admin_event_card.dart';
 import '../../widgets/admin/event/event_form_card.dart';
 import '../../widgets/profile/profile_sub_page_header.dart';
+import '../../animations/brand_refresh.dart';
 
 /// Sección "Eventos" del panel admin: crear eventos con imagen
 /// (Cloudinary), activar uno (sale como pop-up al abrir la app),
@@ -138,7 +139,7 @@ class _AdminEventsPageState extends State<AdminEventsPage> {
         children: [
           const ProfileSubPageHeader(title: 'Eventos', subtitle: 'El evento activo sale al abrir la app'),
           Expanded(
-            child: RefreshIndicator(
+            child: BrandRefresh(
               onRefresh: provider.fetchEvents,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),

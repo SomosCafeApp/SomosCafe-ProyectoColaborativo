@@ -187,6 +187,7 @@ class _LoginFormCardState extends State<LoginFormCard> {
               hintStyle: TextStyle(color: subtitleColor.withValues(alpha: 0.5), fontSize: 14),
               prefixIcon: const Icon(Icons.lock_outline, color: AppColors.primary, size: 20),
               suffixIcon: IconButton(
+        tooltip: 'Mostrar contraseña',
                 icon: Icon(
                   _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
                   color: subtitleColor,

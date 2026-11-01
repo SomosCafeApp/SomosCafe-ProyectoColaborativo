@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../animations/selection_pulse.dart';
+
 import '../../animations/press_scale.dart';
 import 'studio_colors.dart';
 import 'studio_ui.dart';
@@ -30,7 +32,7 @@ class OptionCard extends StatelessWidget {
     final text = StudioColors.text(dark);
     return PressScale(
       onTap: onTap,
-      child: AnimatedContainer(
+      child: SelectionPulse(selected: selected, radius: 18, child: AnimatedContainer(
         duration: const Duration(milliseconds: 220),
         curve: Curves.easeOutCubic,
         width: width,
@@ -63,7 +65,7 @@ class OptionCard extends StatelessWidget {
             ),
           ],
         ),
-      ),
+      )),
     );
   }
 }

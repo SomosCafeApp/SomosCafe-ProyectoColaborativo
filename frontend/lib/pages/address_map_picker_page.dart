@@ -196,6 +196,7 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
                       ],
                     ),
                     child: IconButton(
+        tooltip: 'Volver',
                       icon: Icon(Icons.arrow_back, color: textColor),
                       onPressed: () => Navigator.pop(context),
                     ),
@@ -234,6 +235,7 @@ class _AddressMapPickerPageState extends State<AddressMapPickerPage> {
                                   ),
                                 )
                               : IconButton(
+        tooltip: 'Buscar',
                                   icon: Icon(Icons.search, color: AppColors.primary),
                                   onPressed: _searchAddress,
                                 ),

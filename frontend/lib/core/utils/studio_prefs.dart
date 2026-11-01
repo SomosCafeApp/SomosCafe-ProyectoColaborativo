@@ -13,6 +13,7 @@ class StudioPrefs extends ChangeNotifier {
   static const _kHaptics = 'studio_haptics';
   static const _kEffects = 'studio_effects';
   static const _kAnimations = 'studio_animations';
+  static const _kLowPower = 'studio_low_power';
 
   /// Vibración táctil (al elegir, al avanzar el vertido, al terminar).
   bool haptics = true;
@@ -22,6 +23,10 @@ class StudioPrefs extends ChangeNotifier {
 
   /// Movimientos: transiciones entre etapas, vapor, ondas, cámara.
   bool animations = true;
+
+  /// Ahorro de energía: menos partículas, sin resplandores desenfocados.
+  /// Además el estudio baja solo la calidad si detecta que va lento.
+  bool lowPower = false;
 
   /// Mejor puntaje del modo desafío por diseño.
   final Map<String, int> bestScores = {};
@@ -39,6 +44,7 @@ class StudioPrefs extends ChangeNotifier {
       haptics = p.getBool(_kHaptics) ?? true;
       effects = p.getBool(_kEffects) ?? true;
       animations = p.getBool(_kAnimations) ?? true;
+      lowPower = p.getBool(_kLowPower) ?? false;
       for (final k in p.getKeys().where((k) => k.startsWith(_kBest))) {
         final v = p.getInt(k);
         if (v != null) bestScores[k.substring(_kBest.length)] = v;
@@ -79,6 +85,13 @@ class StudioPrefs extends ChangeNotifier {
     haptics = v;
     notifyListeners();
     _save(_kHaptics, v);
+  }
+
+  void setLowPower(bool v) {
+    if (lowPower == v) return;
+    lowPower = v;
+    notifyListeners();
+    _save(_kLowPower, v);
   }
 
   void setEffects(bool v) {

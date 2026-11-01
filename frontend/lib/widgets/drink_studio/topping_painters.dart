@@ -22,6 +22,60 @@ class _Frame {
   final bool hasArt;
   final bool top;
 
+  /// Avance de la animación de entrada del topping que se está
+  /// dibujando (0..1; 1 = ya asentado).
+  double prog = 1;
+
+  /// Altura desde la que caen las piezas (vista de lado).
+  double get dropHeight => ry * 2.4 + rx * 0.8;
+
+  /// Avance local de la pieza [i] de [n]: caen escalonadas, una tras otra.
+  double piece(int i, int n, {double span = 0.45}) {
+    if (prog >= 1) return 1;
+    final start = n <= 1 ? 0.0 : (i / n) * (1 - span);
+    return ((prog - start) / span).clamp(0.0, 1.0).toDouble();
+  }
+
+  /// Prepara el lienzo para una pieza que cae y rebota hasta asentarse
+  /// (de lado cae desde arriba; desde arriba "se acerca" al crecer).
+  /// Devuelve cuántos `save` hay que cerrar con [dropOut].
+  int dropIn(Canvas canvas, Offset p, double lp) {
+    if (lp >= 1) return 0;
+    final e = 1 - Curves.bounceOut.transform(lp);
+    final fade = (lp * 4).clamp(0.0, 1.0).toDouble();
+    canvas.save();
+    var saves = 1;
+    if (top) {
+      canvas.translate(p.dx, p.dy);
+      canvas.scale(1 + e * 0.7);
+      canvas.translate(-p.dx, -p.dy);
+    } else {
+      canvas.translate(0, -e * dropHeight);
+    }
+    if (fade < 1) {
+      canvas.saveLayer(Rect.fromCircle(center: p, radius: rx * 0.45), Paint()..color = Colors.white.withValues(alpha: fade));
+      saves++;
+    }
+    return saves;
+  }
+
+  void dropOut(Canvas canvas, int saves) {
+    for (var i = 0; i < saves; i++) {
+      canvas.restore();
+    }
+  }
+
+  /// Crece desde el punto [p] con un pequeño rebote (rosetones, tiers).
+  int popIn(Canvas canvas, Offset p, double lp) {
+    if (lp >= 1) return 0;
+    final k = Curves.easeOutBack.transform(lp).clamp(0.0, 1.2).toDouble();
+    canvas.save();
+    canvas.translate(p.dx, p.dy);
+    canvas.scale(k);
+    canvas.translate(-p.dx, -p.dy);
+    return 1;
+  }
+
   /// Punto de la superficie en coordenadas unitarias (-1..1).
   Offset at(double u, double v) => Offset(c.dx + rx * u, c.dy + ry * v);
 
@@ -74,13 +128,29 @@ class ToppingPainters {
     Map<String, int> qty, {
     required bool hasArt,
     bool topView = false,
+    Map<String, double> progress = const {},
+    double topMix = -1,
   }) {
     if (names.isEmpty || rx <= 1) return;
-    final f = _Frame(c, rx, ry, hasArt: hasArt, top: topView);
+    // Durante el cambio de cámara, la vista de lado y la de arriba se
+    // funden entre sí (sin salto).
+    if (topMix > 0.001 && topMix < 0.999) {
+      final bounds = Rect.fromCenter(center: c.translate(0, -rx * 0.6), width: rx * 3.2, height: rx * 3.2);
+      canvas.saveLayer(bounds, Paint()..color = Colors.white.withValues(alpha: 1 - topMix));
+      paint(canvas, c, rx, ry, names, qty, hasArt: hasArt, topView: false, progress: progress);
+      canvas.restore();
+      canvas.saveLayer(bounds, Paint()..color = Colors.white.withValues(alpha: topMix));
+      paint(canvas, c, rx, ry, names, qty, hasArt: hasArt, topView: true, progress: progress);
+      canvas.restore();
+      return;
+    }
+    final f = _Frame(c, rx, ry, hasArt: hasArt, top: topMix >= 0.999 ? true : topView);
     final ordered = [...names]..sort((a, b) => kindOf(a).index.compareTo(kindOf(b).index));
     for (final name in ordered) {
       final q = math.max(1, math.min(9, qty[name] ?? 1));
       final r = _rng(name);
+      f.prog = (progress[name] ?? 1.0).clamp(0.0, 1.0).toDouble();
+      if (f.prog <= 0) continue;
       switch (kindOf(name)) {
         case ToppingKind.cocoa:
           _dust(canvas, f, r, q, const [Color(0xFF3B2416), Color(0xFF5A3522), Color(0xFF7A4A2E)], base: 120, perExtra: 70, haze: 0xFF4A2C1B, size: 0.8);
@@ -114,7 +184,7 @@ class ToppingPainters {
     final count = base + perExtra * (q - 1);
 
     // Velo suave debajo del polvo: da cuerpo y une los granos.
-    final hazeAlpha = math.min(0.32, 0.1 + 0.05 * q);
+    final hazeAlpha = math.min(0.32, 0.1 + 0.05 * q) * Curves.easeIn.transform(f.prog);
     if (f.hasArt) {
       canvas.drawOval(
         Rect.fromCenter(center: f.c, width: f.rx * 2 * 0.92, height: f.ry * 2 * 0.92),
@@ -137,7 +207,22 @@ class ToppingPainters {
       final jitter = r.nextDouble();
       final tone = tones[(r.nextDouble() * tones.length).floor() % tones.length];
       final radius = (0.55 + jitter * 1.15) * size * unit * 1.25;
-      canvas.drawCircle(f.at(p.dx, p.dy), math.max(0.5, radius), Paint()..color = tone.withValues(alpha: 0.5 + 0.45 * r.nextDouble()));
+      final grainAlpha = 0.5 + 0.45 * r.nextDouble();
+      // El polvo se espolvorea: cada grano cae desde arriba (o, desde
+      // arriba de la taza, "se acerca") y se asienta en su sitio.
+      final lp = f.piece(i, count, span: 0.55);
+      if (lp <= 0) continue;
+      final settle = Curves.easeIn.transform(lp);
+      var at = f.at(p.dx, p.dy);
+      var gr = radius;
+      if (lp < 1) {
+        if (f.top) {
+          gr = radius * (1 + (1 - settle) * 0.9);
+        } else {
+          at = at.translate(math.sin(i * 1.7) * f.rx * 0.08 * (1 - settle), -(1 - settle) * f.dropHeight);
+        }
+      }
+      canvas.drawCircle(at, math.max(0.5, gr), Paint()..color = tone.withValues(alpha: grainAlpha * (lp < 1 ? (lp * 3).clamp(0.0, 1.0) : 1)));
     }
   }
 
@@ -151,8 +236,12 @@ class ToppingPainters {
     final hh = f.top ? rr : math.max(rr * f.k * 1.5, rr * 0.55);
     final angles = [for (var i = 0; i < n; i++) i / n * math.pi * 2 + 0.2]..sort((a, b) => math.sin(a).compareTo(math.sin(b)));
 
+    var idx = 0;
     for (final a in angles) {
       final p = f.at(math.cos(a) * 0.87, math.sin(a) * 0.87);
+      final lp = f.piece(idx++, n, span: 0.5);
+      if (lp <= 0) continue;
+      final saves = f.popIn(canvas, p, lp);
       final lift = f.top ? 0.0 : hh * 0.35;
       final base = Rect.fromCenter(center: p.translate(0, -lift), width: rr * 2, height: hh * 2);
 
@@ -170,12 +259,15 @@ class ToppingPainters {
       canvas.drawArc(base.deflate(rr * 0.28), -0.4, 3.4, false, groove);
       canvas.drawArc(base.deflate(rr * 0.58), 2.2, 3.4, false, groove);
       canvas.drawCircle(p.translate(-rr * 0.28, -lift - hh * 0.3), rr * 0.16, Paint()..color = Colors.white.withValues(alpha: 0.9));
+      f.dropOut(canvas, saves);
     }
   }
 
   /// Desde arriba: un remolino de crema (manga pastelera en espiral).
   static void _creamTop(Canvas canvas, _Frame f, int q) {
-    final radius = f.rx * math.min(0.74, 0.5 + 0.05 * (q - 1));
+    final fullRadius = f.rx * math.min(0.74, 0.5 + 0.05 * (q - 1));
+    // La crema sale en una espiral continua: el disco crece con ella.
+    final radius = fullRadius * (0.45 + 0.55 * Curves.easeOut.transform(f.prog));
     final disc = Rect.fromCircle(center: f.c, radius: radius * 1.05);
 
     canvas.drawCircle(f.c.translate(radius * 0.05, radius * 0.07), radius * 1.05, Paint()..color = Colors.black.withValues(alpha: 0.18));
@@ -197,6 +289,12 @@ class ToppingPainters {
     }
     final tube = radius * 0.8 / turns * 1.12;
 
+    // Tramo de espiral ya dibujado y posición de la punta de la manga.
+    final metric = path.computeMetrics().first;
+    final done = Curves.easeInOut.transform(f.prog);
+    final drawn = f.prog >= 1 ? path : metric.extractPath(0, metric.length * done);
+    final head = f.prog >= 1 ? f.c : (metric.getTangentForOffset(metric.length * done)?.position ?? f.c);
+
     Paint stroke(Color color, double w) => Paint()
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
@@ -204,13 +302,13 @@ class ToppingPainters {
       ..strokeWidth = w
       ..color = color;
 
-    canvas.drawPath(path.shift(Offset(tube * 0.12, tube * 0.14)), stroke(StudioColors.cream4.withValues(alpha: 0.85), tube));
-    canvas.drawPath(path, stroke(StudioColors.cream2, tube * 0.92));
-    canvas.drawPath(path.shift(Offset(-tube * 0.14, -tube * 0.16)), stroke(Colors.white.withValues(alpha: 0.9), tube * 0.3));
+    canvas.drawPath(drawn.shift(Offset(tube * 0.12, tube * 0.14)), stroke(StudioColors.cream4.withValues(alpha: 0.85), tube));
+    canvas.drawPath(drawn, stroke(StudioColors.cream2, tube * 0.92));
+    canvas.drawPath(drawn.shift(Offset(-tube * 0.14, -tube * 0.16)), stroke(Colors.white.withValues(alpha: 0.9), tube * 0.3));
 
-    // Punta de la manga.
-    canvas.drawCircle(f.c, radius * 0.13, Paint()..color = StudioColors.cream1);
-    canvas.drawCircle(f.c.translate(-radius * 0.04, -radius * 0.05), radius * 0.05, Paint()..color = Colors.white);
+    // Punta de la manga (mientras sale la crema sigue la espiral).
+    canvas.drawCircle(head, radius * 0.13, Paint()..color = StudioColors.cream1);
+    canvas.drawCircle(head.translate(-radius * 0.04, -radius * 0.05), radius * 0.05, Paint()..color = Colors.white);
   }
 
   /// De lado: un copete de crema en pisos con su remolino y su punta.
@@ -231,6 +329,13 @@ class ToppingPainters {
     for (var t = 0; t < tiers; t++) {
       final w = baseW * (1 - 0.72 * t / tiers);
       final cy = baseY - t * tierH * 0.7;
+      final tierLp = f.piece(t, tiers + 1, span: 0.5);
+      if (tierLp <= 0) {
+        topW = w;
+        topY = cy;
+        continue;
+      }
+      final tierSaves = f.popIn(canvas, Offset(f.c.dx, cy + tierH * 0.4), tierLp);
       final rect = Rect.fromCenter(center: Offset(f.c.dx, cy), width: w, height: tierH);
       canvas.drawOval(
         rect,
@@ -271,11 +376,15 @@ class ToppingPainters {
           ..strokeWidth = math.max(1.2, tierH * 0.1)
           ..color = Colors.white.withValues(alpha: 0.85),
       );
+      f.dropOut(canvas, tierSaves);
       topW = w;
       topY = cy;
     }
 
-    // Punta rizada.
+    // Punta rizada (es lo último que sale).
+    final tipLp = f.piece(tiers, tiers + 1, span: 0.5);
+    if (tipLp <= 0) return;
+    final tipSaves = f.popIn(canvas, Offset(f.c.dx, topY + tierH * 0.1), tipLp);
     final tip = Path()
       ..moveTo(f.c.dx - topW * 0.2, topY + tierH * 0.1)
       ..quadraticBezierTo(f.c.dx - topW * 0.06, topY - tierH * 0.25, f.c.dx + topW * 0.05, topY - tierH * 1.05)
@@ -291,6 +400,7 @@ class ToppingPainters {
         ..color = StudioColors.cream4.withValues(alpha: 0.7),
     );
     canvas.drawCircle(Offset(f.c.dx - topW * 0.05, topY - tierH * 0.3), math.max(1.2, tierH * 0.09), Paint()..color = Colors.white);
+    f.dropOut(canvas, tipSaves);
   }
 
   // ───────────── Caramelo ─────────────
@@ -367,19 +477,42 @@ class ToppingPainters {
       ..strokeWidth = w
       ..color = color;
 
+    // Los hilos se dibujan uno tras otro, trazo a trazo: [lineT] es lo
+    // que lleva dibujado el hilo [k] (0..1).
+    double lineT(int k) => f.prog >= 1 ? 1.0 : (f.prog * lines.length - k).clamp(0.0, 1.0).toDouble();
+
+    Path partOf(Path full, double t) {
+      if (t >= 1) return full;
+      final out = Path();
+      for (final m in full.computeMetrics()) {
+        out.addPath(m.extractPath(0, m.length * t), Offset.zero);
+      }
+      return out;
+    }
+
     final clip = Path()..addOval(Rect.fromCenter(center: f.c, width: f.rx * 2 * 0.94, height: f.ry * 2 * 0.94));
     canvas.save();
     canvas.clipPath(clip);
-    for (final pts in lines) {
+    for (var k = 0; k < lines.length; k++) {
+      final t = lineT(k);
+      if (t <= 0) continue;
+      final pts = lines[k];
       // Borde oscuro, cuerpo ámbar y brillo: un hilo brillante y espeso.
-      canvas.drawPath(pathOf(pts), stroke(const Color(0xFF8C5420).withValues(alpha: 0.9), width * 1.35));
-      canvas.drawPath(pathOf(pts), stroke(StudioColors.caramel, width));
-      canvas.drawPath(pathOf(pts, shift: Offset(-width * 0.12, -width * 0.2 * f.k)), stroke(const Color(0xFFF6C77A).withValues(alpha: 0.9), width * 0.3));
+      canvas.drawPath(partOf(pathOf(pts), t), stroke(const Color(0xFF8C5420).withValues(alpha: 0.9), width * 1.35));
+      canvas.drawPath(partOf(pathOf(pts), t), stroke(StudioColors.caramel, width));
+      canvas.drawPath(partOf(pathOf(pts, shift: Offset(-width * 0.12, -width * 0.2 * f.k)), t), stroke(const Color(0xFFF6C77A).withValues(alpha: 0.9), width * 0.3));
+      // Punta del chorro mientras el hilo se está trazando.
+      if (t < 1) {
+        final m = pathOf(pts).computeMetrics().first;
+        final head = m.getTangentForOffset(m.length * t)?.position;
+        if (head != null) canvas.drawCircle(head, width * 0.95, Paint()..color = StudioColors.caramel);
+      }
     }
     canvas.restore();
 
-    // Gotas al final de algunos hilos.
+    // Gotas al final de algunos hilos (cuando el hilo ya terminó).
     for (var i = 0; i < lines.length; i++) {
+      if (lineT(i) < 1) continue;
       if (i % 2 == 1 && !f.hasArt) continue;
       final end = lines[i].last;
       canvas.drawOval(
@@ -398,11 +531,15 @@ class ToppingPainters {
     final len = f.rx * 0.17;
     final thick = f.rx * 0.05;
 
-    for (final u in spots) {
+    for (var i = 0; i < spots.length; i++) {
+      final u = spots[i];
       final p = f.at(u.dx, u.dy);
       final angle = r.nextDouble() * math.pi;
       final shade = r.nextDouble();
-      f.flat(canvas, p, angle, () {
+      final lp = f.piece(i, spots.length);
+      if (lp <= 0) continue;
+      final saves = f.dropIn(canvas, p, lp);
+      f.flat(canvas, p, angle + (1 - lp) * 2.4 * (i.isEven ? 1 : -1), () {
         final rect = Rect.fromCenter(center: Offset.zero, width: len * (0.8 + 0.5 * shade), height: thick);
         final rr = RRect.fromRectAndRadius(rect, Radius.circular(thick * 0.5));
         canvas.drawRRect(rr.shift(Offset(thick * 0.15, thick * 0.3)), Paint()..color = Colors.black.withValues(alpha: 0.25));
@@ -429,6 +566,7 @@ class ToppingPainters {
           Paint()..color = const Color(0xFF5A3522),
         );
       });
+      f.dropOut(canvas, saves);
     }
   }
 
@@ -445,7 +583,10 @@ class ToppingPainters {
       final p = f.at(spots[i].dx, spots[i].dy);
       final angle = r.nextDouble() * math.pi;
       final color = palette[i % palette.length];
-      f.flat(canvas, p, angle, () {
+      final lp = f.piece(i, spots.length, span: 0.4);
+      if (lp <= 0) continue;
+      final saves = f.dropIn(canvas, p, lp);
+      f.flat(canvas, p, angle + (1 - lp) * 3.0 * (i.isEven ? 1 : -1), () {
         final rr = RRect.fromRectAndRadius(Rect.fromCenter(center: Offset.zero, width: w, height: h), Radius.circular(h / 2));
         canvas.drawRRect(rr.shift(Offset(h * 0.2, h * 0.35)), Paint()..color = Colors.black.withValues(alpha: 0.2));
         canvas.drawRRect(rr, Paint()..color = color);
@@ -458,6 +599,7 @@ class ToppingPainters {
             ..color = Colors.white.withValues(alpha: 0.45),
         );
       });
+      f.dropOut(canvas, saves);
     }
   }
 
@@ -470,6 +612,9 @@ class ToppingPainters {
 
     for (var i = 0; i < spots.length; i++) {
       final p = f.at(spots[i].dx, spots[i].dy);
+      final lp = f.piece(i, spots.length, span: 0.5);
+      if (lp <= 0) continue;
+      final saves = f.dropIn(canvas, p, lp);
       final pink = i % 4 == 3;
       final top = pink ? const Color(0xFFFBE3E8) : const Color(0xFFFFFDF8);
       final side = pink ? const Color(0xFFF0C4CD) : const Color(0xFFE8DAC4);
@@ -522,6 +667,7 @@ class ToppingPainters {
         );
         canvas.drawCircle(cap.center.translate(-size * 0.3, 0), size * 0.14, Paint()..color = Colors.white.withValues(alpha: 0.9));
       }
+      f.dropOut(canvas, saves);
     }
   }
 

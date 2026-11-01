@@ -180,7 +180,7 @@ class _OrdersPageState extends State<OrdersPage> {
             subtitle: 'Sigue el estado de tus compras',
           ),
           Expanded(
-            child: RefreshIndicator(
+            child: BrandRefresh(
               onRefresh: () => orderProvider.fetchOrders(),
               child: _buildBody(
                 orderProvider,

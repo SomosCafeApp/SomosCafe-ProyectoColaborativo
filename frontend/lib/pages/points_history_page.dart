@@ -84,7 +84,7 @@ class _PointsHistoryPageState extends State<PointsHistoryPage> {
             subtitle: 'Lo que has ganado y canjeado',
           ),
           Expanded(
-            child: RefreshIndicator(
+            child: BrandRefresh(
               onRefresh: _load,
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),

@@ -30,6 +30,7 @@ class StudioPrefsSwitches extends StatelessWidget {
             tile(Icons.vibration_rounded, 'Vibración', 'Respuesta táctil al elegir y al verter', prefs.haptics, prefs.setHaptics),
             tile(Icons.auto_awesome_rounded, 'Efectos', 'Destellos, chorros, nieve y fuego', prefs.effects, prefs.setEffects),
             tile(Icons.animation_rounded, 'Animaciones', 'Transiciones, vapor y movimiento de cámara', prefs.animations, prefs.setAnimations),
+            tile(Icons.battery_saver_rounded, 'Ahorro de energía', 'Menos partículas y efectos más ligeros', prefs.lowPower, prefs.setLowPower),
           ],
         );
       },

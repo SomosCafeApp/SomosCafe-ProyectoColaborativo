@@ -42,6 +42,7 @@ class _RegisterFormCardState extends State<RegisterFormCard> {
 
   Widget _buildEyeIcon(bool isObscured, VoidCallback onTap, Color iconColor) {
     return IconButton(
+        tooltip: 'Mostrar contraseña',
       icon: Icon(
         isObscured ? Icons.visibility_outlined : Icons.visibility_off_outlined,
         color: iconColor,

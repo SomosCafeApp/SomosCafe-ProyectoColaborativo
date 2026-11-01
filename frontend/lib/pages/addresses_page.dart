@@ -137,7 +137,7 @@ class _AddressesPageState extends State<AddressesPage> {
             subtitle: '${addresses.length} ubicaciones guardadas',
           ),
           Expanded(
-            child: RefreshIndicator(
+            child: BrandRefresh(
               onRefresh: () => addressProvider.fetchAddresses(),
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16.0),

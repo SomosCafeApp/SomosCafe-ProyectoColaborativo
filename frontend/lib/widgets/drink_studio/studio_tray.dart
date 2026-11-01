@@ -6,6 +6,7 @@ import '../../providers/drink_studio_provider.dart';
 import '../common/styled_confirm_dialog.dart';
 import 'studio_colors.dart';
 import 'studio_panels.dart';
+import 'summary_actions.dart';
 
 /// Bandeja inferior: el panel de la sección activa y los controles
 /// para avanzar y regresar sin perder lo elegido.
@@ -66,7 +67,30 @@ class StudioTray extends StatelessWidget {
             top: false,
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
-              child: Row(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 240),
+                child: s.showSummary
+                    ? KeyedSubtree(key: const ValueKey('actions'), child: SummaryActions(studio: s))
+                    : KeyedSubtree(key: const ValueKey('nav'), child: _NavRow(studio: s, nextStep: nextStep, onNext: () => _next(context, s))),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NavRow extends StatelessWidget {
+  const _NavRow({required this.studio, required this.nextStep, required this.onNext});
+  final DrinkStudioProvider studio;
+  final StudioStep nextStep;
+  final VoidCallback onNext;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = studio;
+    return Row(
                 children: [
                   if (!s.isFirstStep) ...[
                     OutlinedButton.icon(
@@ -94,7 +118,7 @@ class StudioTray extends StatelessWidget {
                         boxShadow: [BoxShadow(color: StudioColors.primary.withValues(alpha: 0.35), blurRadius: 14, offset: const Offset(0, 6))],
                       ),
                       child: FilledButton.icon(
-                        onPressed: () => _next(context, s),
+                        onPressed: onNext,
                         iconAlignment: IconAlignment.end,
                         style: FilledButton.styleFrom(backgroundColor: Colors.transparent, shadowColor: Colors.transparent, minimumSize: const Size(0, 54), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
                         icon: Icon(nextStep == StudioStep.result ? Icons.check_circle_rounded : Icons.arrow_forward_rounded),
@@ -103,11 +127,6 @@ class StudioTray extends StatelessWidget {
                     ),
                   ),
                 ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+              );
   }
 }

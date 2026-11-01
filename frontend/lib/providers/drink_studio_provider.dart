@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
 import '../core/utils/drink_profile.dart';
+import '../core/utils/studio_draft.dart';
 import '../core/utils/studio_prefs.dart';
 import '../models/cup_snapshot.dart';
 import '../models/drink_options.dart';
@@ -15,20 +17,26 @@ import '../services/api_client.dart';
 import '../services/api_exception.dart';
 import '../widgets/drink_studio/latte_art_shapes.dart';
 import '../widgets/drink_studio/latte_pour_session.dart';
+import 'cart_provider.dart';
 
 export '../models/price_quote.dart' show PriceLine, PriceQuote;
 
 enum StudioLoad { loading, error, ready }
+
+/// Estado de la compra de la bebida (botón «Comprar latte»).
+enum PurchaseStatus { idle, checking, added, error }
 
 
 /// Estado del estudio de bebidas: UNA sola pantalla donde cada acción
 /// actualiza el vaso al instante. Las opciones y precios vienen del
 /// backend; los acompañamientos son los postres reales del menú.
 class DrinkStudioProvider extends ChangeNotifier {
-  /// DrinkStudio es un minijuego INDEPENDIENTE: prepara un latte propio.
-  /// No usa productos del catálogo, no tiene precio y terminar la
-  /// partida jamás agrega nada al carrito ni cambia un producto.
-  DrinkStudioProvider.latte()
+  /// DrinkStudio prepara un latte y, al terminar, lo vende: el producto
+  /// es el latte REAL del menú (lo resuelve el backend en [load]) y el
+  /// precio lo calcula el servidor. Mientras no se resuelva (o si el menú
+  /// no tiene un latte disponible) el estudio se puede jugar, pero la
+  /// compra queda bloqueada con un aviso claro.
+  DrinkStudioProvider.latte({this.token})
       : product = Product(
           id: 'drinkstudio-latte',
           name: 'Latte',
@@ -41,6 +49,9 @@ class DrinkStudioProvider extends ChangeNotifier {
     StudioPrefs.instance.load();
   }
 
+  /// Sesión del usuario (para cotizar con sus promociones y comprar).
+  String? token;
+
   void _onPrefs() => notifyListeners();
 
   /// En el desafío, un diseño terminado puede ser récord.
@@ -51,8 +62,11 @@ class DrinkStudioProvider extends ChangeNotifier {
     }
   }
 
-  final Product product;
+  Product product;
   final List<Product> _catalog;
+
+  /// true cuando [product] es el latte real del menú.
+  bool hasRealProduct = false;
 
   StudioLoad status = StudioLoad.loading;
   String? error;
@@ -75,11 +89,28 @@ class DrinkStudioProvider extends ChangeNotifier {
   final Map<String, Product> pairings = {};
 
   // Interfaz
-  StudioStep step = StudioStep.size;
+  StudioStep step = StudioStep.temperature;
 
   /// Sección más avanzada a la que ya llegó (permite volver a las anteriores).
   int furthest = 0;
-  bool adding = false;
+
+  // ───────────── Compra ─────────────
+  PurchaseStatus purchase = PurchaseStatus.idle;
+  String? purchaseMessage;
+
+  /// El error de compra se resuelve iniciando sesión.
+  bool purchaseNeedsLogin = false;
+
+  /// Precio por unidad que confirmó el servidor en la última compra.
+  double? verifiedUnitPrice;
+
+  /// Aviso (no error) cuando el servidor cotizó distinto a lo mostrado.
+  String? priceNotice;
+
+  /// Clave del RepaintBoundary del vaso (para guardar la imagen).
+  final GlobalKey artKey = GlobalKey();
+  bool get buying => purchase == PurchaseStatus.checking;
+  bool get canBuy => hasRealProduct && product.isAvailable && !buying;
 
   // Transición entre secciones
   StudioTransition transition = StudioTransition.none;
@@ -120,11 +151,62 @@ class DrinkStudioProvider extends ChangeNotifier {
   @override
   void notifyListeners() {
     // Las cargas asíncronas pueden terminar cuando la pantalla ya se cerró.
-    if (!_disposed) super.notifyListeners();
+    if (_disposed) return;
+    super.notifyListeners();
+    _scheduleDraft();
   }
+
+  Timer? _draftTimer;
+  bool _draftEnabled = false;
+
+  /// Guarda el borrador (con retraso, para no escribir en cada gesto).
+  void _scheduleDraft() {
+    if (!_draftEnabled || status != StudioLoad.ready) return;
+    _draftTimer?.cancel();
+    _draftTimer = Timer(const Duration(milliseconds: 700), () {
+      if (_disposed || !hasProgress) return;
+      StudioDraft.save(draftJson());
+    });
+  }
+
+  /// Lo necesario para reconstruir la bebida (formato de la API).
+  Map<String, dynamic> draftJson() => {
+        'customization': customization.toJson(),
+        'milkLevel': milkLevel,
+        'cupName': cupName,
+        'artDone': pour.completed ? pour.design : '',
+        'step': step.name,
+      };
+
+  /// ¿Hay un borrador guardado que ofrecer? (null si no)
+  Future<Map<String, dynamic>?> pendingDraft() => StudioDraft.load();
+
+  /// Aplica el borrador que el usuario autorizó retomar.
+  void resumeDraft(Map<String, dynamic> d) {
+    final o = options;
+    if (o == null) return;
+    final custom = ProductCustomization.fromJson(d['customization'] is Map ? Map<String, dynamic>.from(d['customization'] as Map) : null);
+    final art = d['artDone']?.toString() ?? '';
+    _applySelection(
+      custom.copyWith(latteArt: art),
+      ((d['milkLevel'] as num?)?.toDouble() ?? 0.55).clamp(0.0, 0.92).toDouble(),
+      d['cupName']?.toString() ?? '',
+    );
+    final saved = StudioStep.values.where((e) => e.name == d['step']).firstOrNull;
+    final list = steps;
+    if (saved != null && list.contains(saved) && saved != StudioStep.result) {
+      step = saved;
+      furthest = list.indexOf(saved);
+    }
+    notifyListeners();
+  }
+
+  /// Empezar de cero descarta el borrador.
+  Future<void> discardDraft() => StudioDraft.clear();
 
   @override
   void dispose() {
+    _draftTimer?.cancel();
     _disposed = true;
     StudioPrefs.instance.removeListener(_onPrefs);
     pour.dispose();
@@ -136,6 +218,7 @@ class DrinkStudioProvider extends ChangeNotifier {
     error = null;
     notifyListeners();
     try {
+      await _resolveProduct();
       final data = await ApiClient.get('/customization/options');
       final loaded = DrinkOptions.fromJson(data['options'] as Map<String, dynamic>);
       if (!loaded.isUsable) {
@@ -146,6 +229,7 @@ class DrinkStudioProvider extends ChangeNotifier {
       profile = DrinkProfile.of(product, loaded);
       _applyDefaults(loaded);
       status = StudioLoad.ready;
+      _draftEnabled = true;
     } on ApiException catch (e) {
       error = e.message;
       status = StudioLoad.error;
@@ -154,6 +238,51 @@ class DrinkStudioProvider extends ChangeNotifier {
       status = StudioLoad.error;
     }
     notifyListeners();
+  }
+
+  /// Carga opciones y producto sin red (pruebas).
+  @visibleForTesting
+  void debugLoad(DrinkOptions loaded, {Product? latte}) {
+    if (latte != null) {
+      product = latte;
+      hasRealProduct = true;
+    }
+    loaded.register();
+    options = loaded;
+    profile = DrinkProfile.of(product, loaded);
+    _applyDefaults(loaded);
+    status = StudioLoad.ready;
+    notifyListeners();
+  }
+
+  /// Busca el latte real del menú. Si el servidor no lo encuentra, el
+  /// estudio sigue funcionando pero sin poder comprar.
+  Future<void> _resolveProduct() async {
+    try {
+      final data = await ApiClient.get('/customization/drinkstudio/product', token: token);
+      final raw = data['product'];
+      if (raw is Map<String, dynamic>) {
+        final price = (raw['price'] as num?)?.toDouble() ?? 0;
+        final discount = (raw['discountPerUnit'] as num?)?.toDouble() ?? 0;
+        final images = (raw['images'] as List?)?.map((e) => e.toString()).toList() ?? const <String>[];
+        product = Product(
+          id: raw['id'].toString(),
+          name: (raw['name'] as String?) ?? 'Latte',
+          description: (raw['description'] as String?) ?? '',
+          price: price,
+          images: images,
+          isAvailable: raw['isAvailable'] != false,
+          categoryName: raw['categoryName'] as String?,
+          discountedPrice: discount > 0 ? price - discount : null,
+          promotionName: raw['promotionName'] as String?,
+        );
+        hasRealProduct = true;
+        return;
+      }
+    } on ApiException catch (e) {
+      if (e.isNetworkError) rethrow;
+    }
+    hasRealProduct = false;
   }
 
   static String _defaultSize(DrinkOptions o) => o.sizes.containsKey(o.defaultSize) ? o.defaultSize : o.sizes.keys.first;
@@ -169,7 +298,11 @@ class DrinkStudioProvider extends ChangeNotifier {
   // ───────────── Datos derivados ─────────────
 
   bool get isHot => type == ProductCustomization.defaultType;
-  bool get canLatteArt => (profile?.supportsLatteArt ?? false) && isHot;
+  bool get hasMilk => milkLevel >= 0.2;
+
+  /// El arte latte necesita bebida caliente, espuma de leche y algo de
+  /// leche en el vaso (sin leche no hay sobre qué dibujar).
+  bool get canLatteArt => (profile?.supportsLatteArt ?? false) && isHot && hasMilk;
 
   /// Arte latte TERMINADO de la bebida (lo único que viaja al pedido).
   /// Elegir una figura solo muestra su silueta: el diseño cuenta cuando
@@ -228,7 +361,7 @@ class DrinkStudioProvider extends ChangeNotifier {
     final o = options;
     if (o == null) return const [];
     return [
-      StudioStep.size,
+      StudioStep.temperature,
       StudioStep.base,
       StudioStep.milk,
       if (canLatteArt && o.latteArtDesigns.isNotEmpty) StudioStep.art,
@@ -252,8 +385,20 @@ class DrinkStudioProvider extends ChangeNotifier {
   CupView get view => switch (step) {
         StudioStep.art => CupView.tilt,
         StudioStep.toppings => CupView.top,
+        StudioStep.result => resultTop ? CupView.top : CupView.side,
         _ => CupView.side,
       };
+
+  bool? _resultTop;
+
+  /// En el resultado: vista desde arriba si hay arte o toppings que lucir
+  /// (el usuario puede alternar).
+  bool get resultTop => _resultTop ?? (latteArt.isNotEmpty || toppings.isNotEmpty || sweeteners.isNotEmpty);
+
+  void setResultTop(bool v) {
+    _resultTop = v;
+    notifyListeners();
+  }
 
   int? get ounces => options?.ouncesOf(size);
 
@@ -446,6 +591,7 @@ class DrinkStudioProvider extends ChangeNotifier {
 
   void _move(StudioStep to, int dir, StudioTransition kind) {
     step = to;
+    if (status == StudioLoad.ready) _draftEnabled = true;
     final index = steps.indexOf(to);
     if (index > furthest) furthest = index;
     transition = kind;
@@ -461,8 +607,7 @@ class DrinkStudioProvider extends ChangeNotifier {
     if (i < 0 || i >= list.length - 1) return;
     stepDoneTick++;
     final kind = switch (step) {
-      StudioStep.size => StudioTransition.tempIntro,
-      StudioStep.base => StudioTransition.tempBurst,
+      StudioStep.temperature => StudioTransition.tempBurst,
       _ => StudioTransition.plain,
     };
     _move(list[i + 1], 1, kind);
@@ -471,7 +616,10 @@ class DrinkStudioProvider extends ChangeNotifier {
   void back() {
     final list = steps;
     final i = list.indexOf(step);
-    if (i > 0) _move(list[i - 1], -1, StudioTransition.plain);
+    if (i > 0) {
+      final to = list[i - 1];
+      _move(to, -1, to == StudioStep.temperature ? StudioTransition.tempIntro : StudioTransition.plain);
+    }
   }
 
   /// Salta a una sección ya alcanzada (sin perder lo elegido).
@@ -479,7 +627,7 @@ class DrinkStudioProvider extends ChangeNotifier {
     final list = steps;
     final to = list.indexOf(target), from = list.indexOf(step);
     if (to < 0 || to == from || to > furthest) return;
-    _move(target, to > from ? 1 : -1, StudioTransition.plain);
+    _move(target, to > from ? 1 : -1, target == StudioStep.temperature ? StudioTransition.tempIntro : StudioTransition.plain);
   }
 
   /// Vuelve a empezar con un vaso vacío.
@@ -499,9 +647,15 @@ class DrinkStudioProvider extends ChangeNotifier {
     syrups.clear();
     sweeteners.clear();
     pairings.clear();
-    step = StudioStep.size;
+    step = StudioStep.temperature;
     furthest = 0;
+    _resultTop = null;
+    purchase = PurchaseStatus.idle;
+    purchaseMessage = null;
+    priceNotice = null;
     transition = StudioTransition.none;
+    StudioDraft.clear();
+    _draftEnabled = status == StudioLoad.ready;
     notifyListeners();
   }
 
@@ -513,10 +667,11 @@ class DrinkStudioProvider extends ChangeNotifier {
     final o = options;
     if (o == null) return;
     switch (step) {
-      case StudioStep.size:
-        size = _defaultSize(o);
+      case StudioStep.temperature:
+        setType(_defaultType(o));
+        return;
       case StudioStep.base:
-        type = _defaultType(o);
+        size = _defaultSize(o);
         shots = 0;
       case StudioStep.milk:
         milk = _defaultMilk(o);
@@ -534,21 +689,134 @@ class DrinkStudioProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ───────────── Compra ─────────────
+
+  /// Convierte la bebida en una línea REAL del carrito:
+  ///  1. el servidor valida la configuración y cotiza (reglas centrales);
+  ///  2. la línea se agrega con el CartProvider de siempre, enviando el
+  ///     importe cotizado para que el servidor lo vuelva a verificar.
+  /// Nunca simula un pago: después se sigue el flujo normal del carrito.
+  /// Devuelve true si la bebida quedó en el carrito.
+  Future<bool> buy(CartProvider cart) async {
+    if (buying) return false; // evita dobles envíos
+    purchaseNeedsLogin = false;
+    priceNotice = null;
+
+    if (!hasRealProduct || !product.isAvailable) {
+      return _fail('El latte no está disponible por ahora. Tu bebida queda guardada para cuando vuelva.');
+    }
+    if (token == null) {
+      purchaseNeedsLogin = true;
+      return _fail('Inicia sesión para comprar tu latte. Tu bebida se conserva.');
+    }
+
+    purchase = PurchaseStatus.checking;
+    purchaseMessage = null;
+    notifyListeners();
+
+    final local = customization;
+    final localUnit = unitPrice;
+    try {
+      final data = await ApiClient.post('/customization/drinkstudio/quote', token: token, body: {
+        'productId': product.id,
+        'quantity': quantity,
+        'customization': local.toJson(),
+        'milkLevel': milkLevel,
+      });
+      final raw = data['quote'];
+      if (raw is! Map<String, dynamic>) throw ApiException('Respuesta inesperada del servidor');
+
+      final verified = ProductCustomization.fromJson(raw['customization'] is Map ? Map<String, dynamic>.from(raw['customization'] as Map) : null);
+      final serverUnit = (raw['unitPrice'] as num).toDouble();
+      verifiedUnitPrice = serverUnit;
+      if ((serverUnit - localUnit).abs() >= 0.5) {
+        priceNotice = 'El precio oficial de tu bebida es ${_money(serverUnit)} por unidad.';
+      }
+
+      await cart.addToCart(
+        product,
+        quantity: quantity,
+        customization: verified,
+        source: 'drinkstudio',
+        expectedUnitPrice: serverUnit,
+      );
+      final rejected = cart.lastAddError;
+      if (rejected != null) return _fail(rejected);
+
+      purchase = PurchaseStatus.added;
+      purchaseMessage = '¡Tu latte está en el carrito!';
+      // Ya se compró: no se vuelve a ofrecer como "latte a medias" hasta
+      // que el usuario edite o reinicie.
+      _draftEnabled = false;
+      _draftTimer?.cancel();
+      StudioDraft.clear();
+      notifyListeners();
+      return true;
+    } on ApiException catch (e) {
+      final msg = switch (e.statusCode) {
+        null => 'No pudimos conectarnos. Revisa tu internet; tu bebida sigue aquí.',
+        404 || 409 => e.message.isNotEmpty ? e.message : 'El latte ya no está disponible.',
+        400 => 'Esta combinación no se puede preparar: ${e.message}',
+        401 => 'Tu sesión venció. Inicia sesión de nuevo; tu bebida se conserva.',
+        _ => e.message,
+      };
+      if (e.statusCode == 401) purchaseNeedsLogin = true;
+      return _fail(msg);
+    } catch (_) {
+      return _fail('No pudimos preparar tu pedido. Inténtalo de nuevo.');
+    }
+  }
+
+  bool _fail(String message) {
+    purchase = PurchaseStatus.error;
+    purchaseMessage = message;
+    notifyListeners();
+    return false;
+  }
+
+  /// El usuario vio el resultado de la compra (o volvió a editar).
+  void clearPurchaseStatus() {
+    if (purchase == PurchaseStatus.idle) return;
+    purchase = PurchaseStatus.idle;
+    purchaseMessage = null;
+    purchaseNeedsLogin = false;
+    notifyListeners();
+  }
+
+  static String _money(double v) {
+    final n = v.round().toString();
+    final b = StringBuffer();
+    for (var i = 0; i < n.length; i++) {
+      if (i > 0 && (n.length - i) % 3 == 0) b.write('.');
+      b.write(n[i]);
+    }
+    return '\$$b';
+  }
+
   // ───────────── Recetas ─────────────
 
   /// Aplica una receta guardada o reciente, ignorando lo que ya no
   /// exista en el menú actual (nunca rompe el estudio).
   void applyRecipe(DrinkRecipe r) {
     // Una receta aplica al recorrido completo: se vuelve al inicio para revisarla.
-    step = StudioStep.size;
+    step = StudioStep.temperature;
     final o = options;
     if (o == null) return;
-    final c = r.customization;
+    _applySelection(r.customization, r.milkLevel, r.name);
+    lastRecipe = null;
+    furthest = steps.length - 1;
+    notifyListeners();
+  }
+
+  /// Aplica una configuración ignorando lo que ya no exista en el menú.
+  void _applySelection(ProductCustomization c, double level, String name) {
+    final o = options;
+    if (o == null) return;
     if (o.sizes.containsKey(c.size)) size = c.size;
     if (o.types.contains(c.type)) type = c.type;
     if (o.milks.containsKey(c.milk)) milk = c.milk;
     shots = c.extraShots.clamp(0, o.maxExtraShots).toInt();
-    milkLevel = r.milkLevel.clamp(0.0, 0.92).toDouble();
+    milkLevel = level.clamp(0.0, 0.92).toDouble();
     toppings
       ..clear()
       ..addAll(c.toppings.where(o.toppings.containsKey));
@@ -569,10 +837,7 @@ class DrinkStudioProvider extends ChangeNotifier {
     } else {
       pour.loadCompleted(design);
     }
-    cupName = r.name;
-    lastRecipe = null;
-    furthest = steps.length - 1;
-    notifyListeners();
+    cupName = name;
   }
 
   void offerLastRecipe(DrinkRecipe? r) {

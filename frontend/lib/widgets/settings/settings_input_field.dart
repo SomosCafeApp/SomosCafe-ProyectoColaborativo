@@ -72,6 +72,7 @@ class _SettingsInputFieldState extends State<SettingsInputField> {
             prefixIcon: Icon(widget.icon, color: AppColors.primary, size: 20),
             suffixIcon: widget.obscure
                 ? IconButton(
+        tooltip: 'Mostrar contraseña',
                     icon: Icon(
                       _hidden ? Icons.visibility_outlined : Icons.visibility_off_outlined,
                       color: subtitleColor,

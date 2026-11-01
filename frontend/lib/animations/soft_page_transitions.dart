@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Transición discreta para TODAS las pantallas que se abren con
+/// Transición discreta (<= 320 ms) para TODAS las pantallas que se abren con
 /// `MaterialPageRoute`: un fundido suave con un desplazamiento mínimo
 /// hacia arriba (~2.5 % del alto). Nada de zoom ni barridos.
 class SoftPageTransitionsBuilder extends PageTransitionsBuilder {
@@ -20,8 +20,9 @@ class SoftPageTransitionsBuilder extends PageTransitionsBuilder {
     Animation<double> secondaryAnimation,
     Widget child,
   ) {
-    // La primera pantalla de la app no se anima.
-    if (route.isFirst) return child;
+    // La primera pantalla no se anima; tampoco si el sistema pide
+    // reducir el movimiento.
+    if (route.isFirst || MediaQuery.disableAnimationsOf(context)) return child;
 
     return FadeTransition(
       opacity: animation.drive(_fade),

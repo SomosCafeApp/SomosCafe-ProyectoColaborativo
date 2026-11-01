@@ -10,6 +10,7 @@ import '../../widgets/admin/admin_promotion_card.dart';
 import '../../widgets/admin/confirm_action_dialog.dart';
 import '../../widgets/admin/promotion_form_card.dart';
 import '../../widgets/profile/profile_sub_page_header.dart';
+import '../../animations/brand_refresh.dart';
 
 /// Sección "Promociones" del panel admin. Usa AdminCrudSection (lista +
 /// botón agregar + formulario inline). Cada promoción se puede
@@ -182,7 +183,7 @@ class _AdminPromotionsPageState extends State<AdminPromotionsPage> {
             subtitle: 'Descuentos y promo del día',
           ),
           Expanded(
-            child: RefreshIndicator(
+            child: BrandRefresh(
               onRefresh: () => provider.fetchPromotions(),
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),

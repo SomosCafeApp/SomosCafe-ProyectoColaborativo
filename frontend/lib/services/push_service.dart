@@ -4,8 +4,10 @@ import 'dart:convert';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/painting.dart' show Color;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
+import '../core/constants/app_colors.dart';
 import 'api_client.dart';
 import 'api_exception.dart';
 
@@ -49,6 +51,14 @@ class PushService {
 
   /// Mismo id que usa el backend (utils/push.js) y el AndroidManifest.
   static const String channelId = 'somoscafe_default';
+
+  /// Icono pequeño de la barra de estado (res/drawable*/notification_icon.png):
+  /// silueta blanca de la taza. Es el mismo recurso que usa FCM por defecto
+  /// (meta-data del manifest), así push y locales se ven idénticas.
+  static const String androidIcon = 'notification_icon';
+
+  /// Acento de marca (AppColors.primary) con el que Android tiñe el icono.
+  static const Color androidColor = AppColors.primary;
 
   static const AndroidNotificationChannel _androidChannel =
       AndroidNotificationChannel(
@@ -111,7 +121,7 @@ class PushService {
     try {
       await _local.initialize(
         const InitializationSettings(
-          android: AndroidInitializationSettings('notification_icon'),
+          android: AndroidInitializationSettings(androidIcon),
           // Los permisos se piden con FirebaseMessaging.requestPermission.
           iOS: DarwinInitializationSettings(
             requestAlertPermission: false,
@@ -265,12 +275,32 @@ class PushService {
   // MENSAJES
   // ===================================
 
+  /// Ids ya mostrados (con la app abierta). Evita que un mensaje que FCM
+  /// reentrega se muestre dos veces como notificación local.
+  final List<String> _shownIds = <String>[];
+
+  /// Identificador estable del mensaje: el de la notificación del backend
+  /// (`data.notificationId`) y, si no viene, el de FCM.
+  static String dedupeKey(RemoteMessage message) {
+    final fromData = message.data['notificationId']?.toString() ?? '';
+    return fromData.isNotEmpty ? fromData : (message.messageId ?? '');
+  }
+
+  /// true si [key] ya se mostró; si no, lo recuerda (máx. 50).
+  bool _alreadyShown(String key) {
+    if (key.isEmpty) return false;
+    if (_shownIds.contains(key)) return true;
+    _shownIds.add(key);
+    if (_shownIds.length > 50) _shownIds.removeAt(0);
+    return false;
+  }
+
   Future<void> _onForegroundMessage(RemoteMessage message) async {
     final notification = message.notification;
 
-    if (notification != null) {
+    if (notification != null && !_alreadyShown(dedupeKey(message))) {
       await _local.show(
-        (message.messageId ?? '').hashCode & 0x7FFFFFFF,
+        dedupeKey(message).hashCode & 0x7FFFFFFF,
         notification.title,
         notification.body,
         NotificationDetails(
@@ -280,6 +310,8 @@ class PushService {
             channelDescription: _androidChannel.description,
             importance: Importance.high,
             priority: Priority.high,
+            icon: androidIcon,
+            color: androidColor,
           ),
           iOS: const DarwinNotificationDetails(
             presentAlert: true,

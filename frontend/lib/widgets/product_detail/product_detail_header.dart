@@ -36,6 +36,7 @@ class ProductDetailHeader extends StatelessWidget {
             ),
           ),
           IconButton(
+        tooltip: 'Favorito',
             icon: Icon(
               isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
               color: isFav ? Colors.red : subtitleColor,

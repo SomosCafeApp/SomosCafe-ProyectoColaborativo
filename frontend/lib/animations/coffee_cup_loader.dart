@@ -4,34 +4,40 @@ import 'package:flutter/material.dart';
 
 import 'motion.dart';
 
-/// Indicador de carga: una taza que se llena y se vacía suavemente.
-/// Reemplaza al círculo giratorio en las pantallas completas.
+/// Indicador de carga de SOMOS CAFÉ: una taza estilizada que se llena
+/// de café mientras sube un hilo de vapor. Sustituye al círculo giratorio
+/// en pantallas y secciones (los botones conservan su spinner pequeño).
+/// Con "reducir movimiento" se queda quieto y sigue siendo legible.
 class CoffeeCupLoader extends StatefulWidget {
-  const CoffeeCupLoader({super.key, this.size = 48, this.color});
+  const CoffeeCupLoader({super.key, this.size = 48, this.color, this.label});
 
   final double size;
 
   /// Si es null usa el color primario del tema.
   final Color? color;
 
+  /// Texto accesible (por defecto "Cargando").
+  final String? label;
+
   @override
   State<CoffeeCupLoader> createState() => _CoffeeCupLoaderState();
 }
 
-class _CoffeeCupLoaderState extends State<CoffeeCupLoader>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 1500),
-  );
+/// Nombre de marca del mismo indicador.
+typedef BrandLoader = CoffeeCupLoader;
+
+class _CoffeeCupLoaderState extends State<CoffeeCupLoader> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1800));
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (Motion.reduced(context)) {
-      _controller.value = 0.7;
+      _controller
+        ..stop()
+        ..value = 0.7;
     } else if (!_controller.isAnimating) {
-      _controller.repeat(reverse: true);
+      _controller.repeat();
     }
   }
 
@@ -47,13 +53,14 @@ class _CoffeeCupLoaderState extends State<CoffeeCupLoader>
 
     return Center(
       child: Semantics(
-        label: 'Cargando',
-        child: SizedBox(
-          width: widget.size,
-          height: widget.size,
-          child: RepaintBoundary(
-            child: CustomPaint(
-              painter: _CupPainter(animation: _controller, color: color),
+        label: widget.label ?? 'Cargando',
+        liveRegion: true,
+        child: ExcludeSemantics(
+          child: SizedBox(
+            width: widget.size,
+            height: widget.size,
+            child: RepaintBoundary(
+              child: CustomPaint(painter: CupLoaderPainter(animation: _controller, color: color)),
             ),
           ),
         ),
@@ -62,9 +69,9 @@ class _CoffeeCupLoaderState extends State<CoffeeCupLoader>
   }
 }
 
-class _CupPainter extends CustomPainter {
-  _CupPainter({required this.animation, required this.color})
-      : super(repaint: animation);
+/// Dibujo de la taza con vapor. `animation` va de 0 a 1 en bucle.
+class CupLoaderPainter extends CustomPainter {
+  CupLoaderPainter({required this.animation, required this.color}) : super(repaint: animation);
 
   final Animation<double> animation;
   final Color color;
@@ -73,11 +80,12 @@ class _CupPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final double w = size.width;
     final double h = size.height;
+    final t = animation.value;
 
     final double l = w * 0.14;
     final double r = w * 0.70;
-    final double top = h * 0.28;
-    final double bottom = h * 0.80;
+    final double top = h * 0.36;
+    final double bottom = h * 0.84;
     final double rad = w * 0.10;
 
     final Path body = Path()
@@ -89,17 +97,15 @@ class _CupPainter extends CustomPainter {
       ..quadraticBezierTo(l + w * 0.05, bottom, l + w * 0.04, bottom - rad)
       ..close();
 
-    // Café que sube.
-    final double level = Curves.easeInOut.transform(animation.value);
-    final double fillTop = bottom - (bottom - top) * (0.08 + 0.80 * level);
-    final double wave = math.sin(animation.value * math.pi * 4) * h * 0.012;
+    // El café sube y baja suave (ida y vuelta con la misma fase).
+    final double tri = t < 0.5 ? t * 2 : (1 - t) * 2;
+    final double level = Curves.easeInOut.transform(tri);
+    final double fillTop = bottom - (bottom - top) * (0.1 + 0.78 * level);
+    final double wave = math.sin(t * math.pi * 6) * h * 0.012;
 
     canvas.save();
     canvas.clipPath(body);
-    canvas.drawRect(
-      Rect.fromLTRB(0, fillTop + wave, w, h),
-      Paint()..color = color.withValues(alpha: 0.85),
-    );
+    canvas.drawRect(Rect.fromLTRB(0, fillTop + wave, w, h), Paint()..color = color.withValues(alpha: 0.85));
     canvas.restore();
 
     final Paint stroke = Paint()
@@ -110,24 +116,26 @@ class _CupPainter extends CustomPainter {
       ..color = color;
 
     canvas.drawPath(body, stroke);
+    canvas.drawArc(Rect.fromLTRB(r - w * 0.10, top + h * 0.07, r + w * 0.17, top + h * 0.33), -math.pi / 2, math.pi, false, stroke);
+    canvas.drawLine(Offset(l - w * 0.08, bottom + h * 0.06), Offset(r + w * 0.04, bottom + h * 0.06), stroke);
 
-    // Asa.
-    canvas.drawArc(
-      Rect.fromLTRB(r - w * 0.10, top + h * 0.07, r + w * 0.17, top + h * 0.33),
-      -math.pi / 2,
-      math.pi,
-      false,
-      stroke,
-    );
-
-    // Plato.
-    canvas.drawLine(
-      Offset(l - w * 0.08, bottom + h * 0.06),
-      Offset(r + w * 0.04, bottom + h * 0.06),
-      stroke,
-    );
+    // Tres hilos de vapor desfasados que suben y se desvanecen.
+    for (var i = 0; i < 3; i++) {
+      final p = (t + i / 3) % 1.0;
+      final x = l + (r - l) * (0.25 + 0.25 * i) + math.sin((p + i) * math.pi * 2) * w * 0.03;
+      final y = top - h * 0.04 - p * h * 0.26;
+      final alpha = math.sin(p * math.pi).clamp(0.0, 1.0) * 0.7;
+      canvas.drawLine(
+        Offset(x, y),
+        Offset(x + math.sin(p * math.pi * 3) * w * 0.02, y - h * 0.07),
+        Paint()
+          ..strokeCap = StrokeCap.round
+          ..strokeWidth = math.max(1.6, w * 0.04)
+          ..color = color.withValues(alpha: alpha),
+      );
+    }
   }
 
   @override
-  bool shouldRepaint(covariant _CupPainter old) => old.color != color;
+  bool shouldRepaint(covariant CupLoaderPainter old) => old.color != color;
 }

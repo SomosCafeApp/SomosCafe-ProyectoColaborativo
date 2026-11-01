@@ -224,10 +224,16 @@ class CartProvider extends ChangeNotifier {
 
   /// Agrega un producto con su personalización. Misma combinación →
   /// suma cantidad; combinación distinta → línea nueva.
+  ///
+  /// [source] = 'drinkstudio' pide al servidor que vuelva a cotizar la
+  /// bebida y rechace (409) si el importe esperado [expectedUnitPrice]
+  /// (el que el servidor cotizó antes) ya no coincide.
   Future<void> addToCart(
     Product product, {
     int quantity = 1,
     ProductCustomization? customization,
+    String? source,
+    double? expectedUnitPrice,
   }) {
     final custom = customization ?? ProductCustomization();
 
@@ -239,7 +245,7 @@ class CartProvider extends ChangeNotifier {
     _pendingAdds++;
     final task = _addQueue
         .catchError((_) {})
-        .then((_) => _syncAdd(product, quantity, custom));
+        .then((_) => _syncAdd(product, quantity, custom, source, expectedUnitPrice));
     _addQueue = task;
     return task;
   }
@@ -251,6 +257,8 @@ class CartProvider extends ChangeNotifier {
     Product product,
     int quantity,
     ProductCustomization custom,
+    String? source,
+    double? expectedUnitPrice,
   ) async {
     var failed = false;
     _lastAddError = null;
@@ -261,7 +269,8 @@ class CartProvider extends ChangeNotifier {
         'customization': custom.toJson(),
         // Lo que la app mostró por unidad: si el servidor calcula otra
         // cosa, rechaza el alta (409) en vez de cobrar algo distinto.
-        'expectedUnitPrice': custom.quote(basePrice: product.price, effectivePrice: product.effectivePrice).unitPrice.round(),
+        'expectedUnitPrice': (expectedUnitPrice ?? custom.quote(basePrice: product.price, effectivePrice: product.effectivePrice).unitPrice).round(),
+        if (source != null) 'source': source,
       });
       if (_pendingAdds == 1) {
         _lines = _parseCart(data['cart'] as Map<String, dynamic>);
@@ -269,7 +278,7 @@ class CartProvider extends ChangeNotifier {
       }
     } on ApiException catch (e) {
       _errorMessage = e.message;
-      _lastAddError = e.statusCode == 409 ? 'El precio de ${product.name} cambió. Ya actualizamos tu carrito: revísalo e inténtalo de nuevo.' : e.message;
+      _lastAddError = e.statusCode == 409 && source == null ? 'El precio de ${product.name} cambió. Ya actualizamos tu carrito: revísalo e inténtalo de nuevo.' : e.message;
       failed = true;
     } finally {
       _pendingAdds--;

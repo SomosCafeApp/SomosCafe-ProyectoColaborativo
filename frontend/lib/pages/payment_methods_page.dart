@@ -8,6 +8,7 @@ import '../widgets/payment_methods/saved_payment_methods_section.dart';
 import '../widgets/payment_methods/payment_method_form_card.dart';
 import '../widgets/payment_methods/other_payment_options_section.dart';
 import '../widgets/payment_methods/secure_payment_info_card.dart';
+import '../animations/brand_refresh.dart';
 
 class PaymentMethodsPage extends StatefulWidget {
   const PaymentMethodsPage({super.key});
@@ -141,7 +142,7 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
             subtitle: 'Gestiona tus formas de pago preferidas',
           ),
           Expanded(
-            child: RefreshIndicator(
+            child: BrandRefresh(
               onRefresh: paymentProvider.fetchPaymentMethods,
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16),

@@ -82,13 +82,33 @@ class ArtPour {
     // donde la leche se funde con el café) y el cuerpo de leche encima.
     final halo = Paint()..color = Color.lerp(StudioColors.cream, const Color(0xFFD9A873), 0.45)!.withValues(alpha: 0.5);
     final milk = Paint()..color = StudioColors.cream.withValues(alpha: 0.97);
+    // Borde definido: un contorno apenas más oscuro bajo la leche, como el
+    // límite nítido entre la espuma y el café.
+    final edge = Paint()..color = const Color(0xFFB9854F).withValues(alpha: 0.55);
     canvas.save();
     canvas.clipPath(sil);
     for (final st in s.stamps) {
       canvas.drawCircle(Offset(st.x, st.y), st.r * 1.16, halo);
     }
     for (final st in s.stamps) {
+      canvas.drawCircle(Offset(st.x, st.y), st.r * 1.06, edge);
+    }
+    for (final st in s.stamps) {
       canvas.drawCircle(Offset(st.x, st.y), st.r, milk);
+    }
+    // Microespuma: burbujitas y un brillo suave dentro de cada mancha,
+    // fijas por mancha (no parpadean al avanzar el vertido).
+    final bubble = Paint()..color = Colors.white.withValues(alpha: 0.5);
+    final pore = Paint()..color = const Color(0xFFE6D2B4).withValues(alpha: 0.55);
+    var k = 0;
+    for (final st in s.stamps) {
+      k++;
+      if (k % 2 == 1) continue; // la mitad basta (rendimiento)
+      final a = k * 2.399963;
+      final d = st.r * (0.25 + 0.5 * ((k * 0.37) % 1.0));
+      final o = Offset(st.x + math.cos(a) * d, st.y + math.sin(a) * d);
+      canvas.drawCircle(o, st.r * 0.09, bubble);
+      canvas.drawCircle(o.translate(st.r * 0.2, st.r * 0.15), st.r * 0.05, pore);
     }
     canvas.restore();
 
@@ -156,7 +176,17 @@ class ArtPour {
       target.dx,
       target.dy,
     );
-    final w = math.max(3.0, jugSize * 0.075) * flow;
+    // El grosor responde al caudal que da el usuario (más lento = hilo
+    // fino, más rápido = chorro grueso) y respira un poco.
+    final w = math.max(3.0, jugSize * 0.075) * flow * (0.92 + 0.08 * math.sin(time * 14));
+    canvas.drawPath(
+      path,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..strokeWidth = w * 1.22
+        ..color = const Color(0xFFCFAE86).withValues(alpha: 0.6),
+    );
     canvas.drawPath(
       path,
       Paint()

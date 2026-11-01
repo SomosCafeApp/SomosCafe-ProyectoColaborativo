@@ -126,7 +126,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                   final isSelected = _currentIndex == index;
                   final item = _navItems[index];
 
-                  return GestureDetector(
+                  return Semantics(
+                    button: true,
+                    selected: isSelected,
+                    excludeSemantics: true,
+                    label: index == 3 && cartCount > 0 ? '${item['label']}, $cartCount ${cartCount == 1 ? 'artículo' : 'artículos'}' : item['label'] as String,
+                    child: GestureDetector(
                     onTap: () => _changeTab(index),
                     behavior: HitTestBehavior.opaque,
                     child: Column(
@@ -165,6 +170,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                           ),
                         ),
                       ],
+                    ),
                     ),
                   );
                 }),

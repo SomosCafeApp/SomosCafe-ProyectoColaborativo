@@ -19,6 +19,11 @@ import {
     promotionSummary
 } from "../utils/promotions.js";
 
+import {
+    buildStudioQuote,
+    priceMatches
+} from "../utils/drinkStudio.js";
+
 // ===================================
 // HELPERS
 // ===================================
@@ -196,7 +201,9 @@ export const addItemForUser = async (userId, input = {}) => {
     const {
         productId,
         quantity,
-        customization: rawCustomization
+        customization: rawCustomization,
+        source,
+        expectedUnitPrice
     } = input;
 
     if (!productId) {
@@ -249,6 +256,36 @@ export const addItemForUser = async (userId, input = {}) => {
 
     if (error) {
         return { status: 400, body: { message: error } };
+    }
+
+    // Bebidas armadas en DrinkStudio: el servidor vuelve a cotizar con
+    // las promociones del usuario y rechaza (409) si el importe que
+    // vio el cliente ya no coincide, en vez de cobrar algo distinto.
+    if (source === "drinkstudio") {
+
+        const studioQuote = buildStudioQuote({
+            product,
+            raw: { customization, quantity: productQuantity },
+            discountOf: await getDiscountResolver(userId)
+        });
+
+        if (!studioQuote.ok) {
+            return {
+                status: studioQuote.status,
+                body: { code: studioQuote.code, message: studioQuote.message }
+            };
+        }
+
+        if (!priceMatches(expectedUnitPrice, studioQuote.unitPrice)) {
+            return {
+                status: 409,
+                body: {
+                    code: "PRICE_CHANGED",
+                    message: "El precio de tu bebida cambió. Revisa el nuevo total.",
+                    unitPrice: studioQuote.unitPrice
+                }
+            };
+        }
     }
 
     const key = customizationKey(customization);

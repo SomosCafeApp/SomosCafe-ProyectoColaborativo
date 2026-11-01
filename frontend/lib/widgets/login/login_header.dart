@@ -58,6 +58,7 @@ class LoginHeader extends StatelessWidget {
             backgroundColor: Colors.white.withValues(alpha: 0.25),
             radius: 18,
             child: IconButton(
+        tooltip: 'Volver',
               padding: EdgeInsets.zero,
               icon: const Icon(Icons.arrow_back, color: Colors.white, size: 18),
               // CAMBIO AQUÍ: Forzamos la redirección limpia al Home/MainNavigationScreen

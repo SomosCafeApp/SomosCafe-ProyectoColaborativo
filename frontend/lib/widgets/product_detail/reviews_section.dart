@@ -8,6 +8,7 @@ import '../../providers/reviews_provider.dart';
 
 import 'review_form.dart';
 import 'review_item_card.dart';
+import '../../animations/animations.dart';
 
 class ReviewsSection extends StatefulWidget {
   final String productId;
@@ -363,7 +364,7 @@ class _ReviewsSectionState extends State<ReviewsSection> {
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 24),
               child: Center(
-                child: CircularProgressIndicator(),
+                child: CoffeeCupLoader(size: 40),
               ),
             ),
           ]

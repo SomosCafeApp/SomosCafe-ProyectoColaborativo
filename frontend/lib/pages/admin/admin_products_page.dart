@@ -12,6 +12,7 @@ import '../../widgets/admin/product/admin_product_filters.dart';
 import '../../widgets/admin/product/product_dialogs.dart';
 import '../../widgets/admin/product/product_form_card.dart';
 import '../../widgets/profile/profile_sub_page_header.dart';
+import '../../animations/animations.dart';
 
 /// Sección "Productos" del panel admin: lista de todos los productos
 /// (incluidos los ocultos), formulario con imagen (Cloudinary),
@@ -181,7 +182,7 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
               ),
             ),
           Expanded(
-            child: RefreshIndicator(
+            child: BrandRefresh(
               onRefresh: provider.fetchProducts,
               child: CustomScrollView(
                 physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
@@ -224,7 +225,7 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
         );
 
     if (provider.isLoading && provider.products.isEmpty) {
-      return [centered(const CircularProgressIndicator())];
+      return [centered(const CoffeeCupLoader())];
     }
 
     if (provider.errorMessage != null && provider.products.isEmpty) {

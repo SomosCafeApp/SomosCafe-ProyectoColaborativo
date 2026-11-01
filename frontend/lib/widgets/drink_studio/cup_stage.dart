@@ -12,7 +12,6 @@ import 'art_pour.dart';
 import 'cup_geometry.dart';
 import 'latte_pour_session.dart';
 import 'takeaway_cup_painter.dart';
-import 'top_view_painter.dart';
 import 'transition_painter.dart';
 
 /// Escenario animado del vaso. Mantiene vivos el vapor y las ondas del
@@ -79,7 +78,23 @@ class _CupStageState extends State<CupStage> with TickerProviderStateMixin {
 
   void _onClockTick(Duration elapsed) {
     final t = elapsed.inMicroseconds / 1e6;
-    if (t - _clock.seconds >= _clockStep) _clock.set(t);
+
+    // ¿Va lento? Si el promedio de 90 cuadros baja de ~38 fps, se reducen
+    // partículas y se quitan los resplandores desenfocados.
+    if (_lastFrameT > 0 && !_autoLow) {
+      _frameSum += t - _lastFrameT;
+      if (++_frames >= 90) {
+        if (_frameSum / _frames > 0.026) _autoLow = true;
+        _frames = 0;
+        _frameSum = 0;
+      }
+    }
+    _lastFrameT = t;
+
+    if (t - _clock.seconds >= _clockStep) {
+      _clock.set(t);
+      _born.removeWhere((name, born) => t - born > _toppingSeconds(name));
+    }
   }
 
   /// Saltito del vaso al completar una etapa.
@@ -88,8 +103,51 @@ class _CupStageState extends State<CupStage> with TickerProviderStateMixin {
   late final AnimationController _temp = AnimationController(vsync: this, duration: const Duration(milliseconds: 2400));
   late final AnimationController _jug = AnimationController(vsync: this, duration: const Duration(milliseconds: 450));
   late final AnimationController _slide = AnimationController(vsync: this, duration: const Duration(milliseconds: 1000));
-  late final AnimationController _tilt = AnimationController(vsync: this, duration: const Duration(milliseconds: 650));
-  late final AnimationController _top = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
+
+  /// Cámara virtual: 0 = de lado, 0.5 = inclinada (arte latte), 1 = desde
+  /// arriba. UN solo controlador mueve la cámara entre las tres, así de
+  /// lado → arriba pasa por la inclinada sin detenerse ni cambiar de
+  /// componente (el vaso es siempre el mismo).
+  late final AnimationController _cam = AnimationController(vsync: this, duration: const Duration(milliseconds: 1100));
+
+  static double _camOf(CupView v) => switch (v) {
+        CupView.side => 0.0,
+        CupView.tilt => 0.5,
+        CupView.top => 1.0,
+      };
+
+  /// Inclinación (0..1) y altura cenital (0..1) derivadas de la cámara.
+  double get _camTilt => Curves.easeInOutSine.transform((_cam.value / 0.5).clamp(0.0, 1.0).toDouble());
+  double get _camTop => Curves.easeInOutSine.transform(((_cam.value - 0.5) / 0.5).clamp(0.0, 1.0).toDouble());
+
+  // ───────────── Mezcla del color de la leche ─────────────
+  // El café no cambia de color de golpe: se mezcla mientras cae la leche.
+  late final AnimationController _mix = AnimationController(vsync: this, duration: const Duration(milliseconds: 1900));
+  late Color _mixFrom = widget.snapshot.milkColor;
+  late Color _mixTo = widget.snapshot.milkColor;
+  static const Curve _mixCurve = Interval(0.3, 0.95, curve: Curves.easeInOut);
+
+  Color get _milkNow => Color.lerp(_mixFrom, _mixTo, _mixCurve.transform(_mix.value))!;
+
+  // ───────────── Toppings que entran animados ─────────────
+  final Map<String, double> _born = {};
+
+  static double _toppingSeconds(String name) {
+    final n = name.toLowerCase();
+    if (n.contains('caramelo')) return 2.2;
+    if (n.contains('crema')) return 1.9;
+    if (n.contains('malvavisco')) return 1.4;
+    return 1.5;
+  }
+
+  // ───────────── Calidad adaptable ─────────────
+  bool _autoLow = false;
+  int _frames = 0;
+  double _frameSum = 0;
+  double _lastFrameT = 0;
+
+  /// 0.5 en dispositivos modestos (ahorro activado o detectado), 1 si no.
+  double get _quality => StudioPrefs.instance.lowPower || _autoLow ? 0.5 : 1.0;
   late final AnimationController _lid = AnimationController(vsync: this, duration: const Duration(milliseconds: 750));
 
   /// Cambio de tamaño del vaso: crece o se encoge en vez de saltar.
@@ -99,7 +157,11 @@ class _CupStageState extends State<CupStage> with TickerProviderStateMixin {
 
   double get _factor => _sizeFrom + (_sizeTo - _sizeFrom) * Curves.easeOutCubic.transform(_size.value);
 
-  CupSnapshot get _snap => (_factor - widget.snapshot.sizeFactor).abs() < 1e-6 ? widget.snapshot : widget.snapshot.withSizeFactor(_factor);
+  CupSnapshot get _snap {
+    final mixing = _mix.value < 1 && _mixFrom != _mixTo;
+    if ((_factor - widget.snapshot.sizeFactor).abs() < 1e-6 && !mixing) return widget.snapshot;
+    return widget.snapshot.copyWith(sizeFactor: _factor, milkColor: mixing ? _milkNow : widget.snapshot.milkColor);
+  }
 
   /// Satisfacción al terminar el diseño (0 → 1; 1 = en reposo).
   late final AnimationController _done = AnimationController(vsync: this, duration: const Duration(milliseconds: 1600));
@@ -133,8 +195,8 @@ class _CupStageState extends State<CupStage> with TickerProviderStateMixin {
     super.initState();
     final s = widget.snapshot;
     _temp.value = s.isHot ? 0 : 1;
-    _tilt.value = widget.view == CupView.tilt ? 1 : 0;
-    _top.value = widget.view == CupView.top ? 1 : 0;
+    _cam.value = _camOf(widget.view);
+    _mix.value = 1;
     _lid.value = widget.lidOn ? 1 : 0;
     _slide.value = 1;
     _size.value = 1;
@@ -220,6 +282,23 @@ class _CupStageState extends State<CupStage> with TickerProviderStateMixin {
         _size.forward(from: 0);
       }
     }
+    // Toppings nuevos: entran animados (espolvoreo, caída, trazos...).
+    if (!_reduced && _fxOn && _clockTicker.isActive) {
+      for (final name in s.toppings) {
+        if (!old.snapshot.toppings.contains(name)) _born[name] = _clock.seconds;
+      }
+    }
+    _born.removeWhere((name, _) => !s.toppings.contains(name));
+
+    if (old.snapshot.milkColor != s.milkColor) {
+      _mixFrom = _milkNow;
+      _mixTo = s.milkColor;
+      if (_reduced) {
+        _mix.value = 1;
+      } else {
+        _mix.forward(from: 0);
+      }
+    }
     if (old.snapshot.isHot != s.isHot) {
       if (_reduced) {
         _temp.value = s.isHot ? 0 : 1;
@@ -237,14 +316,13 @@ class _CupStageState extends State<CupStage> with TickerProviderStateMixin {
       }
     }
     if (old.view != widget.view) {
-      final tiltTo = widget.view == CupView.tilt ? 1.0 : 0.0;
-      final topTo = widget.view == CupView.top ? 1.0 : 0.0;
+      final to = _camOf(widget.view);
       if (_reduced) {
-        _tilt.value = tiltTo;
-        _top.value = topTo;
+        _cam.value = to;
       } else {
-        _tilt.animateTo(tiltTo);
-        _top.animateTo(topTo);
+        // La duración sigue la distancia: un tramo corto no se arrastra.
+        final ms = (650 + 900 * (to - _cam.value).abs()).round();
+        _cam.animateTo(to, duration: Duration(milliseconds: ms), curve: Curves.easeInOutCubic);
       }
     }
     if (old.lidOn != widget.lidOn) {
@@ -266,7 +344,7 @@ class _CupStageState extends State<CupStage> with TickerProviderStateMixin {
     _pourTicker.dispose();
     _clockTicker.dispose();
     _clock.dispose();
-    for (final c in [_bump, _fx, _temp, _jug, _slide, _tilt, _top, _lid, _done, _size]) {
+    for (final c in [_bump, _fx, _temp, _jug, _slide, _cam, _mix, _lid, _done, _size]) {
       c.dispose();
     }
     super.dispose();
@@ -275,7 +353,7 @@ class _CupStageState extends State<CupStage> with TickerProviderStateMixin {
   // ───────────── Gesto del vertido ─────────────
 
   /// Solo se vierte con la cámara ya acercada y el diseño sin terminar.
-  bool get _canPour => widget.interactive && (widget.pour?.canPour ?? false) && widget.view == CupView.tilt && _tilt.value > 0.97;
+  bool get _canPour => widget.interactive && (widget.pour?.canPour ?? false) && widget.view == CupView.tilt && (_cam.value - 0.5).abs() < 0.02;
 
   /// Posición del puntero sobre la superficie del café en coordenadas
   /// unitarias (las mismas de los diseños). Usa la misma geometría que
@@ -321,7 +399,7 @@ class _CupStageState extends State<CupStage> with TickerProviderStateMixin {
             onPointerUp: _up,
             onPointerCancel: _up,
             child: AnimatedBuilder(
-              animation: Listenable.merge(<Listenable>[_clock, _bump, _fx, _temp, _jug, _slide, _tilt, _top, _lid, _done, _size, if (pr != null) pr]),
+              animation: Listenable.merge(<Listenable>[_clock, _bump, _fx, _temp, _jug, _slide, _cam, _mix, _lid, _done, _size, if (pr != null) pr]),
               builder: (context, _) {
                 final s = _snap;
                 final time = _clock.seconds;
@@ -330,7 +408,13 @@ class _CupStageState extends State<CupStage> with TickerProviderStateMixin {
                 final cold = Curves.easeInOut.transform(_temp.value);
                 final slide = Curves.easeOutCubic.transform(_slide.value);
                 final dx = (1 - slide) * -widget.transitionDir * box.maxWidth * 0.55;
-                final topT = Curves.easeInOut.transform(_top.value);
+                final tiltT = _camTilt;
+                final topT = _camTop;
+                final progress = <String, double>{
+                  if (_fxOn)
+                    for (final e in _born.entries) e.key: ((time - e.value) / _toppingSeconds(e.key)).clamp(0.0, 1.0).toDouble(),
+                };
+                final swapping = _temp.isAnimating;
                 final scene = pr == null
                     ? const ArtScene()
                     : ArtScene(jugShow: _jug.value, lean: pr.lean, target: pr.jug, flow: pr.flow, progress: pr.progress);
@@ -339,58 +423,49 @@ class _CupStageState extends State<CupStage> with TickerProviderStateMixin {
                   fit: StackFit.expand,
                   children: [
                     CustomPaint(painter: AmbientPainter(time: time, cold: cold, front: false, dark: dark)),
-                    if (topT < 1)
-                      Opacity(
-                        opacity: 1 - topT,
-                        child: Transform.translate(
-                          offset: Offset(dx, -hop * 10),
-                          child: Transform.scale(
-                            scaleX: 1 + 0.025 * hop,
-                            scaleY: 1 - 0.02 * hop,
-                            alignment: Alignment.bottomCenter,
-                            child: CustomPaint(
-                            painter: TakeawayCupPainter(
-                              snap: s,
-                              time: time,
-                              cold: cold,
-                              effect: widget.pourKind,
-                              effectT: _fx.value,
-                              effectSeed: widget.pourTick,
-                              scene: scene,
-                              pour: pr,
-                              artSettle: (_done.value / 0.25).clamp(0.0, 1.0).toDouble(),
-                              celebrate: _done.value,
-                              lid: _lid.value,
-                              tilt: Curves.easeInOut.transform(_tilt.value),
-                              dark: dark,
-                            ),
-                          ),
+                    Transform.translate(
+                      offset: Offset(dx, -hop * 10),
+                      child: Transform.scale(
+                        scaleX: 1 + 0.025 * hop,
+                        scaleY: 1 - 0.02 * hop,
+                        alignment: Alignment.bottomCenter,
+                        child: CustomPaint(
+                          painter: TakeawayCupPainter(
+                            snap: s,
+                            time: time,
+                            cold: cold,
+                            effect: widget.pourKind,
+                            effectT: _fx.value,
+                            effectSeed: widget.pourTick,
+                            scene: scene,
+                            pour: pr,
+                            artSettle: (_done.value / 0.25).clamp(0.0, 1.0).toDouble(),
+                            celebrate: _done.value,
+                            lid: _lid.value,
+                            tilt: tiltT,
+                            top: topT,
+                            quality: _quality,
+                            toppingProgress: progress,
+                            dark: dark,
                           ),
                         ),
-                      ),
-                    if (topT > 0)
-                      Opacity(
-                        opacity: topT,
-                        child: Transform.translate(
-                          offset: Offset(dx, 0),
-                          child: CustomPaint(
-                            painter: TopViewPainter(
-                              snap: s,
-                              time: time,
-                              effect: widget.pourKind,
-                              effectT: _fx.value,
-                              effectSeed: widget.pourTick,
-                              dark: dark,
-                            ),
-                          ),
-                        ),
-                      ),
-                    IgnorePointer(
-                      child: CustomPaint(
-                        painter: TransitionPainter(kind: _fxOn ? widget.transition : StudioTransition.none, t: _slide.value, cold: !s.isHot, time: time),
                       ),
                     ),
-                    if (widget.ambient && _fxOn) IgnorePointer(child: CustomPaint(painter: AmbientPainter(time: time, cold: cold, front: true, dark: dark))),
+                    IgnorePointer(
+                      child: CustomPaint(
+                        painter: TransitionPainter(
+                          kind: _fxOn ? widget.transition : StudioTransition.none,
+                          t: _slide.value,
+                          cold: !s.isHot,
+                          time: time,
+                          swap: _fxOn && swapping ? (_temp.status == AnimationStatus.reverse ? 1 - _temp.value : _temp.value) : -1,
+                          swapToCold: _temp.status != AnimationStatus.reverse,
+                          dark: dark,
+                          quality: _quality,
+                        ),
+                      ),
+                    ),
+                    if (widget.ambient && _fxOn) IgnorePointer(child: CustomPaint(painter: AmbientPainter(time: time, cold: cold, front: true, dark: dark, quality: _quality))),
                   ],
                 );
               },

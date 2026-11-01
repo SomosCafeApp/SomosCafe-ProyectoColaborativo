@@ -126,6 +126,7 @@ class ChatInputBar extends StatelessWidget {
                   button: true,
                   label: 'Enviar mensaje',
                   child: IconButton(
+        tooltip: 'Enviar',
                     onPressed: (isSending || listening) ? null : onSend,
                     constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
                     style: IconButton.styleFrom(

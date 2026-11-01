@@ -68,6 +68,7 @@ class _AdminSearchBarState extends State<AdminSearchBar> {
           suffixIcon: value.text.isEmpty
               ? null
               : IconButton(
+        tooltip: 'Cerrar',
                   icon: Icon(Icons.close, color: subtitleColor, size: 18),
                   onPressed: _clear,
                 ),

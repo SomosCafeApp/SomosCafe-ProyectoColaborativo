@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../models/app_event.dart';
+import '../../animations/animations.dart';
 
 /// Contenido de la ventana emergente de inicio: la imagen del evento
 /// como "afiche" (o una tarjeta con texto si no tiene imagen). Al tocarlo
@@ -80,7 +81,7 @@ class _Poster extends StatelessWidget {
           errorBuilder: (_, _, _) => _TextCard(event: event),
           loadingBuilder: (context, child, progress) => progress == null
               ? child
-              : const SizedBox(height: 320, child: Center(child: CircularProgressIndicator())),
+              : const SizedBox(height: 320, child: CoffeeCupLoader()),
         ),
         Positioned.fill(
           child: DecoratedBox(

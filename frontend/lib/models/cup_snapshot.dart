@@ -2,9 +2,9 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-/// Foto inmutable de lo que lleva el vaso en este momento. La pintan
-/// `TakeawayCupPainter` (de lado / inclinado) y `TopViewPainter`
-/// (desde arriba); el provider la arma con las elecciones reales.
+/// Foto inmutable de lo que lleva el vaso en este momento. La pinta
+/// `TakeawayCupPainter` (de lado, inclinado o desde arriba, con una
+/// cámara continua); el provider la arma con las elecciones reales.
 class CupSnapshot {
   /// Factor de escala del vaso (alto Y ancho) según las onzas: el
   /// volumen crece con el cubo de este factor.
@@ -47,16 +47,17 @@ class CupSnapshot {
     this.label = '',
   });
 
-  /// Misma bebida con otro tamaño (para animar el cambio de tamaño).
-  CupSnapshot withSizeFactor(double factor) => CupSnapshot(
-        sizeFactor: factor,
+  /// Misma bebida con otro tamaño y/o color de leche (para animar los
+  /// cambios en vez de que el vaso salte).
+  CupSnapshot copyWith({double? sizeFactor, Color? milkColor}) => CupSnapshot(
+        sizeFactor: sizeFactor ?? this.sizeFactor,
         ounces: ounces,
         isHot: isHot,
         isCoffee: isCoffee,
         baseColor: baseColor,
         shots: shots,
         milkLevel: milkLevel,
-        milkColor: milkColor,
+        milkColor: milkColor ?? this.milkColor,
         toppings: toppings,
         toppingQty: toppingQty,
         syrups: syrups,
@@ -64,6 +65,8 @@ class CupSnapshot {
         latteArt: latteArt,
         label: label,
       );
+
+  CupSnapshot withSizeFactor(double factor) => copyWith(sizeFactor: factor);
 
   /// Porciones de [name] (mínimo 1 si está elegido).
   int qtyOf(String name) => toppings.contains(name) ? (toppingQty[name] ?? 1).clamp(1, 9).toInt() : 0;

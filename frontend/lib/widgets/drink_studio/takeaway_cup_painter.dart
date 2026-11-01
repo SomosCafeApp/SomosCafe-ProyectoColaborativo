@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../models/cup_snapshot.dart';
+import 'ambient_painter.dart';
 import 'art_pour.dart';
 import 'cup_geometry.dart';
 import 'latte_pour_session.dart';
@@ -31,6 +32,9 @@ class TakeawayCupPainter extends CustomPainter {
     this.artSettle = 1,
     this.celebrate = 1,
     this.tilt = 0,
+    this.top = 0,
+    this.quality = 1,
+    this.toppingProgress = const {},
   });
 
   final CupSnapshot snap;
@@ -56,6 +60,16 @@ class TakeawayCupPainter extends CustomPainter {
   /// 0 = vista de lado … 1 = vista más cenital (sección de arte latte).
   final double tilt;
 
+  /// 0 = vista inclinada … 1 = vista cenital (la cámara sigue subiendo:
+  /// el cuerpo del vaso se esconde tras el borde y aparece el plato).
+  final double top;
+
+  /// 0.5 (dispositivo modesto) … 1: cantidad y calidad de los efectos.
+  final double quality;
+
+  /// Avance (0..1) de la animación de entrada de cada topping recién añadido.
+  final Map<String, double> toppingProgress;
+
   /// 0 = sin tapa … 1 = tapa puesta.
   final double lid;
   final bool dark;
@@ -67,14 +81,25 @@ class TakeawayCupPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final g = CupGeo(size, snap.sizeFactor, tilt: tilt);
+    final g = CupGeo(size, snap.sizeFactor, tilt: tilt, top: top, packets: snap.sweeteners.isNotEmpty);
 
-    _shadow(canvas, g);
-    _body(canvas, g);
-    _window(canvas, g);
-    _brand(canvas, g);
-    _nameLabel(canvas, g);
-    _condensation(canvas, g);
+    // Vista cenital: el plato aparece bajo el vaso.
+    if (top > 0.01) _plate(canvas, g);
+
+    // El cuerpo del vaso (franja, ventana, logo...) se desvanece mientras
+    // la cámara sube; el borde y la bebida siguen siendo los mismos.
+    final bodyA = (1 - top * 1.6).clamp(0.0, 1.0).toDouble();
+    if (bodyA > 0.01) {
+      final fade = bodyA < 1;
+      if (fade) canvas.saveLayer(null, Paint()..color = Colors.white.withValues(alpha: bodyA));
+      _shadow(canvas, g);
+      _body(canvas, g);
+      _window(canvas, g);
+      _brand(canvas, g);
+      _nameLabel(canvas, g);
+      _condensation(canvas, g);
+      if (fade) canvas.restore();
+    }
     _opening(canvas, g);
     if (lid < 1) _steam(canvas, g);
     _lid(canvas, g);
@@ -92,7 +117,8 @@ class TakeawayCupPainter extends CustomPainter {
   /// base del vaso (se esconde al acercar la cámara para el arte latte).
   void _packets(Canvas canvas, CupGeo g, Size size) {
     final names = snap.sweeteners;
-    final visible = (1 - tilt * 2.5).clamp(0.0, 1.0).toDouble();
+    if (names.isNotEmpty && top > 0.01) _packetsTop(canvas, g, size);
+    final visible = (1 - tilt * 2.5).clamp(0.0, 1.0).toDouble() * (1 - top);
     if (names.isEmpty || visible <= 0) return;
 
     final free = size.width - (g.cx + g.botW / 2) - 6;
@@ -109,6 +135,55 @@ class TakeawayCupPainter extends CustomPainter {
     if (visible < 1) canvas.restore();
   }
 
+  /// Vista cenital: los sobres quedan apoyados junto al plato.
+  void _packetsTop(Canvas canvas, CupGeo g, Size size) {
+    final names = snap.sweeteners;
+    final n = names.length;
+    final w = math.min(g.topW / 2 * 0.36, size.width * 0.13);
+    final h = w * SweetenerPacketPainter.aspect;
+    canvas.saveLayer(null, Paint()..color = Colors.white.withValues(alpha: top));
+    for (var i = n - 1; i >= 0; i--) {
+      final center = Offset(size.width - w * 0.85 - i * w * 0.5, size.height - h * 0.62 - i * w * 0.05);
+      SweetenerPacketPainter.paint(canvas, center, w, names[i], angle: -0.22 + i * 0.16);
+    }
+    canvas.restore();
+  }
+
+  // ───────────── Plato (vista cenital) ─────────────
+
+  void _plate(Canvas canvas, CupGeo g) {
+    final c = Offset(g.cx, g.topY);
+    final r = g.topW / 2;
+    final bounds = Rect.fromCircle(center: c, radius: r * 1.4);
+    canvas.saveLayer(bounds, Paint()..color = Colors.white.withValues(alpha: top.clamp(0.0, 1.0).toDouble()));
+    // Sombra suave del plato sobre la mesa (la luz viene de arriba a la izquierda).
+    canvas.drawCircle(
+      c.translate(r * 0.05, r * 0.1),
+      r * 1.16,
+      Paint()
+        ..color = Colors.black.withValues(alpha: dark ? 0.35 : 0.16)
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, quality >= 0.75 ? 10 : 5),
+    );
+    Watercolor.wash(canvas, Path()..addOval(Rect.fromCircle(center: c, radius: r * 1.14)), StudioColors.latte, alpha: dark ? 0.55 : 0.8, blur: 4);
+    canvas.drawCircle(
+      c,
+      r * 1.04,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.4
+        ..color = StudioColors.ink.withValues(alpha: 0.25),
+    );
+    // Sombra que proyecta el vaso sobre el plato (abajo a la derecha).
+    canvas.drawCircle(
+      c.translate(r * 0.1, r * 0.14),
+      r * 1.02,
+      Paint()
+        ..color = Colors.black.withValues(alpha: 0.16)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 7),
+    );
+    canvas.restore();
+  }
+
   // ───────────── Cuerpo ─────────────
 
   void _shadow(Canvas canvas, CupGeo g) {
@@ -123,6 +198,10 @@ class TakeawayCupPainter extends CustomPainter {
   void _body(Canvas canvas, CupGeo g) {
     final body = g.body();
     final rect = Rect.fromLTRB(g.cx - g.topW / 2, g.topY, g.cx + g.topW / 2, g.baseY);
+    // Resplandor de temperatura por detrás del vaso (no sobre él).
+    if (quality >= 0.75) {
+      ThermalOutline.stroke(canvas, body, body.getBounds(), cold: cold, time: time, width: 2.4, dark: dark, crisp: false);
+    }
     canvas.drawPath(
       body,
       Paint()
@@ -177,6 +256,9 @@ class TakeawayCupPainter extends CustomPainter {
     }
 
     Watercolor.ink(canvas, body, StudioColors.ink, width: 2.4);
+    // Contorno degradado: cálido (crema, ámbar, terracota) o frío (hielo,
+    // turquesa, azul), siguiendo la luz del vaso.
+    ThermalOutline.stroke(canvas, body, body.getBounds(), cold: cold, time: time, width: 2.0, intensity: 0.85, glow: false, dark: dark);
   }
 
   void _text(Canvas canvas, String text, Offset center, double size, Color color, {double spacing = 0, FontWeight weight = FontWeight.w800}) {
@@ -344,8 +426,33 @@ class TakeawayCupPainter extends CustomPainter {
 
   void _opening(Canvas canvas, CupGeo g) {
     final rim = g.rimRect;
-    // Interior de cartón.
-    canvas.drawOval(rim, Paint()..color = const Color(0xFF6B4B33));
+    // Vista cenital: el borde del vaso se ve como un aro de papel con la
+    // franja de la marca (se funde desde el cuerpo mientras sube la cámara).
+    if (top > 0.01) {
+      final ring = rim.inflate(g.topW * 0.02);
+      canvas.saveLayer(ring.inflate(4), Paint()..color = Colors.white.withValues(alpha: top.clamp(0.0, 1.0).toDouble()));
+      canvas.drawOval(ring, Paint()..shader = const RadialGradient(colors: [Color(0xFFFFFAF0), Color(0xFFE6D5BB)]).createShader(rim));
+      canvas.drawOval(
+        rim.deflate(rim.width * 0.017),
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = rim.width * 0.07
+          ..color = AppColors.primary,
+      );
+      canvas.restore();
+    }
+    // Interior de cartón (con luz desde arriba a la izquierda: la pared
+    // del fondo derecho recibe más luz que la del frente izquierdo).
+    final inner = top > 0.01 ? rim.deflate(rim.width * 0.06) : rim;
+    canvas.drawOval(
+      inner,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color.lerp(const Color(0xFF6B4B33), const Color(0xFF42291A), top)!, Color.lerp(const Color(0xFF6B4B33), const Color(0xFF8A6446), top)!],
+        ).createShader(inner),
+    );
 
     // Nivel real del líquido: cuanto más vacío, más abajo se ve.
     final surfaceColor = snap.surfaceColor;
@@ -364,8 +471,22 @@ class TakeawayCupPainter extends CustomPainter {
     final surf = Rect.fromCenter(center: center, width: rx * 2, height: ry * 2);
     canvas.drawOval(
       surf,
-      Paint()..shader = RadialGradient(colors: [Colors.transparent, Colors.black.withValues(alpha: 0.16)], stops: const [0.72, 1]).createShader(surf),
+      Paint()..shader = RadialGradient(colors: [Colors.transparent, Colors.black.withValues(alpha: 0.16 + 0.1 * top)], stops: const [0.72, 1]).createShader(surf),
     );
+    // Sombra que proyecta el borde sobre la bebida (luz arriba a la izquierda).
+    if (top > 0.01) {
+      canvas.drawArc(
+        surf.deflate(rx * 0.03),
+        math.pi * 0.85,
+        math.pi * 0.9,
+        false,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = rx * 0.1
+          ..color = Colors.black.withValues(alpha: 0.16 * top)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5),
+      );
+    }
     canvas.drawOval(
       surf.deflate(rx * 0.02),
       Paint()
@@ -397,9 +518,26 @@ class TakeawayCupPainter extends CustomPainter {
     // Labio del vaso.
     Watercolor.ink(canvas, Path()..addOval(rim), StudioColors.ink, width: 2.4);
     Watercolor.ink(canvas, Path()..addOval(rim.inflate(g.topW * 0.018)), StudioColors.ink.withValues(alpha: 0.6), width: 1.6);
+    // Contorno de temperatura en el labio del vaso.
+    ThermalOutline.stroke(canvas, Path()..addOval(rim.inflate(g.topW * 0.018)), rim.inflate(g.topW * 0.02), cold: cold, time: time, width: 1.8, intensity: 0.8, glow: top > 0.5 && quality >= 0.75, dark: dark);
+    // Brillo del borde (más marcado desde arriba).
+    if (top > 0.01) {
+      canvas.drawArc(
+        rim.deflate(rim.width * 0.035),
+        math.pi * 1.1,
+        math.pi * 0.35,
+        false,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeCap = StrokeCap.round
+          ..strokeWidth = 3
+          ..color = Colors.white.withValues(alpha: 0.6 * top),
+      );
+    }
 
-    // Toppings (la crema sobresale del borde).
-    SurfaceDecor.toppings(canvas, center, rx, ry, snap.toppings, hasArt: snap.latteArt.isNotEmpty, qty: snap.toppingQty);
+    // Toppings (la crema sobresale del borde): entran animados y la
+    // vista de lado y la de arriba se funden con la cámara.
+    SurfaceDecor.toppings(canvas, center, rx, ry, snap.toppings, hasArt: snap.latteArt.isNotEmpty, qty: snap.toppingQty, progress: toppingProgress, topMix: top);
 
     _surface = (center, rx, ry);
   }
@@ -469,48 +607,40 @@ class TakeawayCupPainter extends CustomPainter {
   // ───────────── Vapor ─────────────
 
   void _steam(Canvas canvas, CupGeo g) {
+    // Nace de la superficie del café y se adapta a la boca del vaso. Se
+    // enciende y se apaga de forma gradual con la temperatura.
     final strength = (1 - cold) * (1 - lid);
     if (strength <= 0.02 || !snap.isHot && cold >= 1) return;
-    for (var i = 0; i < 3; i++) {
-      final x0 = g.cx + (i - 1) * g.topW * 0.22;
-      final path = Path()..moveTo(x0, g.topY - g.rimRy * 0.5);
-      for (var k = 1; k <= 8; k++) {
-        path.lineTo(x0 + math.sin(time * 1.6 + i * 1.7 + k * 0.7) * g.topW * 0.025 * k / 2, g.topY - g.rimRy * 0.5 - k * g.cupH * 0.07);
-      }
-      final alpha = (0.2 + 0.2 * (0.5 + 0.5 * math.sin(time * 1.2 + i))) * strength;
-      canvas.drawPath(
-        path,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeCap = StrokeCap.round
-          ..strokeWidth = 3.4
-          ..color = (dark ? StudioColors.cream : Colors.white).withValues(alpha: alpha)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.6),
-      );
-    }
+    final surface = _surface;
+    if (surface == null) return;
+    final (c, rx, ry) = surface;
+    SteamField.paint(
+      canvas,
+      origin: Offset(c.dx, c.dy - ry * 0.25),
+      width: rx * 1.7,
+      height: g.fullCupH * 0.85 * (1 - 0.45 * top),
+      time: time,
+      strength: strength,
+      dark: dark,
+      quality: quality,
+      spread: top,
+    );
   }
 
   /// Con la bebida caliente ya tapada, un hilo de vapor sale por la boquilla.
   void _lidSteam(Canvas canvas, CupGeo g) {
     final strength = ((lid - 0.9) / 0.1).clamp(0.0, 1.0).toDouble() * (1 - cold);
     if (strength <= 0.02) return;
-    final x0 = g.cx + g.topW * 1.1 * 0.17;
-    final y0 = g.topY - g.cupH * 0.05;
-    for (var i = 0; i < 2; i++) {
-      final path = Path()..moveTo(x0 + i * g.topW * 0.05, y0);
-      for (var k = 1; k <= 6; k++) {
-        path.lineTo(x0 + i * g.topW * 0.05 + math.sin(time * 2 + i * 1.4 + k * 0.8) * g.topW * 0.02 * k / 2, y0 - k * g.cupH * 0.055);
-      }
-      canvas.drawPath(
-        path,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeCap = StrokeCap.round
-          ..strokeWidth = 3
-          ..color = (dark ? StudioColors.cream : Colors.white).withValues(alpha: (0.32 - i * 0.1) * strength)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.6),
-      );
-    }
+    SteamField.paint(
+      canvas,
+      origin: Offset(g.cx + g.topW * 1.1 * 0.17, g.topY - g.cupH * 0.05),
+      width: g.topW * 0.28,
+      height: g.cupH * 0.42,
+      time: time,
+      strength: strength,
+      dark: dark,
+      quality: quality * 0.6,
+    );
   }
 
   // ───────────── Tapa ─────────────

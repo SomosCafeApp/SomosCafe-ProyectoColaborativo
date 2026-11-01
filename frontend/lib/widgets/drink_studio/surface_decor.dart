@@ -34,15 +34,39 @@ class SurfaceDecor {
     canvas.save();
     canvas.translate(c.dx, c.dy);
     canvas.scale(rx * 0.8, ry * 0.86);
+    // Borde definido: una copia teñida de café, apenas desplazada, bajo la
+    // espuma (el límite nítido entre la leche y la crema del café).
+    canvas.saveLayer(
+      Rect.fromCenter(center: Offset.zero, width: 2.6, height: 2.6),
+      Paint()..colorFilter = ColorFilter.mode(const Color(0xFFB9854F).withValues(alpha: 0.5), BlendMode.srcIn),
+    );
+    canvas.translate(0.012, 0.028);
     LatteArtShapes.paintProgress(canvas, design, progress);
+    canvas.restore();
+    LatteArtShapes.paintProgress(canvas, design, progress);
+    // Microespuma: burbujitas dentro del diseño terminado.
+    final sil = progress >= 1 ? LatteArtShapes.silhouette(design) : null;
+    if (sil != null) {
+      canvas.save();
+      canvas.clipPath(sil);
+      final bubble = Paint()..color = Colors.white.withValues(alpha: 0.38);
+      final pore = Paint()..color = const Color(0xFFE6D2B4).withValues(alpha: 0.5);
+      for (var i = 0; i < 34; i++) {
+        final a = i * 2.399963;
+        final d = 0.1 + 0.9 * ((i * 0.6180339) % 1.0);
+        final o = Offset(math.cos(a) * d * 0.9, math.sin(a) * d * 0.95);
+        canvas.drawCircle(o, 0.012 + 0.012 * ((i * 0.37) % 1.0), i.isEven ? bubble : pore);
+      }
+      canvas.restore();
+    }
     canvas.restore();
   }
 
   /// Toppings sobre la superficie (ver `ToppingPainters`). Con latte art
   /// ([hasArt]) la crema forma una corona y el resto se reparte por el
   /// borde: el diseño del centro siempre queda visible.
-  static void toppings(Canvas canvas, Offset c, double rx, double ry, List<String> names, {required bool hasArt, bool topView = false, Map<String, int> qty = const {}}) {
-    ToppingPainters.paint(canvas, c, rx, ry, names, qty, hasArt: hasArt, topView: topView);
+  static void toppings(Canvas canvas, Offset c, double rx, double ry, List<String> names, {required bool hasArt, bool topView = false, Map<String, int> qty = const {}, Map<String, double> progress = const {}, double topMix = -1}) {
+    ToppingPainters.paint(canvas, c, rx, ry, names, qty, hasArt: hasArt, topView: topView, progress: progress, topMix: topMix);
   }
 
   /// Efecto de "verter" sobre la boca del vaso.

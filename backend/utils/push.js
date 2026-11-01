@@ -16,6 +16,14 @@ import DeviceToken from "../models/deviceTokenModel.js";
 // Debe coincidir con el canal que crea la app Flutter.
 export const ANDROID_CHANNEL_ID = "somoscafe_default";
 
+// Recurso drawable de la app Flutter (android/app/src/main/res/drawable*/
+// notification_icon.png): silueta blanca de la taza. Android solo pinta
+// el canal alfa del icono pequeño, por eso NO se usa el logo a color.
+export const ANDROID_NOTIFICATION_ICON = "notification_icon";
+
+// Color de acento de la marca (AppColors.primary).
+export const ANDROID_NOTIFICATION_COLOR = "#9E6D41";
+
 // FCM permite máximo 500 mensajes por llamada a sendEach.
 const BATCH_SIZE = 500;
 
@@ -111,7 +119,7 @@ export const initPush = async () => {
     return Boolean(messaging);
 };
 
-const buildMessage = (token, notification) => ({
+export const buildMessage = (token, notification) => ({
     token,
 
     // `notification` hace que el sistema la muestre solo cuando la
@@ -133,7 +141,9 @@ const buildMessage = (token, notification) => ({
     android: {
         priority: "high",
         notification: {
-            channelId: ANDROID_CHANNEL_ID
+            channelId: ANDROID_CHANNEL_ID,
+            icon: ANDROID_NOTIFICATION_ICON,
+            color: ANDROID_NOTIFICATION_COLOR
         }
     },
 

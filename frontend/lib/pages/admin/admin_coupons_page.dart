@@ -9,6 +9,7 @@ import '../../widgets/admin/admin_crud_section.dart';
 import '../../widgets/admin/confirm_action_dialog.dart';
 import '../../widgets/admin/coupon_form_card.dart';
 import '../../widgets/profile/profile_sub_page_header.dart';
+import '../../animations/brand_refresh.dart';
 
 /// Sección "Cupones" del panel admin: cupones de recompensas que los
 /// clientes canjean con puntos. Al crear uno (o reactivarlo) el backend
@@ -185,7 +186,7 @@ class _AdminCouponsPageState extends State<AdminCouponsPage> {
             subtitle: 'Recompensas que se canjean con puntos',
           ),
           Expanded(
-            child: RefreshIndicator(
+            child: BrandRefresh(
               onRefresh: () => provider.fetchCoupons(),
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),

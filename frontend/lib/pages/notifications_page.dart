@@ -66,7 +66,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
             subtitle: 'Revisa o configura las notificaciones',
           ),
           Expanded(
-            child: RefreshIndicator(
+            child: BrandRefresh(
               onRefresh: notificationProvider.fetchNotifications,
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
