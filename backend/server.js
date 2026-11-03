@@ -79,7 +79,7 @@ app.get(
 );
 
 // ===============================
-// Montando las rutas de la API
+// HEALTH CHECK
 // ===============================
 
 app.get("/health", (req, res) => {
@@ -184,6 +184,10 @@ app.use(
     emailVerificationRoutes
 );
 
+// ===============================
+// CHATBOT
+// ===============================
+
 app.use(
     "/api/chat",
     chatRoutes
@@ -199,13 +203,17 @@ app.use(
 );
 
 // ===============================
-// SUPPORT (WhatsApp) & DRINK RECIPES
+// SUPPORT (WHATSAPP)
 // ===============================
 
 app.use(
     "/api/support",
     supportRoutes
 );
+
+// ===============================
+// DRINK RECIPES
+// ===============================
 
 app.use(
     "/api/recipes",
@@ -225,6 +233,10 @@ app.listen(
 
         console.log(
             `🌐 http://localhost:${PORT}`
+        );
+
+        console.log(
+            "📲 WhatsApp Support API: /api/support"
         );
 
         // Avisos de cupones por vencer y cupón de cumpleaños.
