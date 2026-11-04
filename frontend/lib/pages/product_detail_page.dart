@@ -144,14 +144,22 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    Text(
-                      _product.name,
-                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: textColor),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _product.description,
-                      style: TextStyle(fontSize: 13, color: subtitleColor),
+                    FadeSlideIn(
+                      delay: const Duration(milliseconds: 80),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _product.name,
+                            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, letterSpacing: -0.3, color: textColor),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            _product.description,
+                            style: TextStyle(fontSize: 13.5, height: 1.4, color: subtitleColor),
+                          ),
+                        ],
+                      ),
                     ),
                     ProductIngredients(ingredients: _product.ingredients),
                     const SizedBox(height: 16),

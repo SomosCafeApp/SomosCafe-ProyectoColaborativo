@@ -14,6 +14,8 @@ import 'studio_colors.dart';
 import 'studio_ui.dart';
 
 /// Temperatura: caliente o frío, con su transformación de vapor ↔ nieve.
+/// Las dos opciones van juntas y centradas (tarjetas compactas), no
+/// estiradas a todo el ancho de la bandeja.
 class TemperaturePanel extends StatelessWidget {
   const TemperaturePanel({super.key});
 
@@ -22,53 +24,73 @@ class TemperaturePanel extends StatelessWidget {
     final s = context.watch<DrinkStudioProvider>();
     final o = s.options!;
     final dark = Theme.of(context).brightness == Brightness.dark;
-    return StagePanel(
-      title: '¿Caliente o frío?',
-      hint: 'Mira cómo el vapor se vuelve nieve (y al revés).',
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 340),
-          child: Row(
-        children: [
-          for (final t in o.types)
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.only(right: t == o.types.last ? 0 : 14),
-                child: Semantics(
-                  button: true,
-                  selected: s.type == t,
-                  label: '$t. ${t == 'Frío' ? 'Hielo y frescura' : 'Vapor y calor'}',
-                  child: PressScale(
-                    onTap: () {
-                      StudioHaptics.select();
-                      s.setType(t);
-                    },
-                    child: SelectionPulse(selected: s.type == t, radius: 20, child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 240),
-                      curve: Curves.easeOutCubic,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      decoration: StudioUi.choice(dark, selected: s.type == t, radius: 20),
-                      child: Column(
-                        children: [
-                          AnimatedScale(
-                            scale: s.type == t ? 1.12 : 1,
-                            duration: const Duration(milliseconds: 260),
-                            curve: Curves.easeOutBack,
-                            child: Icon(t == 'Frío' ? Icons.ac_unit_rounded : Icons.local_fire_department_rounded, size: 34, color: t == 'Frío' ? const Color(0xFF5FA8C8) : const Color(0xFFE8772E)),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(t, style: TextStyle(fontWeight: FontWeight.w900, color: StudioColors.text(dark))),
-                          Text(t == 'Frío' ? 'Hielo y frescura' : 'Vapor y calor', style: TextStyle(fontSize: 11.5, color: StudioColors.muted(dark))),
-                        ],
+
+    Widget card(String t) {
+      final cold = t == 'Frío';
+      final selected = s.type == t;
+      final accent = cold ? const Color(0xFF5FA8C8) : const Color(0xFFE8772E);
+      return Flexible(
+        child: SizedBox(
+          width: 132,
+          child: Semantics(
+            button: true,
+            selected: selected,
+            label: '$t. ${cold ? 'Hielo y frescura' : 'Vapor y calor'}',
+            child: PressScale(
+              onTap: () {
+                StudioHaptics.select();
+                s.setType(t);
+              },
+              child: SelectionPulse(
+                selected: selected,
+                radius: 20,
+                color: accent,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 260),
+                  curve: Curves.easeOutCubic,
+                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+                  decoration: StudioUi.choice(dark, selected: selected, radius: 20).copyWith(
+                    gradient: selected
+                        ? LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [accent.withValues(alpha: dark ? 0.30 : 0.18), accent.withValues(alpha: 0.03)],
+                          )
+                        : null,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AnimatedScale(
+                        scale: selected ? 1.15 : 1,
+                        duration: const Duration(milliseconds: 280),
+                        curve: Curves.easeOutBack,
+                        child: Icon(cold ? Icons.ac_unit_rounded : Icons.local_fire_department_rounded, size: 34, color: accent),
                       ),
-                    )),
+                      const SizedBox(height: 4),
+                      Text(t, style: TextStyle(fontWeight: FontWeight.w900, color: StudioColors.text(dark))),
+                      Text(cold ? 'Hielo y frescura' : 'Vapor y calor', textAlign: TextAlign.center, style: TextStyle(fontSize: 11.5, color: StudioColors.muted(dark))),
+                    ],
                   ),
                 ),
               ),
             ),
-        ],
-      ),
+          ),
         ),
+      );
+    }
+
+    final cards = <Widget>[];
+    for (var i = 0; i < o.types.length; i++) {
+      if (i > 0) cards.add(const SizedBox(width: 12));
+      cards.add(card(o.types[i]));
+    }
+
+    return StagePanel(
+      title: '¿Caliente o frío?',
+      hint: 'Mira cómo el vapor se vuelve nieve (y al revés).',
+      child: Center(
+        child: Row(mainAxisSize: MainAxisSize.min, children: cards),
       ),
     );
   }
