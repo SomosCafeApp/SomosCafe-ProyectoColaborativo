@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../animations/animations.dart';
+
 class CustomSectionCard extends StatelessWidget {
   final Color cardColor;
   final Color textColor;
@@ -21,12 +23,16 @@ class CustomSectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
+    return FadeSlideIn(
+      offset: const Offset(0, 10),
+      duration: const Duration(milliseconds: 320),
+      child: Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: Colors.black.withAlpha(isDark ? 0 : 6)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withAlpha(isDark ? 40 : 8),
@@ -52,6 +58,6 @@ class CustomSectionCard extends StatelessWidget {
           child,
         ],
       ),
-    );
+    ));
   }
 }

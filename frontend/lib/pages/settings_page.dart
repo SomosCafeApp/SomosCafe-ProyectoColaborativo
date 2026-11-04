@@ -144,6 +144,7 @@ class SettingsPage extends StatefulWidget {
                             onChanged: StudioPrefs.instance.setHaptics,
                           ),
                         ),
+                        const SizedBox(height: 12),
                         SettingsCardTile(
                           icon: Icons.auto_awesome_rounded,
                           title: 'Efectos',
@@ -155,6 +156,7 @@ class SettingsPage extends StatefulWidget {
                             onChanged: StudioPrefs.instance.setEffects,
                           ),
                         ),
+                        const SizedBox(height: 12),
                         SettingsCardTile(
                           icon: Icons.animation_rounded,
                           title: 'Animaciones',

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../animations/animations.dart';
 import '../../core/utils/money_format.dart';
 import '../../models/price_quote.dart';
 
@@ -57,7 +58,9 @@ class PriceBreakdownCard extends StatelessWidget {
     final extrasTotal = extraRows.fold(0.0, (a, l) => a + l.amount);
     final total = quote.total(quantity) + extrasTotal;
 
-    return Container(
+    return FadeSlideIn(
+      offset: const Offset(0, 10),
+      child: Container(
       padding: padding,
       decoration: BoxDecoration(
         color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03),
@@ -89,6 +92,6 @@ class PriceBreakdownCard extends StatelessWidget {
           ],
         ],
       ),
-    );
+    ));
   }
 }

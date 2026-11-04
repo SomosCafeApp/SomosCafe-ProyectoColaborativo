@@ -25,12 +25,15 @@ class TemperaturePanel extends StatelessWidget {
     return StagePanel(
       title: '¿Caliente o frío?',
       hint: 'Mira cómo el vapor se vuelve nieve (y al revés).',
-      child: Row(
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 340),
+          child: Row(
         children: [
           for (final t in o.types)
             Expanded(
               child: Padding(
-                padding: EdgeInsets.only(right: t == o.types.last ? 0 : 10),
+                padding: EdgeInsets.only(right: t == o.types.last ? 0 : 14),
                 child: Semantics(
                   button: true,
                   selected: s.type == t,
@@ -64,6 +67,8 @@ class TemperaturePanel extends StatelessWidget {
               ),
             ),
         ],
+      ),
+        ),
       ),
     );
   }

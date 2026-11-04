@@ -54,7 +54,6 @@ class ProfileHeader extends StatelessWidget {
             avatarPreset: avatarPreset,
             initials: initials,
             size: 72,
-            borderRadius: 22,
             fontSize: 24,
             backgroundColor: Colors.white.withAlpha(35),
             border: Border.all(

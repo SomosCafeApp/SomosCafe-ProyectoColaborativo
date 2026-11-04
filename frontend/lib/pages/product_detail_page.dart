@@ -193,6 +193,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       ),
                     // Desglose transparente del precio.
                     if (_product.isCustomizable || _product.hasDiscount) ...[
+                      if (_product.isCustomizable) const SizedBox(height: 16),
                       PriceBreakdownCard(quote: _quote, quantity: _quantity),
                       const SizedBox(height: 16),
                     ],
