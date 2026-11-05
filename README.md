@@ -28,7 +28,7 @@ O descarga directamente desde GitHub:
 
 👉 **[Ir a la última versión (Releases)](https://github.com/SomosCafeApp/SomosCafe-ProyectoColaborativo/releases/latest)**
 
-⬇️ **[Descargar APK v1.0.0](https://github.com/SomosCafeApp/SomosCafe-ProyectoColaborativo/releases/download/v1.0.0/SomosCafe-v1_0_0.apk)**
+⬇️ **[Descargar APK v1.0.0](https://github.com/SomosCafeApp/SomosCafe-ProyectoColaborativo/releases/download/v1.0.0/SomosCafe-v1.0.0.apk)**
 
 **Cómo instalar**
 1. Escanea el QR o abre el enlace desde tu celular Android.
