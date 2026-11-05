@@ -8,6 +8,38 @@ La aplicación permite a los usuarios consultar el menú, personalizar productos
 
 Por otra parte, el sistema proporciona funcionalidades administrativas para gestionar productos, pedidos, promociones, eventos, usuarios, inventario y reportes.
 
+<p align="center">
+  <a href="https://github.com/SomosCafeApp/SomosCafe-ProyectoColaborativo/releases/latest">
+    <img src="https://img.shields.io/github/v/release/SomosCafeApp/SomosCafe-ProyectoColaborativo?label=%C3%9Altima%20versi%C3%B3n&color=6B2F20" alt="Última versión">
+  </a>
+  <img src="https://img.shields.io/badge/plataforma-Android-3DDC84?logo=android&logoColor=white" alt="Android">
+  <img src="https://img.shields.io/badge/Flutter-Dart-02569B?logo=flutter&logoColor=white" alt="Flutter">
+</p>
+
+## 📲 Descarga la app (Android)
+
+<p align="center">
+  <img src="docs/qr-descarga.png" alt="Código QR para descargar SomosCafe App" width="260">
+</p>
+
+<p align="center"><b>Escanea el código QR con la cámara de tu celular</b></p>
+
+O descarga directamente desde GitHub:
+
+👉 **[Ir a la última versión (Releases)](https://github.com/SomosCafeApp/SomosCafe-ProyectoColaborativo/releases/latest)**
+
+⬇️ **[Descargar APK v1.0.0](https://github.com/SomosCafeApp/SomosCafe-ProyectoColaborativo/releases/download/v1.0.0/SomosCafe-v1_0_0.apk)**
+
+**Cómo instalar**
+1. Escanea el QR o abre el enlace desde tu celular Android.
+2. En la sección **Assets** descarga el archivo `.apk`.
+3. Ábrelo y, si el teléfono lo pide, permite **"Instalar apps de fuentes desconocidas"**.
+4. Instala y abre **SomosCafe App**.
+
+> Requiere Android y conexión a internet. Google Play Protect puede mostrar una advertencia porque la app no se distribuye desde Play Store: elige **"Instalar de todos modos"**.
+
+---
+
 ## Stack tecnológico 💻
 
 ### Frontend
@@ -155,7 +187,7 @@ git clone https://github.com/SomosCafeApp/SomosCafe-ProyectoColaborativo
 Ingresar al directorio:
 
 ```
-cd Somos-Cafe-App
+cd SomosCafe-ProyectoColaborativo
 ```
 
 ---
@@ -232,6 +264,42 @@ Para ejecutar específicamente en Android:
 ```
 flutter run -d android
 ```
+
+---
+
+# Generar el APK (release)
+
+1. En `frontend/android/local.properties` agrega tu clave de Google Maps para Android:
+
+```
+MAPS_API_KEY=tu_clave_android
+```
+
+2. Crea tu keystore (una sola vez) desde la carpeta `frontend`:
+
+```
+keytool -genkey -v -keystore somoscafe-release.jks -keyalg RSA -keysize 2048 -validity 10000 -alias somoscafe
+```
+
+3. Copia `frontend/android/key.properties.example` como `frontend/android/key.properties` y completa tus datos.
+
+4. Compila desde `frontend`:
+
+```
+flutter clean
+flutter pub get
+flutter build apk --release --dart-define=GEOCODING_API_KEY=tu_clave_geocoding
+```
+
+El APK queda en `frontend/build/app/outputs/flutter-apk/app-release.apk`.
+
+> Las claves, el keystore y `key.properties` **no** se suben al repositorio (están en `.gitignore`).
+
+## Publicar una nueva versión
+
+1. Genera el APK y renómbralo, por ejemplo `SomosCafe-v1_0_1.apk`.
+2. En GitHub: **Releases → Draft a new release**, crea el tag `v1.0.1` y adjunta el APK.
+3. Publícalo como **Latest release** (no como Pre-release). El código QR siempre apunta a la última versión, así que **no hay que regenerarlo**.
 
 # Arquitectura del proyecto
 
@@ -324,5 +392,3 @@ Proyecto desarrollado por:
 | **Faiber Julian Torres Gaviria**  | Base de datos y Documentación     |
 
 -------------------------------------
-
-dev-jesus ======= >>>>>>> main
