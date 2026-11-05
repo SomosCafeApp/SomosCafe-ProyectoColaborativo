@@ -1,8 +1,20 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+}
+
+// Claves y firma: se leen de archivos/variables locales (NO van a GitHub).
+val localProps = Properties().apply {
+    val f = rootProject.file("local.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}
+val keyProps = Properties().apply {
+    val f = rootProject.file("key.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
 }
 
 android {
@@ -30,13 +42,37 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        // Clave de Google Maps SDK para Android (se inyecta en el manifest).
+        // Se define en android/local.properties (MAPS_API_KEY=...) o como
+        // variable de entorno MAPS_API_KEY.
+        manifestPlaceholders["MAPS_API_KEY"] =
+            localProps.getProperty("MAPS_API_KEY")
+                ?: System.getenv("MAPS_API_KEY")
+                ?: ""
+    }
+
+    signingConfigs {
+        // Solo se crea si existe android/key.properties.
+        if (keyProps.getProperty("storeFile") != null) {
+            create("release") {
+                storeFile = rootProject.file(keyProps.getProperty("storeFile"))
+                storePassword = keyProps.getProperty("storePassword")
+                keyAlias = keyProps.getProperty("keyAlias")
+                keyPassword = keyProps.getProperty("keyPassword")
+            }
+        }
     }
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // Firma con tu keystore si existe key.properties;
+            // si no, usa la clave de debug (solo para pruebas).
+            signingConfig =
+                if (signingConfigs.findByName("release") != null)
+                    signingConfigs.getByName("release")
+                else
+                    signingConfigs.getByName("debug")
         }
     }
 }

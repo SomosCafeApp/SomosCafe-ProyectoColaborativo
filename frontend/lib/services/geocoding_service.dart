@@ -182,7 +182,7 @@ class GeocodingService {
     if (!_googleConfigured) {
       throw GeocodingException(
         'NO_API_KEY',
-        'Falta configurar tu API key en lib/core/config/maps_config.dart',
+        'Falta configurar GEOCODING_API_KEY (--dart-define) al compilar la app',
       );
     }
 
