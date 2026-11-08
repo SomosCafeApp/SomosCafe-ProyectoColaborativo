@@ -1,13 +1,13 @@
+
 import 'package:flutter/material.dart';
 
 import '../../animations/selection_pulse.dart';
-
 import '../../animations/press_scale.dart';
 import 'studio_colors.dart';
 import 'studio_ui.dart';
 
-/// Tarjeta táctil de una opción (tamaño, leche, jarabe...). Se anima al
-/// elegirla y muestra su precio real.
+/// Tarjeta táctil de una opción (tamaño, leche, jarabe...).
+/// Se anima al elegirla y muestra su precio real.
 class OptionCard extends StatelessWidget {
   const OptionCard({
     super.key,
@@ -30,91 +30,152 @@ class OptionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
     final text = StudioColors.text(dark);
+
     return PressScale(
       onTap: onTap,
-      child: SelectionPulse(selected: selected, radius: 18, child: AnimatedContainer(
-        duration: const Duration(milliseconds: 220),
-        curve: Curves.easeOutCubic,
-        width: width,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: StudioUi.choice(dark, selected: selected, radius: 18),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (leading != null) ...[leading!, const SizedBox(width: 8)],
-            Flexible(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: text)),
-                  if (caption != null)
-                    Text(caption!, style: TextStyle(fontSize: 11, color: StudioColors.muted(dark))),
-                ],
+      child: SelectionPulse(
+        selected: selected,
+        radius: 18,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          width: width,
+          padding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 10,
+          ),
+          decoration: StudioUi.choice(
+            dark,
+            selected: selected,
+            radius: 18,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (leading != null) ...[
+                leading!,
+                const SizedBox(width: 8),
+              ],
+              Flexible(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: text,
+                      ),
+                    ),
+                    if (caption != null)
+                      Text(
+                        caption!,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: StudioColors.muted(dark),
+                        ),
+                      ),
+                  ],
+                ),
               ),
-            ),
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 180),
-              child: selected
-                  ? const Padding(
-                      key: ValueKey('on'),
-                      padding: EdgeInsets.only(left: 6),
-                      child: Icon(Icons.check_circle_rounded, size: 18, color: StudioColors.accent(dark)),
-                    )
-                  : const SizedBox(key: ValueKey('off'), width: 0),
-            ),
-          ],
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 180),
+                child: selected
+                    ? Padding(
+                        key: const ValueKey('on'),
+                        padding: const EdgeInsets.only(left: 6),
+                        child: Icon(
+                          Icons.check_circle_rounded,
+                          size: 18,
+                          color: StudioColors.accent(dark),
+                        ),
+                      )
+                    : const SizedBox(
+                        key: ValueKey('off'),
+                        width: 0,
+                      ),
+              ),
+            ],
+          ),
         ),
-      )),
+      ),
     );
   }
 }
 
 /// Mini taza dibujada para las tarjetas de tamaño.
 class MiniCup extends StatelessWidget {
-  const MiniCup({super.key, required this.scale});
+  const MiniCup({
+    super.key,
+    required this.scale,
+  });
+
   final double scale;
 
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
-    return CustomPaint(size: Size(34, 30 * scale + 6), painter: _MiniCupPainter(scale, dark));
+
+    return CustomPaint(
+      size: Size(34, 30 * scale + 6),
+      painter: _MiniCupPainter(scale, dark),
+    );
   }
 }
 
 class _MiniCupPainter extends CustomPainter {
   _MiniCupPainter(this.scale, this.dark);
+
   final double scale;
   final bool dark;
 
   @override
   void paint(Canvas canvas, Size size) {
     final h = size.height - 4;
+
     final path = Path()
       ..moveTo(2, 2)
       ..lineTo(size.width - 2, 2)
       ..lineTo(size.width - 8, h)
       ..lineTo(8, h)
       ..close();
-    canvas.drawPath(path, Paint()..color = StudioColors.latte.withValues(alpha: 0.7));
+
+    canvas.drawPath(
+      path,
+      Paint()..color = StudioColors.latte.withValues(alpha: 0.7),
+    );
+
     canvas.drawPath(
       path,
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.8
         ..strokeJoin = StrokeJoin.round
-        // En oscuro el trazo café oscuro desaparecería: se usa el latte claro.
+        // En oscuro se utiliza el latte claro para mantener el contraste.
         ..color = dark ? StudioColors.latte : StudioColors.ink,
     );
   }
 
   @override
-  bool shouldRepaint(covariant _MiniCupPainter old) => old.scale != scale || old.dark != dark;
+  bool shouldRepaint(covariant _MiniCupPainter old) {
+    return old.scale != scale || old.dark != dark;
+  }
 }
 
-/// Contenido de cada pestaña de la bandeja: título, pista y panel.
+/// Contenido de cada pestaña de la bandeja:
+/// título, pista y panel.
 class StagePanel extends StatelessWidget {
-  const StagePanel({super.key, required this.title, this.hint, required this.child});
+  const StagePanel({
+    super.key,
+    required this.title,
+    this.hint,
+    required this.child,
+  });
+
   final String title;
   final String? hint;
   final Widget child;
@@ -122,15 +183,22 @@ class StagePanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: StudioUi.title(dark)),
+          Text(
+            title,
+            style: StudioUi.title(dark),
+          ),
           if (hint != null) ...[
             const SizedBox(height: 4),
-            Text(hint!, style: StudioUi.hint(dark)),
+            Text(
+              hint!,
+              style: StudioUi.hint(dark),
+            ),
           ],
           const SizedBox(height: 14),
           child,
