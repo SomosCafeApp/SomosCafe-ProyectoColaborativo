@@ -6,7 +6,7 @@ Aplicación móvil y sistema de gestión para la cafetería SOMOS, orientado a d
 
 La aplicación permite a los usuarios consultar el menú, personalizar productos, realizar pedidos, consultar su historial, acumular puntos de fidelización, recibir notificaciones, participar en eventos y valorar productos o servicios.
 
-Por otra parte, el sistema proporciona funcionalidades administrativas para gestionar productos, pedidos, promociones, eventos, usuarios, inventario y reportes.
+Por otra parte, el sistema proporciona funcionalidades administrativas para la gestión de productos, pedidos, promociones, eventos, usuarios, inventario y reportes.
 
 <p align="center">
   <a href="https://github.com/SomosCafeApp/SomosCafe-ProyectoColaborativo/releases/latest">
