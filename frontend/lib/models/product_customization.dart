@@ -1,3 +1,4 @@
+import '../core/utils/money_format.dart';
 import 'price_quote.dart';
 
 /// Personalización elegida en ProductDetailPage o en el estudio de
@@ -138,14 +139,14 @@ class ProductCustomization {
     final milkExtra = milkPrices[milk] ?? 0;
     if (milkExtra != 0) lines.add(PriceLine('Leche $milk', milkExtra));
     if (extraShots > 0) {
-      lines.add(PriceLine('Shots extra × $extraShots', extraShots * extraShotPrice, detail: '\$${extraShotPrice.round()} c/u'));
+      lines.add(PriceLine('Shots extra × $extraShots', extraShots * extraShotPrice, detail: '${formatCop(extraShotPrice)} c/u'));
     }
     for (final t in (toppings.toList()..sort())) {
       final q = quantityOf(t);
       lines.add(PriceLine(
         q > 1 ? '$t × $q' : t,
         toppingLinePrice(toppingPrices[t] ?? 0, q),
-        detail: q > 1 ? '${q - 1} extra × \$${toppingExtraPortionPrice.round()}' : null,
+        detail: q > 1 ? '${q - 1} extra × ${formatCop(toppingExtraPortionPrice)}' : null,
       ));
     }
     for (final y in (syrups.toList()..sort())) {

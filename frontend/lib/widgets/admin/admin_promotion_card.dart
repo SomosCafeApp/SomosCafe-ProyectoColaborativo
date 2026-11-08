@@ -1,3 +1,4 @@
+import '../../core/utils/money_format.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -138,7 +139,7 @@ class AdminPromotionCard extends StatelessWidget {
             ),
             if (promotion.maximumDiscount != null) ...[
               const SizedBox(height: 6),
-              Text('Tope por unidad: \$${promotion.maximumDiscount!.toStringAsFixed(0)}',
+              Text('Tope por unidad: ${formatCop(promotion.maximumDiscount!)}',
                   style: TextStyle(fontSize: 12, color: subtitleColor)),
             ],
             const SizedBox(height: 10),

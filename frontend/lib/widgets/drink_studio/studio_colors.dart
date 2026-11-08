@@ -49,4 +49,14 @@ class StudioColors {
   static Color soft(bool dark) => dark ? AppColors.darkSurfaceSubtle : AppColors.lightSurfaceSubtle;
   static Color text(bool dark) => dark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
   static Color muted(bool dark) => dark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
+
+  /// Línea fina de tarjetas y píldoras (tono café en oscuro, nunca blanca).
+  static Color line(bool dark) => dark ? AppColors.darkBorder : const Color(0xFFE7DED3);
+
+  /// Color de marca legible sobre el fondo: en oscuro, un caramelo más
+  /// claro (el café medio pierde contraste sobre superficies oscuras).
+  static Color accent(bool dark) => dark ? AppColors.darkAccent : AppColors.primary;
+
+  /// Superficie elevada (bandeja, hojas): un escalón sobre el panel.
+  static Color raised(bool dark) => dark ? AppColors.darkSurfaceRaised : AppColors.lightSurface;
 }

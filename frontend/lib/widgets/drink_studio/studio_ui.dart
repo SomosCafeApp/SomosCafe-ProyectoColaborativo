@@ -10,10 +10,22 @@ class StudioUi {
   /// Fondo de una tarjeta de opción. Elegida: tinte de marca, borde
   /// marcado y sombra suave; sin elegir: superficie neutra con borde fino.
   static BoxDecoration choice(bool dark, {required bool selected, double radius = 20}) => BoxDecoration(
-        color: selected ? StudioColors.primary.withValues(alpha: dark ? 0.28 : 0.1) : StudioColors.soft(dark),
+        gradient: selected
+            ? LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  StudioColors.primary.withValues(alpha: dark ? 0.42 : 0.16),
+                  StudioColors.primary.withValues(alpha: dark ? 0.22 : 0.07),
+                ],
+              )
+            : null,
+        color: selected ? null : StudioColors.soft(dark),
         borderRadius: BorderRadius.circular(radius),
-        border: Border.all(color: selected ? StudioColors.primary : StudioColors.muted(dark).withValues(alpha: 0.14), width: selected ? 1.8 : 1),
-        boxShadow: selected ? [BoxShadow(color: StudioColors.primary.withValues(alpha: 0.18), blurRadius: 14, offset: const Offset(0, 5))] : const [],
+        border: Border.all(color: selected ? StudioColors.accent(dark) : StudioColors.line(dark), width: selected ? 1.8 : 1),
+        boxShadow: selected
+            ? [BoxShadow(color: StudioColors.primary.withValues(alpha: dark ? 0.32 : 0.2), blurRadius: 16, offset: const Offset(0, 6))]
+            : const [],
       );
 
   static TextStyle title(bool dark) => TextStyle(fontSize: 18, fontWeight: FontWeight.w800, letterSpacing: -0.2, color: StudioColors.text(dark));
@@ -74,7 +86,7 @@ class QuantityPill extends StatelessWidget {
       decoration: BoxDecoration(
         color: StudioColors.panel(dark),
         borderRadius: BorderRadius.circular(40),
-        border: Border.all(color: StudioColors.primary.withValues(alpha: 0.35)),
+        border: Border.all(color: StudioColors.line(dark)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

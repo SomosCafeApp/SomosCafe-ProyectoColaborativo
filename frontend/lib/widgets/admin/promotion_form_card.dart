@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/constants/app_colors.dart';
+import 'admin_choice_chip.dart';
 import '../../models/promotion.dart';
 import '../../providers/product_provider.dart';
 import 'promotion_product_picker_sheet.dart';
@@ -290,16 +291,11 @@ class _PromotionFormCardState extends State<PromotionFormCard> {
               children: [
                 for (final type in PromotionDiscountType.values) ...[
                   Expanded(
-                    child: ChoiceChip(
-                      label: SizedBox(width: double.infinity, child: Text(type.label, textAlign: TextAlign.center)),
+                    child: AppChoiceChip(
+                      label: type.label,
+                      expand: true,
                       selected: _type == type,
-                      selectedColor: AppColors.primary,
-                      labelStyle: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: _type == type ? Colors.white : textColor,
-                      ),
-                      onSelected: (_) => setState(() => _type = type),
+                      onSelected: () => setState(() => _type = type),
                     ),
                   ),
                   if (type == PromotionDiscountType.percentage) const SizedBox(width: 8),

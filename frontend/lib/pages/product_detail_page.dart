@@ -182,7 +182,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         mutedColor: subtitleColor.withAlpha(150),
                         selectedBg: placeholderBg,
                         primary: primary,
-                        borderColor: isDark ? Colors.white24 : Colors.black12,
+                        borderColor: isDark ? AppColors.darkBorder : Colors.black12,
                         counterBg: isDark ? AppColors.darkSurfaceSubtle : AppColors.lightSurfaceSubtle,
                         basePrice: _product.price,
                         selectedSize: _selectedSize,

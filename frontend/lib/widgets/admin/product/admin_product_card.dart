@@ -1,3 +1,4 @@
+import '../../../core/utils/money_format.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
@@ -89,7 +90,7 @@ class AdminProductCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '\$${product.price.toStringAsFixed(0)} COP',
+                        '${formatCop(product.price)} COP',
                         style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.primary),
                       ),
                       if (product.ingredients.isNotEmpty) ...[

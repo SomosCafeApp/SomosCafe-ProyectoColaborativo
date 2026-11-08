@@ -45,11 +45,23 @@ class StudioTopBar extends StatelessWidget {
               for (var i = 0; i < steps.length; i++) ...[
                 if (i > 0)
                   Expanded(
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 350),
+                    // El tramo se «llena» de izquierda a derecha al avanzar.
+                    child: Container(
                       height: 4,
                       margin: const EdgeInsets.only(bottom: 12),
-                      decoration: BoxDecoration(color: i <= s.stepIndex ? StudioColors.primary : StudioColors.soft(dark), borderRadius: BorderRadius.circular(4)),
+                      decoration: BoxDecoration(color: StudioColors.line(dark), borderRadius: BorderRadius.circular(4)),
+                      child: TweenAnimationBuilder<double>(
+                        tween: Tween(end: i <= s.stepIndex ? 1.0 : 0.0),
+                        duration: StudioPrefs.instance.animations ? const Duration(milliseconds: 450) : Duration.zero,
+                        curve: Curves.easeOutCubic,
+                        builder: (_, v, _) => Align(
+                          alignment: Alignment.centerLeft,
+                          child: FractionallySizedBox(
+                            widthFactor: v,
+                            child: DecoratedBox(decoration: BoxDecoration(gradient: StudioColors.brand, borderRadius: BorderRadius.circular(4))),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 _Dot(
@@ -88,7 +100,9 @@ class _Dot extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            AnimatedContainer(
+            _Halo(
+              on: state == _DotState.current,
+              child: AnimatedContainer(
               duration: const Duration(milliseconds: 300),
               curve: Curves.easeOutBack,
               width: state == _DotState.current ? 30 : 24,
@@ -110,11 +124,75 @@ class _Dot extends StatelessWidget {
                 ),
               ),
             ),
+            ),
             const SizedBox(height: 2),
-            Text(step.label, style: TextStyle(fontSize: 9.5, fontWeight: state == _DotState.current ? FontWeight.w800 : FontWeight.w600, color: active ? StudioColors.primary : StudioColors.muted(dark))),
+            Text(step.label, style: TextStyle(fontSize: 9.5, fontWeight: state == _DotState.current ? FontWeight.w800 : FontWeight.w600, color: active ? StudioColors.accent(dark) : StudioColors.muted(dark))),
           ],
         ),
       ),
+    );
+  }
+}
+
+
+/// Anillo que late suavemente alrededor del paso actual.
+class _Halo extends StatefulWidget {
+  const _Halo({required this.on, required this.child});
+  final bool on;
+  final Widget child;
+
+  @override
+  State<_Halo> createState() => _HaloState();
+}
+
+class _HaloState extends State<_Halo> with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 1800));
+
+  @override
+  void initState() {
+    super.initState();
+    _sync();
+  }
+
+  @override
+  void didUpdateWidget(_Halo old) {
+    super.didUpdateWidget(old);
+    _sync();
+  }
+
+  void _sync() {
+    final go = widget.on && StudioPrefs.instance.animations;
+    if (go && !_c.isAnimating) {
+      _c.repeat();
+    } else if (!go && _c.isAnimating) {
+      _c.stop();
+      _c.value = 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _c,
+      child: widget.child,
+      builder: (context, child) {
+        final v = _c.value;
+        return DecoratedBox(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            boxShadow: widget.on && _c.isAnimating
+                ? [BoxShadow(color: StudioColors.primary.withValues(alpha: 0.45 * (1 - v)), blurRadius: 2, spreadRadius: 9 * v)]
+                : const [],
+          ),
+          child: child,
+        );
+      },
     );
   }
 }

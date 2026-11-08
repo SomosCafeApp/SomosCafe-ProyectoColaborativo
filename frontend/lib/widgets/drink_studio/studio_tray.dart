@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../models/drink_studio_stage.dart';
 import '../../providers/drink_studio_provider.dart';
+import '../../core/constants/app_colors.dart';
 import '../common/styled_confirm_dialog.dart';
 import 'studio_colors.dart';
 import 'studio_panels.dart';
@@ -40,9 +41,16 @@ class StudioTray extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: StudioColors.panel(dark),
+        // Degradado sutil: la bandeja se siente como una superficie
+        // elevada sobre la escena, no como un bloque plano.
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [StudioColors.raised(dark), StudioColors.panel(dark)],
+        ),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.14), blurRadius: 24, offset: const Offset(0, -6))],
+        border: Border(top: BorderSide(color: dark ? AppColors.darkBorder : Colors.white, width: 1.2)),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: dark ? 0.5 : 0.14), blurRadius: 28, offset: const Offset(0, -8))],
       ),
       child: Column(
         children: [
@@ -122,7 +130,15 @@ class _NavRow extends StatelessWidget {
                         iconAlignment: IconAlignment.end,
                         style: FilledButton.styleFrom(backgroundColor: Colors.transparent, shadowColor: Colors.transparent, minimumSize: const Size(0, 54), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
                         icon: Icon(nextStep == StudioStep.result ? Icons.check_circle_rounded : Icons.arrow_forward_rounded),
-                        label: Text(nextStep == StudioStep.result ? 'Ver mi bebida' : 'Siguiente · ${nextStep.label}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, letterSpacing: 0.1)),
+                        label: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 220),
+                          transitionBuilder: (c, a) => FadeTransition(opacity: a, child: SlideTransition(position: Tween(begin: const Offset(0, 0.35), end: Offset.zero).animate(a), child: c)),
+                          child: Text(
+                            nextStep == StudioStep.result ? 'Ver mi bebida' : 'Siguiente · ${nextStep.label}',
+                            key: ValueKey(nextStep),
+                            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, letterSpacing: 0.1),
+                          ),
+                        ),
                       ),
                     ),
                   ),

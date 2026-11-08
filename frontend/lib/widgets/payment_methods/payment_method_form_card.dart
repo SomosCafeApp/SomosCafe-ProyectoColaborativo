@@ -149,7 +149,7 @@ class PaymentMethodFormCard extends StatelessWidget {
                   height: 46,
                   child: OutlinedButton(
                     style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: isDark ? Colors.white.withAlpha(30) : const Color(0xFFE5DDD3)),
+                      side: BorderSide(color: isDark ? AppColors.darkBorder : const Color(0xFFE5DDD3)),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                     ),
                     onPressed: isSaving ? null : onClose,

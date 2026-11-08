@@ -1,7 +1,8 @@
+import '../core/utils/money_format.dart';
 import 'package:flutter/material.dart';
 import '../core/constants/app_colors.dart';
 import '../models/order.dart';
-import 'main_navigation_screen.dart';
+import '../core/utils/tab_navigation.dart';
 
 import '../animations/animations.dart';
 class OrderSuccessPage extends StatelessWidget {
@@ -74,7 +75,7 @@ class OrderSuccessPage extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                'Pedido $_orderNumber · \$${order.total.toStringAsFixed(0)} COP',
+                'Pedido $_orderNumber · ${formatCop(order.total)} COP',
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
@@ -105,16 +106,9 @@ class OrderSuccessPage extends StatelessWidget {
                     ),
                   ),
                   onPressed: () {
-                    // Limpia todo el stack de pantallas y reconstruye la navegación desde la raíz
-                    Navigator.of(context).pushAndRemoveUntil(
-                      PageRouteBuilder(
-                        pageBuilder: (context, animation1, animation2) =>
-                            const MainNavigationScreen(),
-                        transitionDuration: Duration.zero,
-                        reverseTransitionDuration: Duration.zero,
-                      ),
-                      (route) => false,
-                    );
+                    // Cierra el stack y vuelve a la navegación principal ya
+                    // montada (conserva pop-up de eventos y alertas admin).
+                    TabNavigation.goToTab(context, TabNavigation.homeTab);
                   },
                   child: const Text(
                     'Volver al Menú',

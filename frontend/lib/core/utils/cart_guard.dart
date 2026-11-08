@@ -6,6 +6,7 @@ import '../../models/product_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cart_provider.dart';
 import '../constants/app_colors.dart';
+import 'tab_navigation.dart';
 
 /// Centraliza la regla "hay que estar logueado para agregar al
 /// carrito". Se usa en vez de llamar a CartProvider.addToCart
@@ -50,8 +51,12 @@ class CartGuard {
 
   static void _showLoginRequiredSnackBar(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Debes iniciar sesión para agregar productos al carrito'),
+      SnackBar(
+        content: const Text('Debes iniciar sesión para agregar productos al carrito'),
+        action: SnackBarAction(
+          label: 'Iniciar sesión',
+          onPressed: () => TabNavigation.goToProfile(context),
+        ),
       ),
     );
   }

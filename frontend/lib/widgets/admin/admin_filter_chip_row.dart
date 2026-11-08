@@ -3,6 +3,7 @@ import 'dart:ui' show PointerDeviceKind;
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
+import 'admin_choice_chip.dart';
 
 /// Un chip de filtro: etiqueta, cuántos elementos incluye y su acción.
 class AdminFilterItem {
@@ -37,13 +38,10 @@ class AdminFilterChipRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final unselectedBgColor = isDark ? AppColors.darkSurface : AppColors.lightSurfaceSubtle;
-    final unselectedTextColor = isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
-
-    final dividerColor = isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
+    final dividerColor = isDark ? AppColors.darkBorder : AppColors.lightTextSecondary;
 
     return SizedBox(
-      height: 38,
+      height: 46,
       child: ScrollConfiguration(
         // Por defecto Flutter no deja arrastrar con el mouse; sin esto,
         // en escritorio los chips que no caben quedarían inalcanzables.
@@ -62,20 +60,10 @@ class AdminFilterChipRow extends StatelessWidget {
           itemBuilder: (context, index) {
             final item = items[index];
 
-            final chip = ChoiceChip(
-              label: Text('${item.label} (${item.count})'),
+            final chip = AppChoiceChip(
+              label: '${item.label} (${item.count})',
               selected: item.selected,
-              selectedColor: AppColors.primary,
-              backgroundColor: unselectedBgColor,
-              showCheckmark: false,
-              side: BorderSide.none,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              labelStyle: TextStyle(
-                fontSize: 12,
-                fontWeight: item.selected ? FontWeight.bold : FontWeight.w500,
-                color: item.selected ? Colors.white : unselectedTextColor,
-              ),
-              onSelected: (_) => item.onTap(),
+              onSelected: item.onTap,
             );
 
             if (!item.dividerBefore) return chip;

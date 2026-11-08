@@ -1,3 +1,4 @@
+import '../core/utils/money_format.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
@@ -318,7 +319,7 @@ class _ProductCardState extends State<ProductCard> {
                             ),
                             if (product.hasDiscount)
                               Text(
-                                '\$${product.price.toStringAsFixed(0)}',
+                                '${formatCop(product.price)}',
                                 style: TextStyle(
                                   fontSize: 9,
                                   color: mutedColor,
@@ -326,7 +327,7 @@ class _ProductCardState extends State<ProductCard> {
                                 ),
                               ),
                             Text(
-                              '\$${product.effectivePrice.toStringAsFixed(0)} COP',
+                              '${formatCop(product.effectivePrice)} COP',
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w900,

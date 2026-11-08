@@ -1,3 +1,4 @@
+import '../core/utils/money_format.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -288,7 +289,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
       ),
       bottomNavigationBar: ConfirmOrderBar(
         label: '${_paymentMethod == PaymentMethodType.transfer ? 'Continuar con el pago' : 'Confirmar pedido'}'
-            ' · \$${total.toStringAsFixed(0)} COP',
+            ' · ${formatCop(total)} COP',
         isLoading: orderProvider.isCreating,
         enabled: !cart.isEmpty && !cart.hasUnavailableLines,
         onConfirm: _confirm,

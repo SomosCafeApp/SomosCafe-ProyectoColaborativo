@@ -87,7 +87,7 @@ class _CouponPickerSectionState extends State<CouponPickerSection> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: selected != null ? AppColors.primary : (isDark ? Colors.white24 : Colors.grey.shade300),
+                  color: selected != null ? AppColors.primary : (isDark ? AppColors.darkBorder : Colors.grey.shade300),
                   width: selected != null ? 2 : 1,
                 ),
               ),
@@ -186,7 +186,7 @@ class _CouponSheet extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: selected ? AppColors.primary : (isDark ? Colors.white24 : Colors.grey.shade300),
+                color: selected ? AppColors.primary : (isDark ? AppColors.darkBorder : Colors.grey.shade300),
                 width: selected ? 2 : 1,
               ),
             ),

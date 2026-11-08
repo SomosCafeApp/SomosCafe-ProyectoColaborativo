@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
-import '../../pages/main_navigation_screen.dart'; // Asegúrate de ajustar la ruta si es necesario
+import '../../core/utils/tab_navigation.dart';
 
 class LoginHeader extends StatelessWidget {
   const LoginHeader({super.key});
@@ -61,14 +61,10 @@ class LoginHeader extends StatelessWidget {
         tooltip: 'Volver',
               padding: EdgeInsets.zero,
               icon: const Icon(Icons.arrow_back, color: Colors.white, size: 18),
-              // CAMBIO AQUÍ: Forzamos la redirección limpia al Home/MainNavigationScreen
-              onPressed: () {
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
-                  (route) => false,
-                );
-              },
+              // Vuelve al Inicio reutilizando la navegación principal ya
+              // montada (no se crea otra: así se conservan el pop-up de
+              // eventos y las alertas de pedidos del admin).
+              onPressed: () => TabNavigation.goToTab(context, TabNavigation.homeTab),
             ),
           ),
         ),

@@ -1,3 +1,4 @@
+import '../core/utils/money_format.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -91,7 +92,7 @@ class _TransferPaymentPageState extends State<TransferPaymentPage> {
               children: [
                 Center(
                   child: Text(
-                    'Total a pagar: \$${order.total.toStringAsFixed(0)} COP',
+                    'Total a pagar: ${formatCop(order.total)} COP',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.primary),
                   ),
                 ),

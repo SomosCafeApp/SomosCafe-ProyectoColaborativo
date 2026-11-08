@@ -14,7 +14,7 @@ InputDecoration checkoutFieldDecoration(
 }) {
   final isDark = Theme.of(context).brightness == Brightness.dark;
   final subtitleColor = isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
-  final borderColor = isDark ? Colors.white12 : const Color(0xFFE6E0D8);
+  final borderColor = isDark ? AppColors.darkBorder : const Color(0xFFE6E0D8);
   const errorColor = Color(0xFFE53935);
 
   OutlineInputBorder border(Color color, double width) => OutlineInputBorder(

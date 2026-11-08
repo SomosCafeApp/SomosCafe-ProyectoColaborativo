@@ -3,9 +3,9 @@ import 'package:provider/provider.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/art_saver.dart';
+import '../../core/utils/tab_navigation.dart';
 import '../../models/drink_studio_stage.dart';
 import '../../pages/cart_page.dart';
-import '../../pages/login_page.dart';
 import '../../providers/cart_provider.dart';
 import '../../providers/drink_studio_provider.dart';
 import '../../providers/recipes_provider.dart';
@@ -73,6 +73,7 @@ class SummaryActions extends StatelessWidget {
     final recipes = context.read<RecipesProvider>();
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
+    final rootContext = Navigator.of(context, rootNavigator: true).context;
 
     final custom = studio.customization;
     final level = studio.milkLevel;
@@ -97,18 +98,23 @@ class SummaryActions extends StatelessWidget {
     }
 
     final message = studio.purchaseMessage ?? 'No pudimos agregar tu latte.';
+    final needsLogin = studio.purchaseNeedsLogin;
+    // Mismo estilo que el resto de SnackBar de la app (tema global:
+    // color de marca, flotante, esquinas redondeadas). Solo los errores
+    // reales del servidor usan rojo, igual que CartGuard.
     messenger
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
           content: Text(message),
-          backgroundColor: Colors.red.shade700,
-          duration: const Duration(seconds: 5),
-          action: studio.purchaseNeedsLogin
+          backgroundColor: needsLogin ? null : Colors.red.shade700,
+          duration: Duration(seconds: needsLogin ? 4 : 5),
+          action: needsLogin
               ? SnackBarAction(
                   label: 'Iniciar sesión',
-                  textColor: Colors.white,
-                  onPressed: () => navigator.push(MaterialPageRoute<void>(builder: (_) => const LoginPage())),
+                  // No se apila un Login sobre DrinkStudio: se vuelve a la
+                  // navegación principal y se abre la pestaña Perfil.
+                  onPressed: () => TabNavigation.goToProfile(rootContext),
                 )
               : null,
         ),

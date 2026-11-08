@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../core/constants/app_colors.dart';
 import '../models/app_event.dart';
+import '../services/maps_launcher.dart';
 import '../widgets/events/event_hero.dart';
 import '../widgets/events/event_info_tile.dart';
 import '../widgets/profile/profile_sub_page_header.dart';
@@ -109,6 +110,21 @@ class EventDetailPage extends StatelessWidget {
                       iconBackground: isDark ? const Color(0xFF1E2B35) : AppColors.catCold,
                       label: 'Dónde',
                       value: event.location,
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () => MapsLauncher.openWithFeedback(context, event.location),
+                        icon: const Icon(Icons.map_rounded, size: 20),
+                        label: const Text('Ver ubicación en Google Maps', style: TextStyle(fontWeight: FontWeight.w800)),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF0288D1),
+                          side: BorderSide(color: const Color(0xFF0288D1).withValues(alpha: 0.55), width: 1.4),
+                          minimumSize: const Size(0, 50),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                      ),
                     ),
                   ],
                 ],

@@ -50,6 +50,9 @@ class AppTheme {
   }) {
     final buttonShape = WidgetStatePropertyAll<OutlinedBorder>(RoundedRectangleBorder(borderRadius: AppRadius.control));
     const minSize = WidgetStatePropertyAll<Size>(Size(64, AppSizes.minTap));
+    final dark = brightness == Brightness.dark;
+    final chipIdle = dark ? AppColors.darkSurfaceSubtle : AppColors.lightSurfaceSubtle;
+    final line = dark ? AppColors.darkBorder : const Color(0xFFEDE6DD);
 
     return ThemeData(
       useMaterial3: true,
@@ -61,23 +64,76 @@ class AppTheme {
       cardTheme: CardThemeData(
         color: surface,
         elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: AppRadius.card),
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: AppRadius.card,
+          side: dark ? const BorderSide(color: AppColors.darkBorder, width: 0.8) : BorderSide.none,
+        ),
       ),
 
       dialogTheme: DialogThemeData(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         elevation: 0,
-        backgroundColor: surface,
+        backgroundColor: dark ? AppColors.darkSurfaceRaised : surface,
+        surfaceTintColor: Colors.transparent,
         titleTextStyle: TextStyle(color: textPrimary, fontSize: 18, fontWeight: FontWeight.bold),
         contentTextStyle: TextStyle(color: textSecondary, fontSize: 13),
       ),
 
       // Hojas inferiores: esquinas superiores redondeadas y asa visible.
       bottomSheetTheme: BottomSheetThemeData(
-        backgroundColor: surface,
+        backgroundColor: dark ? AppColors.darkSurfaceRaised : surface,
+        surfaceTintColor: Colors.transparent,
+        dragHandleColor: dark ? AppColors.darkBorder : null,
         showDragHandle: true,
         shape: RoundedRectangleBorder(borderRadius: AppRadius.sheet),
       ),
+
+      // Chips / opciones seleccionables (categorías, filtros, tipos de
+      // cupón…): SIN borde (antes M3 dibujaba un contorno claro/blanco),
+      // fondo suave cuando no están seleccionados y color de marca al
+      // seleccionarlos. Un solo estilo para toda la app.
+      chipTheme: ChipThemeData(
+        backgroundColor: chipIdle,
+        selectedColor: AppColors.primary,
+        disabledColor: chipIdle.withValues(alpha: 0.6),
+        side: BorderSide.none,
+        showCheckmark: false,
+        elevation: 0,
+        pressElevation: 0,
+        shadowColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        labelStyle: TextStyle(color: textSecondary, fontSize: 12.5, fontWeight: FontWeight.w600),
+        secondaryLabelStyle: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w700),
+        iconTheme: IconThemeData(color: textSecondary, size: 18),
+      ),
+
+      // Segmented buttons (p. ej. modo del minijuego) con el mismo lenguaje.
+      segmentedButtonTheme: SegmentedButtonThemeData(
+        style: ButtonStyle(
+          side: const WidgetStatePropertyAll(BorderSide.none),
+          backgroundColor: WidgetStateProperty.resolveWith((st) => st.contains(WidgetState.selected) ? AppColors.primary : chipIdle),
+          foregroundColor: WidgetStateProperty.resolveWith((st) => st.contains(WidgetState.selected) ? Colors.white : textSecondary),
+        ),
+      ),
+
+      dividerTheme: DividerThemeData(color: line, thickness: 1, space: 1),
+
+      popupMenuTheme: PopupMenuThemeData(
+        color: dark ? AppColors.darkSurfaceRaised : surface,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith((st) => st.contains(WidgetState.selected) ? Colors.white : (dark ? AppColors.darkTextSecondary : Colors.white)),
+        trackColor: WidgetStateProperty.resolveWith((st) => st.contains(WidgetState.selected) ? AppColors.primary : (dark ? AppColors.darkSurfaceRaised : const Color(0xFFD9D0C6))),
+        trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
+      ),
+
+      listTileTheme: ListTileThemeData(iconColor: dark ? AppColors.darkAccent : AppColors.primary),
 
       snackBarTheme: SnackBarThemeData(
         backgroundColor: AppColors.primary,

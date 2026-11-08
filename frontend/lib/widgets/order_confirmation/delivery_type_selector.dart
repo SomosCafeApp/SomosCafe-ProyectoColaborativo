@@ -70,7 +70,7 @@ class _Option extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: selected ? AppColors.primary : (isDark ? Colors.white24 : Colors.grey.shade300),
+            color: selected ? AppColors.primary : (isDark ? AppColors.darkBorder : Colors.grey.shade300),
             width: selected ? 2 : 1,
           ),
           color: selected

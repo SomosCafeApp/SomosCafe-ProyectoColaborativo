@@ -1,3 +1,4 @@
+import '../../core/utils/money_format.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -87,7 +88,7 @@ class _PromotionProductPickerSheetState extends State<PromotionProductPickerShee
                             activeColor: AppColors.primary,
                             title: Text(p.name),
                             subtitle: Text(
-                              '\$${p.price.toStringAsFixed(0)}${p.isAvailable ? '' : ' · No disponible'}',
+                              '${formatCop(p.price)}${p.isAvailable ? '' : ' · No disponible'}',
                               style: const TextStyle(fontSize: 12),
                             ),
                             onChanged: (v) => setState(() {

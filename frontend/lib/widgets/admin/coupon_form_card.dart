@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../core/constants/app_colors.dart';
+import 'admin_choice_chip.dart';
 import '../../models/coupon.dart';
 import '../../models/promotion.dart';
 import 'admin_form_style.dart';
@@ -152,23 +153,18 @@ class _CouponFormCardState extends State<CouponFormCard> {
             const AdminFieldLabel('Tipo de cupón'),
             Wrap(
               spacing: 8,
+              runSpacing: 8,
               children: [
                 for (final option in const [
                   ('REWARD', 'Canjeable'),
                   ('WELCOME', 'Bienvenida'),
                   ('BIRTHDAY', 'Cumpleaños'),
                 ])
-                  ChoiceChip(
-                    label: Text(option.$2),
+                  AppChoiceChip(
+                    label: option.$2,
                     selected: _kind == option.$1,
-                    selectedColor: AppColors.primary,
-                    labelStyle: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: _kind == option.$1 ? Colors.white : style.textColor,
-                    ),
                     // El tipo no se cambia después de crear el cupón.
-                    onSelected: _isEditing ? null : (_) => setState(() => _kind = option.$1),
+                    onSelected: _isEditing ? null : () => setState(() => _kind = option.$1),
                   ),
               ],
             ),
@@ -208,16 +204,11 @@ class _CouponFormCardState extends State<CouponFormCard> {
               children: [
                 for (final type in PromotionDiscountType.values) ...[
                   Expanded(
-                    child: ChoiceChip(
-                      label: SizedBox(width: double.infinity, child: Text(type.label, textAlign: TextAlign.center)),
+                    child: AppChoiceChip(
+                      label: type.label,
+                      expand: true,
                       selected: _type == type,
-                      selectedColor: AppColors.primary,
-                      labelStyle: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: _type == type ? Colors.white : style.textColor,
-                      ),
-                      onSelected: (_) => setState(() => _type = type),
+                      onSelected: () => setState(() => _type = type),
                     ),
                   ),
                   if (type == PromotionDiscountType.percentage) const SizedBox(width: 8),

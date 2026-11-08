@@ -1,3 +1,4 @@
+import '../../core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 
 import '../../animations/animations.dart';
@@ -41,7 +42,7 @@ class ProfileOptionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: isDestructive
             ? Border.all(color: Colors.redAccent.withAlpha(100), width: 1.2)
-            : (isDark ? Border.all(color: Colors.white.withAlpha(10), width: 1) : null),
+            : (isDark ? Border.all(color: AppColors.darkBorder, width: 0.8) : null),
         boxShadow: (!isDestructive && !isDark)
             ? [
                 BoxShadow(

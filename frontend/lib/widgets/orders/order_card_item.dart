@@ -1,3 +1,4 @@
+import '../../core/utils/money_format.dart';
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../models/order.dart';
@@ -43,7 +44,7 @@ class OrderCardItem extends StatelessWidget {
     return '$day/$month/${date.year}, $hour:$minute';
   }
 
-  String _money(double v) => '\$${v.toStringAsFixed(0)} COP';
+  String _money(double v) => '${formatCop(v)} COP';
 
   String get _remainingText {
     final d = order.cancelRemaining;

@@ -214,7 +214,7 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
                   // Las cuentas de administrador no se pueden eliminar.
                   if (!context.read<AuthProvider>().isAdmin) ...[
                     const SizedBox(height: 28),
-                    Divider(color: isDark ? Colors.white12 : Colors.black12),
+                    Divider(color: isDark ? AppColors.darkBorder : Colors.black12),
                     const SizedBox(height: 12),
                     SizedBox(
                       width: double.infinity,

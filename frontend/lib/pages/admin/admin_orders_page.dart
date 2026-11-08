@@ -1,3 +1,4 @@
+import '../../core/utils/money_format.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -152,7 +153,7 @@ class _AdminOrdersPageState extends State<AdminOrdersPage> {
     );
   }
 
-  String _money(double value) => '\$${value.toStringAsFixed(0)} COP';
+  String _money(double value) => '${formatCop(value)} COP';
 
   @override
   Widget build(BuildContext context) {

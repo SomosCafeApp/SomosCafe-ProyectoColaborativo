@@ -149,3 +149,9 @@ key.properties
 *.keystore
 local.properties
 .env
+
+# Archivos temporales de Flutter
+.dart_tool/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies

@@ -1,3 +1,4 @@
+import '../../core/utils/money_format.dart';
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/cart_provider.dart';
@@ -132,7 +133,7 @@ class CartItemCard extends StatelessWidget {
                       children: [
                         if (line.hasDiscount)
                           Text(
-                            '\$${line.lineSubtotal.toStringAsFixed(0)} COP',
+                            '${formatCop(line.lineSubtotal)} COP',
                             style: TextStyle(
                               fontSize: 11,
                               color: subtitleColor,
@@ -140,7 +141,7 @@ class CartItemCard extends StatelessWidget {
                             ),
                           ),
                         Text(
-                          '\$${line.lineTotal.toStringAsFixed(0)} COP',
+                          '${formatCop(line.lineTotal)} COP',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 14,

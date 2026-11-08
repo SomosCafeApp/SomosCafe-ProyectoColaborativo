@@ -49,7 +49,7 @@ class _ToppingsPanelState extends State<ToppingsPanel> {
     final hint = switch (current) {
       _Section.toppings => s.latteArt.isNotEmpty && hasCream
           ? 'Tu crema va alrededor de la taza para dejar a la vista el arte latte.'
-          : 'Toca para añadir y usa + / − para más porciones. Cada porción extra suma \$${o.toppingExtraPortionPrice.round()}.',
+          : 'Toca para añadir y usa + / − para más porciones. Cada porción extra suma ${formatCop(o.toppingExtraPortionPrice)}.',
       _Section.sweeteners => 'Cada endulzante llega en su sobre, junto a tu bebida. Máximo ${o.maxSweeteners}.',
       _Section.syrups => 'Elige hasta ${o.maxSyrups} jarabes.',
     };
@@ -179,7 +179,7 @@ class _ToppingsPanelState extends State<ToppingsPanel> {
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        extras > 0 ? '$extras extra × \$${o.toppingExtraPortionPrice.round()}' : qty >= o.maxToppingQuantity ? 'Máximo' : 'Incluye 1 porción',
+                                        extras > 0 ? '$extras extra × ${formatCop(o.toppingExtraPortionPrice)}' : qty >= o.maxToppingQuantity ? 'Máximo' : 'Incluye 1 porción',
                                         style: TextStyle(fontSize: 11, color: StudioColors.muted(dark)),
                                       ),
                                     ],

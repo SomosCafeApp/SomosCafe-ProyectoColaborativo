@@ -1,3 +1,4 @@
+import '../widgets/admin/admin_choice_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -49,17 +50,7 @@ class _PointsHistoryPageState extends State<PointsHistoryPage> {
 
   Widget _chip(String label, _Filter value) {
     final selected = _filter == value;
-    return ChoiceChip(
-      label: Text(label),
-      selected: selected,
-      selectedColor: AppColors.primary,
-      labelStyle: TextStyle(
-        fontSize: 12,
-        fontWeight: FontWeight.bold,
-        color: selected ? Colors.white : null,
-      ),
-      onSelected: (_) => setState(() => _filter = value),
-    );
+    return AppChoiceChip(label: label, selected: selected, onSelected: () => setState(() => _filter = value));
   }
 
   @override

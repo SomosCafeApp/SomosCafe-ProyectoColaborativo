@@ -27,7 +27,7 @@ class SettingsDropdownSelector extends StatelessWidget {
       decoration: BoxDecoration(
         color: scaffoldBgColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isDark ? Colors.white24 : Colors.black12),
+        border: Border.all(color: isDark ? AppColors.darkBorder : Colors.black12),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton(

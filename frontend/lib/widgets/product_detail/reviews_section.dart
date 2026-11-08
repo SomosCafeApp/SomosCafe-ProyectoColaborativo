@@ -1,3 +1,4 @@
+import '../../core/utils/tab_navigation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -440,11 +441,20 @@ class _ReviewsSectionState extends State<ReviewsSection> {
 
           if (!isLoggedIn) ...[
             const SizedBox(height: 8),
-            Text(
-              'Inicia sesión para dejar tu reseña.',
-              style: TextStyle(
-                fontSize: 12,
-                color: widget.mutedColor,
+            GestureDetector(
+              onTap: () => TabNavigation.goToProfile(context),
+              behavior: HitTestBehavior.opaque,
+              child: Text.rich(
+                TextSpan(
+                  text: 'Inicia sesión para dejar tu reseña.',
+                  style: TextStyle(fontSize: 12, color: widget.mutedColor),
+                  children: const [
+                    TextSpan(
+                      text: '  Iniciar sesión',
+                      style: TextStyle(fontWeight: FontWeight.w800, decoration: TextDecoration.underline),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

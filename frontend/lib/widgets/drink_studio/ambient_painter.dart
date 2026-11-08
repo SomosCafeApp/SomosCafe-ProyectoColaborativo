@@ -47,13 +47,38 @@ class AmbientPainter extends CustomPainter {
 
   void _background(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
+    // 1) Resplandor cálido detrás del vaso.
     canvas.drawRect(
       rect,
       Paint()
         ..shader = RadialGradient(
-          center: const Alignment(0, 0.35),
+          center: const Alignment(0, 0.3),
           radius: 0.95,
-          colors: [dark ? const Color(0xFF3A2619) : StudioColors.beige, Colors.transparent],
+          colors: [dark ? const Color(0xFF4A301F) : StudioColors.beige, Colors.transparent],
+        ).createShader(rect),
+    );
+    // 2) Luz suave que cae desde arriba (da volumen a la escena).
+    canvas.drawRect(
+      rect,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.center,
+          colors: [
+            (dark ? const Color(0xFFD9A877) : Colors.white).withValues(alpha: dark ? 0.07 : 0.45),
+            Colors.transparent,
+          ],
+        ).createShader(rect),
+    );
+    // 3) Viñeta: oscurece apenas los bordes para centrar la mirada.
+    canvas.drawRect(
+      rect,
+      Paint()
+        ..shader = RadialGradient(
+          center: Alignment.center,
+          radius: 1.15,
+          colors: [Colors.transparent, Colors.black.withValues(alpha: dark ? 0.32 : 0.05)],
+          stops: const [0.62, 1],
         ).createShader(rect),
     );
   }

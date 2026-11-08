@@ -5,6 +5,7 @@ import '../../models/product_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/favorites_provider.dart';
 import '../../providers/product_provider.dart';
+import 'tab_navigation.dart';
 
 /// Centraliza la regla "hay que estar logueado para marcar favoritos".
 /// Se usa en vez de llamar a FavoritesProvider.toggleFavorite
@@ -15,8 +16,12 @@ class FavoritesGuard {
 
     if (!auth.isLoggedIn) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Debes iniciar sesión para agregar a favoritos'),
+        SnackBar(
+          content: const Text('Debes iniciar sesión para agregar a favoritos'),
+          action: SnackBarAction(
+            label: 'Iniciar sesión',
+            onPressed: () => TabNavigation.goToProfile(context),
+          ),
         ),
       );
       return;

@@ -62,7 +62,7 @@ class OrderSummaryCard extends StatelessWidget {
         color: isDark ? const Color(0xFF332B1E) : const Color(0xFFFDF6E2),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? Colors.white12 : const Color(0xFFF3E5AB),
+          color: isDark ? AppColors.darkBorder : const Color(0xFFF3E5AB),
         ),
       ),
       child: Column(

@@ -1,3 +1,4 @@
+import '../../core/utils/money_format.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -28,7 +29,7 @@ class OrderSummaryCard extends StatelessWidget {
     required this.total,
   });
 
-  String _money(double value) => '\$${value.toStringAsFixed(0)} COP';
+  String _money(double value) => '${formatCop(value)} COP';
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +43,7 @@ class OrderSummaryCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF332B1E) : const Color(0xFFFDF6E2),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isDark ? Colors.white12 : const Color(0xFFF3E5AB)),
+        border: Border.all(color: isDark ? AppColors.darkBorder : const Color(0xFFF3E5AB)),
       ),
       child: Column(
         children: [

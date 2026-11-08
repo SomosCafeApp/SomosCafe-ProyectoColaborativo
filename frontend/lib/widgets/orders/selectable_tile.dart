@@ -34,7 +34,7 @@ class SelectableTile extends StatelessWidget {
             border: Border.all(
               color: selected
                   ? AppColors.primary
-                  : (isDark ? Colors.white24 : Colors.grey.shade300),
+                  : (isDark ? AppColors.darkBorder : Colors.grey.shade300),
               width: selected ? 2 : 1,
             ),
           ),

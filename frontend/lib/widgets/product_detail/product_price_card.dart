@@ -1,3 +1,4 @@
+import '../../core/utils/money_format.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -46,7 +47,7 @@ class ProductPriceCard extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      '\$${originalPrice.toStringAsFixed(0)}',
+                      '${formatCop(originalPrice)}',
                       style: TextStyle(
                         fontSize: 13,
                         color: subtitleColor,
@@ -68,7 +69,7 @@ class ProductPriceCard extends StatelessWidget {
                   ],
                 ),
               Text(
-                '\$${totalPrice.toStringAsFixed(0)} COP',
+                '${formatCop(totalPrice)} COP',
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: AppColors.primary),
               ),
             ],

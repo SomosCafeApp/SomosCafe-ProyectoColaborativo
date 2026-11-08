@@ -40,7 +40,13 @@ class _SummaryOverlayState extends State<SummaryOverlay> {
           Row(
             children: [
               Expanded(child: Text(s.cupLabel, maxLines: 1, overflow: TextOverflow.ellipsis, style: StudioUi.title(dark))),
-              const Icon(Icons.check_circle_rounded, color: StudioColors.primary),
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.3, end: 1),
+                duration: const Duration(milliseconds: 520),
+                curve: Curves.easeOutBack,
+                builder: (_, v, child) => Transform.scale(scale: v, child: child),
+                child: Icon(Icons.check_circle_rounded, color: StudioColors.accent(dark)),
+              ),
             ],
           ),
           const SizedBox(height: 2),

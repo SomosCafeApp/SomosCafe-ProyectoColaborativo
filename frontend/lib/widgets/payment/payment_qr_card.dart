@@ -53,7 +53,7 @@ class _PaymentQrCardState extends State<PaymentQrCard> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: isDark ? Colors.white12 : const Color(0xFFEEEEEE)),
+              border: Border.all(color: isDark ? AppColors.darkBorder : const Color(0xFFEEEEEE)),
             ),
             child: Image.asset(
               PaymentConfig.qrAssetPath,

@@ -1,3 +1,4 @@
+import '../../core/utils/money_format.dart';
 import 'package:flutter/material.dart';
 
 import '../../animations/animations.dart';
@@ -22,7 +23,7 @@ class ProductBottomBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final label = isAvailable ? 'Agregar al Carrito (\$${total.toStringAsFixed(0)} COP)' : 'No disponible';
+    final label = isAvailable ? 'Agregar al Carrito (${formatCop(total)} COP)' : 'No disponible';
 
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),

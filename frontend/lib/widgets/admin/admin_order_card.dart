@@ -1,3 +1,4 @@
+import '../../core/utils/money_format.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -30,7 +31,7 @@ class AdminOrderCard extends StatelessWidget {
     required this.onDelete,
   });
 
-  String _money(double v) => '\$${v.toStringAsFixed(0)} COP';
+  String _money(double v) => '${formatCop(v)} COP';
 
   String get _formattedDate {
     final d = order.createdAt;

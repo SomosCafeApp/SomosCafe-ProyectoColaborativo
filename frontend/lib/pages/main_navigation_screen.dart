@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
 import '../core/utils/menu_category_request.dart';
+import '../core/utils/tab_navigation.dart';
 import '../providers/active_event_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/product_provider.dart';
@@ -29,6 +30,27 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int? _lastEventPopupRequest;
   MenuCategoryRequest? _menuCategoryRequest;
   int _menuRequestCount = 0;
+  int _lastTabRequestId = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    TabNavigation.request.addListener(_onTabRequest);
+  }
+
+  @override
+  void dispose() {
+    TabNavigation.request.removeListener(_onTabRequest);
+    super.dispose();
+  }
+
+  /// Otra pantalla (p. ej. DrinkStudio) pidió abrir una pestaña concreta.
+  void _onTabRequest() {
+    final req = TabNavigation.request.value;
+    if (req == null || req.requestId == _lastTabRequestId || !mounted) return;
+    _lastTabRequestId = req.requestId;
+    _changeTab(req.tab);
+  }
 
   /// Si el usuario toca la push de un evento, se vuelve a la pestaña
   /// Inicio (donde sale el pop-up).
@@ -84,7 +106,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     final activePillColor = AppColors.primary;
     final activeTextColor = AppColors.primary;
     final inactiveColor = isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
-    final borderColor = isDark ? AppColors.darkSurfaceSubtle : const Color(0xFFEEEEEE);
+    final borderColor = isDark ? AppColors.darkBorder : const Color(0xFFEEEEEE);
 
     final List<Widget> pages = [
       HomePage(

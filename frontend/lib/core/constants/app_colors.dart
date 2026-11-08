@@ -12,12 +12,17 @@ class AppColors {
   static const Color lightTextPrimary = Color(0xFF2B221E);
   static const Color lightTextSecondary = Color(0xFF8A7E75);
 
-  // MODO OSCURO (Extraído exacto de tus capturas en modo oscuro)
-  static const Color darkBackground = Color(0xFF160E0A);  // Fondo principal café moca oscuro
-  static const Color darkSurface = Color(0xFF281C16);     // Fondo de tarjetas
-  static const Color darkSurfaceSubtle = Color(0xFF382921); // Tarjetas secundarias
-  static const Color darkTextPrimary = Color(0xFFFAF7F2);
-  static const Color darkTextSecondary = Color(0xFFC2B6AC);
+  // MODO OSCURO: misma familia moca, con más profundidad. Cada capa
+  // (fondo → tarjeta → tarjeta secundaria → elevado) sube un escalón de
+  // luminosidad para que las tarjetas se distingan sin usar bordes blancos.
+  static const Color darkBackground = Color(0xFF120B08);   // Fondo principal, espresso profundo
+  static const Color darkSurface = Color(0xFF211610);      // Tarjetas
+  static const Color darkSurfaceSubtle = Color(0xFF302219); // Campos y tarjetas secundarias
+  static const Color darkSurfaceRaised = Color(0xFF3B2B20); // Elementos elevados / seleccionados
+  static const Color darkBorder = Color(0xFF42322A);       // Línea tonal (café, nunca blanca)
+  static const Color darkTextPrimary = Color(0xFFFBF6EF);
+  static const Color darkTextSecondary = Color(0xFFCDBFB3);
+  static const Color darkAccent = Color(0xFFD9A877);       // Caramelo claro: acentos y enlaces legibles sobre oscuro
 
   // Categorías
   static const Color catWarm = Color(0xFFFDF0D5);

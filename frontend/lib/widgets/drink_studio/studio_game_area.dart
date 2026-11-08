@@ -8,6 +8,7 @@ import 'art_overlays.dart';
 import 'cup_stage.dart';
 import 'milk_badge.dart';
 import 'studio_colors.dart';
+import 'studio_sparkles.dart';
 
 /// Zona de juego: el vaso en vivo (de lado, inclinado o desde arriba
 /// según la sección), la ilustración de la leche y la etiqueta con
@@ -65,6 +66,17 @@ class StudioGameArea extends StatelessWidget {
           ),
           Positioned(left: 12, top: 10, child: ArtMiniPreview(pour: s.pour)),
         ],
+        // Celebración: ráfaga de destellos al terminar el arte latte y al
+        // llegar a la bebida final.
+        Positioned.fill(
+          child: AnimatedBuilder(
+            animation: s.pour,
+            builder: (_, _) => StudioSparkles(
+              tick: s.pour.doneTick * 2 + (s.showSummary ? 1 : 0),
+              active: s.showSummary || (s.step == StudioStep.art && s.pour.completed),
+            ),
+          ),
+        ),
         // Cartón de leche que vierte sobre el café (se pinta con la misma
         // geometría del vaso para que el chorro caiga en la superficie).
         Positioned.fill(
@@ -83,11 +95,10 @@ class StudioGameArea extends StatelessWidget {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: StudioColors.panel(dark).withValues(alpha: 0.85),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: StudioColors.primary.withValues(alpha: 0.4),
-                  ),
+                  color: StudioColors.panel(dark).withValues(alpha: 0.88),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: StudioColors.line(dark)),
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: dark ? 0.35 : 0.08), blurRadius: 10, offset: const Offset(0, 3))],
                 ),
                 child: Text(
                   label,
@@ -136,7 +147,7 @@ class _ViewToggle extends StatelessWidget {
                 Icon(
                   icon,
                   size: 16,
-                  color: on ? Colors.white : StudioColors.primary,
+                  color: on ? Colors.white : StudioColors.accent(dark),
                 ),
                 const SizedBox(width: 6),
                 Text(
@@ -159,8 +170,9 @@ class _ViewToggle extends StatelessWidget {
       decoration: BoxDecoration(
         color: StudioColors.panel(dark).withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: StudioColors.line(dark)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.12), blurRadius: 8),
+          BoxShadow(color: Colors.black.withValues(alpha: dark ? 0.4 : 0.12), blurRadius: 10, offset: const Offset(0, 3)),
         ],
       ),
       child: Row(

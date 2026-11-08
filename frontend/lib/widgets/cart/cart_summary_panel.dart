@@ -1,3 +1,4 @@
+import '../../core/utils/money_format.dart';
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 
@@ -55,7 +56,7 @@ class CartSummaryPanel extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '\$${totalPrice.toStringAsFixed(0)} COP',
+                  '${formatCop(totalPrice)} COP',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,

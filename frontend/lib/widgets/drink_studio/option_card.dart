@@ -59,7 +59,7 @@ class OptionCard extends StatelessWidget {
                   ? const Padding(
                       key: ValueKey('on'),
                       padding: EdgeInsets.only(left: 6),
-                      child: Icon(Icons.check_circle_rounded, size: 18, color: StudioColors.primary),
+                      child: Icon(Icons.check_circle_rounded, size: 18, color: StudioColors.accent(dark)),
                     )
                   : const SizedBox(key: ValueKey('off'), width: 0),
             ),
@@ -76,13 +76,16 @@ class MiniCup extends StatelessWidget {
   final double scale;
 
   @override
-  Widget build(BuildContext context) =>
-      CustomPaint(size: Size(34, 30 * scale + 6), painter: _MiniCupPainter(scale));
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return CustomPaint(size: Size(34, 30 * scale + 6), painter: _MiniCupPainter(scale, dark));
+  }
 }
 
 class _MiniCupPainter extends CustomPainter {
-  _MiniCupPainter(this.scale);
+  _MiniCupPainter(this.scale, this.dark);
   final double scale;
+  final bool dark;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -100,12 +103,13 @@ class _MiniCupPainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.8
         ..strokeJoin = StrokeJoin.round
-        ..color = StudioColors.ink,
+        // En oscuro el trazo café oscuro desaparecería: se usa el latte claro.
+        ..color = dark ? StudioColors.latte : StudioColors.ink,
     );
   }
 
   @override
-  bool shouldRepaint(covariant _MiniCupPainter old) => old.scale != scale;
+  bool shouldRepaint(covariant _MiniCupPainter old) => old.scale != scale || old.dark != dark;
 }
 
 /// Contenido de cada pestaña de la bandeja: título, pista y panel.
