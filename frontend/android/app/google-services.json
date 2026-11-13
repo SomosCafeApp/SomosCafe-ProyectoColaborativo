@@ -9,6 +9,25 @@
       "client_info": {
         "mobilesdk_app_id": "1:876145709974:android:abc675c461c8ae905fc3b7",
         "android_client_info": {
+          "package_name": "com.example.somoscafeapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDHY9NHELI6WHwxlMr76Bln6HfNCsLXWR8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:876145709974:android:a3b1a55a901b33555fc3b7",
+        "android_client_info": {
           "package_name": "com.somoscafeapp"
         }
       },
