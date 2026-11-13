@@ -18,7 +18,7 @@ val keyProps = Properties().apply {
 }
 
 android {
-    namespace = "com.example.somoscafeapp"
+    namespace = "com.somoscafeapp"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -34,8 +34,7 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.somoscafeapp"
+        applicationId = "com.somoscafeapp"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
@@ -66,14 +65,32 @@ android {
 
     buildTypes {
         release {
-            // Firma con tu keystore si existe key.properties;
-            // si no, usa la clave de debug (solo para pruebas).
-            signingConfig =
-                if (signingConfigs.findByName("release") != null)
-                    signingConfigs.getByName("release")
-                else
-                    signingConfigs.getByName("debug")
+            // La versión release SIEMPRE se firma con tu keystore de
+            // subida (android/key.properties). Ya no se cae a la clave
+            // de debug: Google Play rechaza esos paquetes.
+            if (signingConfigs.findByName("release") != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
+    }
+}
+
+// Si se intenta construir un release sin key.properties, el build se
+// detiene con un mensaje claro (en vez de generar un APK/AAB mal firmado).
+// Solo para pruebas locales puedes saltarte esto con la variable de
+// entorno ALLOW_DEBUG_RELEASE=true (el resultado NO sirve para Play).
+gradle.taskGraph.whenReady {
+    val buildsRelease = allTasks.any {
+        val n = it.name
+        n.contains("Release") &&
+            (n.startsWith("assemble") || n.startsWith("bundle") || n.startsWith("package"))
+    }
+    val hasReleaseKey = android.signingConfigs.findByName("release") != null
+    if (buildsRelease && !hasReleaseKey && System.getenv("ALLOW_DEBUG_RELEASE") != "true") {
+        throw GradleException(
+            "Falta android/key.properties: no se puede firmar el release. " +
+                "Crea tu keystore y el archivo key.properties (ver guía de firma)."
+        )
     }
 }
 

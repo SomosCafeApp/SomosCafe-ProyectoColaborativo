@@ -5,6 +5,7 @@ import '../../services/google_auth_service.dart';
 import '../../providers/auth_provider.dart';
 import '../../pages/email_verification_page.dart';
 import '../../pages/forgot_password_page.dart';
+import '../documents/terms_acceptance.dart';
 
 class LoginFormCard extends StatefulWidget {
   final TextEditingController emailController;
@@ -345,6 +346,13 @@ class _LoginFormCardState extends State<LoginFormCard> {
                       ),
                     ],
                   ),
+          ),
+          const SizedBox(height: 14),
+          const TermsLinksText(
+            prefix: 'Si creas tu cuenta con Google, aceptas los ',
+            suffix: '.',
+            fontSize: 11,
+            textAlign: TextAlign.center,
           ),
         ],
       ),

@@ -16,8 +16,19 @@ export const registerUser = async (req, res) => {
             email,
             password,
             phone,
-            avatarPreset
+            avatarPreset,
+            acceptedTerms,
+            termsVersion
         } = req.body;
+
+        // Para crear una cuenta es obligatorio aceptar los Términos y
+        // Condiciones y la Política de Privacidad (Ley 1581 de 2012).
+        if (acceptedTerms !== true) {
+            return res.status(400).json({
+                message:
+                    "Debes aceptar los Términos y Condiciones y la Política de Privacidad para crear tu cuenta"
+            });
+        }
 
         // Avatar predefinido elegido al registrarse (opcional). Una
         // foto de galería se sube después de iniciar sesión.
@@ -287,7 +298,15 @@ export const registerUser = async (req, res) => {
                     true,
 
                 isEmailVerified:
-                    false
+                    false,
+
+                termsAcceptedAt:
+                    new Date(),
+
+                termsVersion:
+                    typeof termsVersion === "string"
+                        ? termsVersion.slice(0, 40)
+                        : ""
 
             });
 

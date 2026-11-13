@@ -10,6 +10,7 @@ import '../services/google_auth_service.dart';
 import '../services/push_service.dart';
 import '../models/picked_image.dart';
 import '../models/user_model.dart';
+import '../core/config/app_info.dart';
 
 const _kTokenKey = 'auth_token';
 const _kUserKey = 'auth_user';
@@ -274,12 +275,16 @@ class AuthProvider extends ChangeNotifier with WidgetsBindingObserver {
     required String password,
     String? phone,
     String? avatarPreset,
+    bool acceptedTerms = false,
   }) async {
     _setLoading(true);
     _errorMessage = null;
 
     try {
       await ApiClient.post('/users/register', body: {
+        // Constancia de aceptación de Términos y Política de Privacidad.
+        'acceptedTerms': acceptedTerms,
+        'termsVersion': AppInfo.termsVersion,
         if (avatarPreset != null && avatarPreset.isNotEmpty) 'avatarPreset': avatarPreset,
         'name': name.trim(),
         'lastName': lastName.trim(),
@@ -584,6 +589,8 @@ class AuthProvider extends ChangeNotifier with WidgetsBindingObserver {
     try {
       final data = await ApiClient.post('/users/login-google', body: {
         'idToken': idToken,
+        // Si es una cuenta nueva, queda constancia de la versión aceptada.
+        'termsVersion': AppInfo.termsVersion,
       });
 
       _token = data['token'] as String;

@@ -9,7 +9,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:876145709974:android:abc675c461c8ae905fc3b7",
         "android_client_info": {
-          "package_name": "com.example.somoscafeapp"
+          "package_name": "com.somoscafeapp"
         }
       },
       "oauth_client": [],

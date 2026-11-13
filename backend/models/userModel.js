@@ -111,6 +111,23 @@ const userSchema = new mongoose.Schema(
         },
 
         // ===================================
+        // ACEPTACIÓN DE TÉRMINOS Y PRIVACIDAD
+        // ===================================
+        // Constancia de cuándo y qué versión de los Términos y de la
+        // Política de Privacidad aceptó la persona al crear su cuenta.
+        // Las cuentas anteriores a esta función quedan en null.
+
+        termsAcceptedAt: {
+            type: Date,
+            default: null
+        },
+
+        termsVersion: {
+            type: String,
+            default: ""
+        },
+
+        // ===================================
         // INFORMACIÓN DEL USUARIO
         // ===================================
 

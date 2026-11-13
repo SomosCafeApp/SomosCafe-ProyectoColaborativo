@@ -504,6 +504,35 @@ export const deleteAccount = async (req, res) => {
             )
         ]);
 
+        // Los pedidos se conservan (montos y productos) por obligaciones
+        // contables, pero sin datos personales: nombre, teléfono y
+        // dirección de entrega, y el comprobante de pago.
+        const ordersWithProof = await Order.find(
+            { userId, "paymentProof.url": { $exists: true } },
+            { "paymentProof.url": 1 }
+        ).lean();
+
+        await Order.updateMany(
+            { userId },
+            {
+                $set: {
+                    recipientName: "",
+                    recipientPhone: "",
+                    addressId: null
+                },
+                $unset: {
+                    addressSnapshot: "",
+                    paymentProof: ""
+                }
+            }
+        );
+
+        await Promise.all(
+            ordersWithProof.map((o) =>
+                deleteCloudinaryImage(o.paymentProof?.url)
+            )
+        );
+
         await deleteCloudinaryImage(oldImage);
 
         // updateOne no pasa por los validadores del esquema: el correo

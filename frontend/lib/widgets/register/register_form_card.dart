@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../services/google_auth_service.dart';
 import '../../providers/auth_provider.dart';
+import '../documents/terms_acceptance.dart';
 import 'custom_text_field.dart';
 
 class RegisterFormCard extends StatefulWidget {
@@ -14,6 +15,8 @@ class RegisterFormCard extends StatefulWidget {
   final bool obscurePassword;
   final bool obscureConfirmPassword;
   final bool isLoading;
+  final bool acceptedTerms;
+  final ValueChanged<bool> onAcceptedChanged;
   final VoidCallback onTogglePassword;
   final VoidCallback onToggleConfirmPassword;
   final VoidCallback onRegister;
@@ -30,6 +33,8 @@ class RegisterFormCard extends StatefulWidget {
     required this.onTogglePassword,
     required this.onToggleConfirmPassword,
     required this.onRegister,
+    required this.acceptedTerms,
+    required this.onAcceptedChanged,
     this.isLoading = false,
   });
 
@@ -53,6 +58,16 @@ class _RegisterFormCardState extends State<RegisterFormCard> {
   }
 
   Future<void> _handleGoogleSignUp() async {
+    if (!widget.acceptedTerms) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Acepta los Términos y la Política de Privacidad para continuar con Google',
+          ),
+        ),
+      );
+      return;
+    }
     setState(() => _isGoogleLoading = true);
     try {
       final idToken = await GoogleAuthService.signInAndGetIdToken();
@@ -166,7 +181,12 @@ class _RegisterFormCardState extends State<RegisterFormCard> {
               subtitleColor,
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 18),
+          TermsAcceptanceRow(
+            value: widget.acceptedTerms,
+            onChanged: widget.onAcceptedChanged,
+          ),
+          const SizedBox(height: 18),
           ElevatedButton(
             onPressed: widget.isLoading ? null : widget.onRegister,
             style: ElevatedButton.styleFrom(

@@ -27,6 +27,7 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _obscurePass = true;
   bool _obscureConfirm = true;
   AvatarChoice? _avatar;
+  bool _acceptedTerms = false;
 
   Future<void> _chooseAvatar() async {
     final choice = await AvatarPickerPage.open(
@@ -69,6 +70,17 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
 
+    if (!_acceptedTerms) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Debes aceptar los Términos y Condiciones y la Política de Privacidad',
+          ),
+        ),
+      );
+      return;
+    }
+
     // El backend exige: min 6 caracteres, mayúscula, minúscula,
     // número y carácter especial. Lo validamos antes de enviar
     // para dar feedback inmediato.
@@ -93,6 +105,7 @@ class _RegisterPageState extends State<RegisterPage> {
       email: email,
       password: pass,
       avatarPreset: _avatar?.presetKey,
+      acceptedTerms: _acceptedTerms,
     );
     // Una foto de galería se sube tras el primer inicio de sesión.
     auth.setPendingAvatarImage(_avatar?.image);
@@ -154,6 +167,8 @@ class _RegisterPageState extends State<RegisterPage> {
                       obscurePassword: _obscurePass,
                       obscureConfirmPassword: _obscureConfirm,
                       isLoading: auth.isLoading,
+                      acceptedTerms: _acceptedTerms,
+                      onAcceptedChanged: (v) => setState(() => _acceptedTerms = v),
                       onTogglePassword: () {
                         setState(() {
                           _obscurePass = !_obscurePass;

@@ -9,7 +9,7 @@ import 'personal_data_page.dart';
 import 'security_page.dart';
 import 'chat_page.dart';
 import '../core/utils/studio_prefs.dart';
-import 'terms_page.dart';
+import '../documents/documents_page.dart';
 import '../widgets/drink_studio/drink_studio_launcher.dart';
 
 import '../widgets/profile/profile_sub_page_header.dart';
@@ -255,12 +255,18 @@ class SettingsPage extends StatefulWidget {
                     onTap: () => openSupportWhatsApp(context),
                   ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 24),
+
+                  // DOCUMENTOS
+
+                  const SettingsSectionHeader(
+                    title: 'Documentos',
+                  ),
 
                   SettingsCardTile(
-                    icon: Icons.description_outlined,
-                    title: 'Términos y Condiciones',
-                    subtitle: 'Lee nuestros términos',
+                    icon: Icons.folder_open_rounded,
+                    title: 'Documentos de la app',
+                    subtitle: 'Manuales, términos y privacidad',
                     trailing: Icon(
                       Icons.arrow_forward_rounded,
                       color: primaryBrown,
@@ -268,7 +274,7 @@ class SettingsPage extends StatefulWidget {
                     ),
                     onTap: () => Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const TermsPage()),
+                      MaterialPageRoute(builder: (_) => const DocumentsPage()),
                     ),
                   ),
 

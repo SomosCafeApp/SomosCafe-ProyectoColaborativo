@@ -166,7 +166,8 @@ export const loginWithGoogle =
             // ===================================
 
             const {
-                idToken
+                idToken,
+                termsVersion
             } = req.body;
 
             if (
@@ -406,7 +407,17 @@ export const loginWithGoogle =
                             true,
 
                         isActive:
-                            true
+                            true,
+
+                        // La app muestra el aviso "Al continuar aceptas
+                        // los Términos y la Política de Privacidad".
+                        termsAcceptedAt:
+                            new Date(),
+
+                        termsVersion:
+                            typeof termsVersion === "string"
+                                ? termsVersion.slice(0, 40)
+                                : ""
 
                     });
 
