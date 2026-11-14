@@ -33,7 +33,7 @@ const AppDocument deleteAccountDocument = AppDocument(
       accent: Color(0xFF4A90C2),
       title: 'Si no puedes entrar a la app',
       blocks: [
-        DocBlock.p('Escribe a legal@coffeeapp.co desde el correo con el que te registraste, con el asunto "Eliminar mi cuenta" e indica tu nombre. Atenderemos tu solicitud dentro de los plazos de la Ley 1581 de 2012.'),
+        DocBlock.p('Escribe a somoscafeappgarzon@gmail.com desde el correo con el que te registraste, con el asunto "Eliminar mi cuenta" e indica tu nombre. Atenderemos tu solicitud dentro de los plazos de la Ley 1581 de 2012.'),
       ],
     ),
     DocSection(

@@ -19,7 +19,7 @@ const AppDocument privacyDocument = AppDocument(
       accent: Color(0xFFB7791F),
       title: 'Responsable del tratamiento',
       blocks: [
-        DocBlock.p('Cafetería SOMOS, con sede en Garzón, Huila, Colombia, es la responsable del tratamiento de tus datos personales a través de SomosCafe App.\nCorreo para asuntos de datos: legal@coffeeapp.co'),
+        DocBlock.p('Cafetería SOMOS, con sede en Garzón, Huila, Colombia, es la responsable del tratamiento de tus datos personales a través de SomosCafe App.\nCorreo para asuntos de datos: somoscafeappgarzon@gmail.com'),
       ],
     ),
     DocSection(
@@ -135,7 +135,7 @@ const AppDocument privacyDocument = AppDocument(
           'Revocar la autorización y solicitar la supresión de tus datos.',
           'Acceder de forma gratuita a tus datos personales.',
         ]),
-        DocBlock.p('Para ejercerlos puedes editar tus datos en Configuración > Datos personales, eliminar tu cuenta desde la app, o escribir a legal@coffeeapp.co indicando tu nombre y el correo de tu cuenta. Responderemos las consultas en máximo 10 días hábiles y los reclamos en máximo 15 días hábiles, prorrogables según el artículo 14 y el artículo 15 de la Ley 1581 de 2012.'),
+        DocBlock.p('Para ejercerlos puedes editar tus datos en Configuración > Datos personales, eliminar tu cuenta desde la app, o escribir a somoscafeappgarzon@gmail.com indicando tu nombre y el correo de tu cuenta. Responderemos las consultas en máximo 10 días hábiles y los reclamos en máximo 15 días hábiles, prorrogables según el artículo 14 y el artículo 15 de la Ley 1581 de 2012.'),
       ],
     ),
     DocSection(
@@ -149,7 +149,7 @@ const AppDocument privacyDocument = AppDocument(
           'Tu cuenta queda anonimizada: se borran nombre, correo, teléfono, fecha de cumpleaños y el vínculo con Google.',
           'En tus pedidos anteriores se eliminan el nombre, teléfono y dirección de entrega y el comprobante de pago; se conservan solo los montos y productos para fines contables.',
         ]),
-        DocBlock.p('Si no puedes entrar a la app, pide la eliminación escribiendo a legal@coffeeapp.co desde el correo de tu cuenta.'),
+        DocBlock.p('Si no puedes entrar a la app, pide la eliminación escribiendo a somoscafeappgarzon@gmail.com desde el correo de tu cuenta.'),
       ],
     ),
     DocSection(
@@ -165,7 +165,7 @@ const AppDocument privacyDocument = AppDocument(
       accent: Color(0xFFB7791F),
       title: 'Contacto',
       blocks: [
-        DocBlock.p('Cafetería SOMOS · Garzón, Huila, Colombia\nCorreo: legal@coffeeapp.co'),
+        DocBlock.p('Cafetería SOMOS · Garzón, Huila, Colombia\nCorreo: somoscafeappgarzon@gmail.com'),
       ],
     ),
   ],

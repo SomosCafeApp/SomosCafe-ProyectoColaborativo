@@ -13,7 +13,7 @@ class AppInfo {
   static const String location = 'Garzón, Huila, Colombia';
 
   /// Correo para asuntos legales, de datos personales y PQR.
-  static const String legalEmail = 'legal@coffeeapp.co';
+  static const String legalEmail = 'somoscafeappgarzon@gmail.com';
 
   /// Versión vigente de los Términos y de la Política de Privacidad.
   /// Se envía al backend como constancia al registrarse. Cámbiala cuando

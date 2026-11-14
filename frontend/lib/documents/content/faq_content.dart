@@ -91,7 +91,7 @@ const AppDocument faqDocument = AppDocument(
       accent: Color(0xFF4A90C2),
       title: '¿Cómo contacto a la cafetería?',
       blocks: [
-        DocBlock.p('Desde Configuración > Soporte: Centro de Ayuda (ChatBot) o WhatsApp. También por correo a legal@coffeeapp.co.'),
+        DocBlock.p('Desde Configuración > Soporte: Centro de Ayuda (ChatBot) o WhatsApp. También por correo a somoscafeappgarzon@gmail.com.'),
       ],
     ),
   ],

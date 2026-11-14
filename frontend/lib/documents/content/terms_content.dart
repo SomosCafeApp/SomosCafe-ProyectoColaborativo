@@ -218,7 +218,7 @@ const AppDocument termsDocument = AppDocument(
       accent: Color(0xFF4A90C2),
       title: 'Contacto',
       blocks: [
-        DocBlock.p('Correo: legal@coffeeapp.co\nWhatsApp: desde Configuración > Soporte > Escríbenos por WhatsApp\nUbicación: Garzón, Huila, Colombia'),
+        DocBlock.p('Correo: somoscafeappgarzon@gmail.com\nWhatsApp: desde Configuración > Soporte > Escríbenos por WhatsApp\nUbicación: Garzón, Huila, Colombia'),
       ],
     ),
   ],
